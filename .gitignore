@@ -83,7 +83,6 @@ pnpm-lock.yaml*
 .windsurf/
 .zencoder/
 skills/
-AGENTS.md
 .plan/
 skills-lock.json
 findings.md

@@ -10,13 +10,17 @@
     "prepare": "husky",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "lint-staged": {
     "*.{js,ts,vue,json,css,md}": "prettier --write",
     "*.{js,ts,vue}": "eslint --fix"
   },
   "dependencies": {
+    "@vueuse/core": "^14.4.0",
     "axios": "^1.19.0",
     "element-plus": "^2.14.4",
     "nprogress": "^0.2.0",
@@ -30,11 +34,14 @@
     "@types/node": "^24.13.3",
     "@types/nprogress": "^0.2.3",
     "@vitejs/plugin-vue": "^6.0.8",
+    "@vitest/coverage-v8": "^4.1.10",
     "@vue/eslint-config-prettier": "^10.2.0",
     "@vue/eslint-config-typescript": "^14.9.0",
+    "@vue/test-utils": "^2.4.11",
     "@vue/tsconfig": "^0.9.1",
     "eslint": "^10.8.1",
     "eslint-plugin-vue": "^10.10.0",
+    "happy-dom": "^20.11.2",
     "husky": "^9.1.7",
     "lint-staged": "^17.3.0",
     "prettier": "^3.9.6",
@@ -45,6 +52,7 @@
     "unplugin-vue-components": "^32.1.0",
     "unplugin-vue-setup-extend-plus": "^1.0.1",
     "vite": "^8.2.0",
+    "vitest": "^4.1.10",
     "vue-tsc": "^3.3.8"
   }
 }

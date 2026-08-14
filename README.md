@@ -10,6 +10,8 @@ Learn more about the recommended Project Setup and IDE Support in the [Vue Docs 
 - `pnpm build` — type-check and build
 - `pnpm lint` / `pnpm lint:fix` — ESLint check / auto-fix
 - `pnpm format` — Prettier format
+- `pnpm test` / `pnpm test:run` — Vitest watch / single run
+- `pnpm test:coverage` — Vitest with coverage
 
 ## Git commit convention
 
