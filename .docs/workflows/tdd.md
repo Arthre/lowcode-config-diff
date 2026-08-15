@@ -22,7 +22,7 @@
 单元测试使用 **Vitest + happy-dom + @vue/test-utils**：
 
 - 命令：`pnpm test`（监听）/ `pnpm test:run`（CI/完成验证）/ `pnpm test:coverage`
-- 用例放在 `src/**/*.{spec,test}.ts`；`describe` / `it` 说明用中文（见 `.cursor/rules/unit-test-chinese.mdc`）
+- 用例放在 `src/**/*.test.ts`；`describe` / `it` 说明用中文（见 `.cursor/rules/unit-test-chinese.mdc`）
 - 平凡单行修复可按 `AGENTS.md` 简单改动路径处理，但仍需验证
 
 ## Red-Green-Refactor 循环

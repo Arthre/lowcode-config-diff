@@ -1,0 +1,41 @@
+---
+description: 代码注释与用户可见文案使用简体中文
+globs: '**/*.{ts,tsx,vue,js,jsx}'
+alwaysApply: false
+---
+
+# 中文注释与界面文案
+
+本项目面向中文用户与中文开发者。
+
+## 必须用中文
+
+- 代码注释（行内、块注释、JSDoc）
+- 用户可见文案：按钮、标签、占位符、空态、错误提示、Toast、对话框、`aria-label` / `title` 等
+- 会直接展示给用户的 `Error.message` 或等价提示字符串
+
+## 保持英文
+
+- 标识符：变量名、函数名、类型名、文件名
+- 协议/库固有英文（如 HTTP header 名、第三方 API 字段名）
+- Conventional Commits 的 `type`（如 `feat`）；subject/body 仍用中文
+
+```ts
+// ❌ BAD
+throw new Error('Invalid JSON')
+el.textContent = 'Copy failed'
+
+// ✅ GOOD
+throw new Error('JSON 无效')
+el.textContent = '复制失败'
+```
+
+```ts
+// ❌ BAD
+/** Returns whether both sides are valid. */
+
+// ✅ GOOD
+/** 两侧配置均合法时返回 true。 */
+```
+
+详细约定见 `AGENTS.md`「中文注释与文案」与 `.docs/workflows/naming-convention.md`。

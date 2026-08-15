@@ -54,21 +54,24 @@
 
 ## 目录与业务边界
 
-| 路径              | 职责                                         |
-| ----------------- | -------------------------------------------- |
-| `src/`            | 应用源码                                     |
-| `src/views/`      | 页面视图                                     |
-| `src/components/` | 通用组件                                     |
-| `src/router/`     | 路由与导航守卫（含 NProgress）               |
-| `src/stores/`     | Pinia 状态                                   |
-| `src/utils/`      | 工具与请求封装                               |
-| `src/types/`      | 自动生成类型声明（auto-import / components） |
-| `public/`         | 静态资源                                     |
-| `.docs/`          | 主要文档：工作流、specs、plans、模块活文档   |
-| `.husky/`         | Git hooks（lint-staged、commitlint）         |
-| `.cursor/`        | Cursor 规则等 IDE 薄层（入库共享）           |
-| `.agents/`        | Agent Skills（入库共享）                     |
-| `.claude/`        | Claude 相关配置与 skills（入库共享）         |
+| 路径               | 职责                                                               |
+| ------------------ | ------------------------------------------------------------------ |
+| `src/`             | 应用源码                                                           |
+| `src/views/`       | 页面视图                                                           |
+| `src/components/`  | 通用组件（约超过 12～15 个文件时再按 layout/json/diff 等分子目录） |
+| `src/composables/` | 可复用副作用与可测纯逻辑                                           |
+| `src/core/`        | Diff/Merge 纯引擎（禁止依赖 Vue / Pinia / DOM）                    |
+| `src/styles/`      | 设计系统 SCSS（token / 原语 / 壳 / 语义；功能扩展见 `features/`）  |
+| `src/router/`      | 路由与导航守卫（含 NProgress）                                     |
+| `src/stores/`      | Pinia 状态                                                         |
+| `src/utils/`       | 工具与请求封装                                                     |
+| `src/types/`       | 自动生成类型声明（auto-import / components）                       |
+| `public/`          | 静态资源                                                           |
+| `.docs/`           | 主要文档：工作流、specs、plans、模块活文档                         |
+| `.husky/`          | Git hooks（lint-staged、commitlint）                               |
+| `.cursor/`         | Cursor 规则等 IDE 薄层（入库共享）                                 |
+| `.agents/`         | Agent Skills（入库共享）                                           |
+| `.claude/`         | Claude 相关配置与 skills（入库共享）                               |
 
 新增页面优先放 `src/views/`；可复用 UI 放 `src/components/`；跨页面状态放 `src/stores/`；HTTP 调用统一走 `src/utils/request.ts`（或后续抽离的 `src/api/`），页面内不要散落裸 `axios`。
 
@@ -120,7 +123,19 @@
 
 ### UI 与样式
 
-- 样式优先 UnoCSS 原子类；全局样式放 `src/style.css`，避免无必要的深层耦合样式。
+- 样式优先 UnoCSS 原子类；全局主题与 `.ui-*` 原语放 `src/styles/`（入口 `styles/index.scss`，统一 SCSS），功能级样式进 `styles/features/`；避免无必要的深层耦合样式。
+
+### 中文注释与文案
+
+本项目面向**中文用户与中文开发者**，语言约定如下：
+
+- **代码注释**（含行内注释、JSDoc / 块注释）：优先使用简体中文；说明业务含义即可，勿堆砌英文套话。
+- **用户可见文案**：界面标签、按钮、占位符、空态、错误提示、`aria-label` / `title`、Toast / 对话框等，一律使用简体中文；**不要**使用英文提示。
+- **抛给用户或可展示的错误信息**（含 `Error.message` 若会直接展示）：使用中文。
+- **标识符仍用英文**：变量名、函数名、类型名、文件名、Git `type`（如 `feat`）保持英文；与「文案用中文」不冲突。
+- 单测 `describe` / `it`、提交信息 subject/body 已另有中文约定（见下方 Git 与验证、以及 `.cursor/rules/`）。
+
+细则见 [命名规范 — 函数注释](.docs/workflows/naming-convention.md#函数注释规范jsdoc-优先) 与 `.cursor/rules/chinese-locale.mdc`。
 
 ## Git 与验证
 
@@ -160,7 +175,7 @@
 
 ## IDE 规则同步
 
-- Cursor 规则：`.cursor/rules/`（如 `commit-message.mdc`、`unit-test-chinese.mdc`）
+- Cursor 规则：`.cursor/rules/`（如 `commit-message.mdc`、`unit-test-chinese.mdc`、`chinese-locale.mdc`）
 - Agent Skills：`.agents/skills/`（如 `git-commit`）；Claude 侧可对应 `.claude/`
 - VS Code / Cursor 工作区设置：`.vscode/settings.json`、`.vscode/extensions.json`
 - 规则只保留激活条件、核心约束和主文档链接；详细行为以 `.docs/` 与当前代码为准。

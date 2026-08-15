@@ -150,14 +150,16 @@ createDiffSession({ leftId: 'a', rightId: 'b', mode: 'json', label: '对比' })
 
 ## 函数注释规范：JSDoc 优先
 
-新增或重写函数注释时使用简洁 JSDoc：一句话描述函数用途，必要时补 `@param` 与 `@returns`。注释只说明业务含义，不展开实现细节、历史背景或调用链路。
+新增或重写函数注释时使用简洁 JSDoc：**用简体中文**写一句话描述用途，必要时补 `@param` 与 `@returns`（参数说明亦用中文）。注释只说明业务含义，不展开实现细节、历史背景或调用链路。
+
+本项目用户与协作者为中文用户，**不要**用英文写注释或用户可见提示。
 
 ```typescript
 /**
- * Calculates the sum of two numbers.
- * @param {number} num1 - The first number.
- * @param {number} num2 - The second number.
- * @returns {number} The sum of num1 and num2.
+ * 计算两个数的和。
+ * @param num1 - 第一个加数
+ * @param num2 - 第二个加数
+ * @returns 两数之和
  */
 function sum(num1: number, num2: number): number {
   return num1 + num2
@@ -168,12 +170,12 @@ function sum(num1: number, num2: number): number {
 
 ```typescript
 /**
- * Applies left/right config payloads into the current compare session.
- * @param {object} params - The compare apply parameters.
- * @param {unknown} params.left - The left-side config payload.
- * @param {unknown} params.right - The right-side config payload.
- * @param {boolean} params.shouldRefresh - Whether to refresh the diff view after apply.
- * @returns {Promise<void>} Resolves after the payloads are applied.
+ * 将左右两侧配置写入当前对比会话。
+ * @param params - 应用参数
+ * @param params.left - 左侧配置
+ * @param params.right - 右侧配置
+ * @param params.shouldRefresh - 应用后是否刷新 Diff 视图
+ * @returns 应用完成后结束
  */
 async function applyComparePayloads({
   left,
@@ -190,6 +192,7 @@ async function applyComparePayloads({
 
 规则：
 
+- 注释与 `@param` / `@returns` 说明使用**简体中文**；勿写英文套话。
 - 函数说明第一句回答“这个函数做什么”，保持简短。
 - `@param` 说明参数业务意义，避免重复 TypeScript 类型或写长段背景。
 - 仅当返回值有业务含义或对外 API 需要说明时写 `@returns`；普通 `void` 可省略。
