@@ -85,8 +85,8 @@ function summarizeValue(value: JsonValue | undefined): string {
   if (value === null) return 'null'
   if (typeof value === 'string') return JSON.stringify(value)
   if (typeof value === 'number' || typeof value === 'boolean') return String(value)
-  if (Array.isArray(value)) return `Array(${value.length})`
-  return `Object(${Object.keys(value).length})`
+  if (Array.isArray(value)) return `数组(${value.length})`
+  return `对象(${Object.keys(value).length})`
 }
 
 function stringifyValue(value: JsonValue | undefined): string {
@@ -103,7 +103,7 @@ function onShowUnchangedChange(event: Event) {
 <template>
   <div class="flex flex-col gap-3.5 text-left w-full">
     <div v-if="!session.active" class="ui-empty-slot">
-      <p>两侧 JSON 均 Valid 并点击「开始 Diff」后，此处显示差异树。</p>
+      <p>两侧 JSON 均合法并点击「开始 Diff」后，此处显示差异树。</p>
     </div>
 
     <template v-else>

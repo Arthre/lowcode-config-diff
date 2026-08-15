@@ -1,0 +1,83 @@
+/* 主题切换 View Transition：亮→暗收回 / 暗→亮展开 */
+
+@keyframes theme-vt-expand {
+  from {
+    clip-path: var(--theme-vt-clip-from);
+  }
+  to {
+    clip-path: var(--theme-vt-clip-to);
+  }
+}
+
+@keyframes theme-vt-retract {
+  from {
+    clip-path: var(--theme-vt-clip-to);
+  }
+  to {
+    clip-path: var(--theme-vt-clip-from);
+  }
+}
+
+::view-transition {
+  /* 擦除底层用暗色画布，避免亮色收回/进入时出现白缝 */
+  background-color: var(--theme-vt-backdrop, #0c1014);
+}
+
+::view-transition-group(root) {
+  animation: none;
+  background-color: var(--theme-vt-backdrop, #0c1014);
+}
+
+::view-transition-image-pair(root) {
+  isolation: isolate;
+  animation: none;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+  /* 避免根快照上下出现白边 */
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 2147483646;
+}
+
+/* 切到暗色：旧亮层在上，向点击点收回 */
+html[data-theme-vt='to-dark']::view-transition-old(root) {
+  z-index: 2147483646;
+  animation: theme-vt-retract var(--theme-vt-ms, 340ms) var(--theme-vt-ease, ease-in-out) both;
+}
+
+html[data-theme-vt='to-dark']::view-transition-new(root) {
+  z-index: 1;
+  animation: none;
+}
+
+/* 切到亮色：新亮层在上，从点击点展开 */
+html[data-theme-vt='to-light']::view-transition-new(root) {
+  z-index: 2147483646;
+  animation: theme-vt-expand var(--theme-vt-ms, 340ms) var(--theme-vt-ease, ease-in-out) both;
+}
+
+html[data-theme-vt='to-light']::view-transition-old(root) {
+  z-index: 1;
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme-vt='to-dark']::view-transition-old(root),
+  html[data-theme-vt='to-light']::view-transition-new(root),
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+}

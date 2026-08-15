@@ -149,7 +149,7 @@ Operate 模式的配置 Diff 工作台：冷灰画布托起白表面面板，青
 
 - 入口：页眉右侧太阳/月亮按钮（`ThemeToggle`）
 - 状态：`useDark`（VueUse）+ `localStorage` 键 `lcd-color-scheme`；首次无存储时跟随系统偏好；`index.html` 内联脚本防 FOUC
-- 过场：支持时用 **View Transitions API** 从点击点做圆形揭示（约 450ms）；不支持或 `prefers-reduced-motion: reduce` 时瞬时切换
+- 过场：支持时用 **View Transitions API**（约 340ms，对称缓动）：亮→暗为亮色*收回*，暗→亮为亮色*进入*；CSS 首帧驱动动画 + 暗色过渡底抑白闪；不支持或 `prefers-reduced-motion: reduce` 时瞬时切换
 - 编辑器：CodeMirror 主题用 CSS 变量，随 `html.dark` 同步
 
 ## Typography
@@ -161,6 +161,8 @@ Operate 模式的配置 Diff 工作台：冷灰画布托起白表面面板，青
 ## Layout
 
 - 单栏工作流纵向堆叠：Header → Input → Diff → Result
+- **页眉 = 全宽半透明层**（透 canvas，不用白色 surface；轻模糊分层），不吸顶、不高卡片
+- **内容 = canvas 上的 raised 面板区**（`ui-page-body`），与页眉分层明确
 - 组内紧、区间松；面板圆角 `lg`，内边距 `lg`
 - 桌面双栏输入；小屏纵向堆叠
 - 不做 01/02/03 步骤编号、不做指标仪表盘

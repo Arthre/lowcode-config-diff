@@ -1,0 +1,80 @@
+/* 产品语义色：Diff 类型、TEST/PROD 侧、状态文字色 */
+
+.ui-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 0.15rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.ui-badge-added {
+  background: var(--diff-added-bg);
+  color: var(--diff-added);
+}
+
+.ui-badge-removed {
+  background: var(--diff-removed);
+  color: #fff;
+}
+
+.ui-badge-modified {
+  background: var(--diff-modified-bg);
+  color: var(--diff-modified);
+}
+
+.ui-side-test {
+  color: var(--side-test);
+}
+
+.ui-side-prod {
+  color: var(--side-prod);
+}
+
+.ui-label-test,
+.ui-label-prod {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.ui-label-test::before,
+.ui-label-prod::before {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-xs);
+}
+
+.ui-label-test {
+  color: var(--side-test);
+}
+
+.ui-label-test::before {
+  background: var(--side-test);
+}
+
+.ui-label-prod {
+  color: var(--side-prod);
+}
+
+.ui-label-prod::before {
+  background: var(--side-prod);
+}
+
+.ui-status-valid {
+  color: var(--success);
+}
+
+.ui-status-invalid {
+  color: var(--danger);
+}
+
+.ui-status-empty {
+  color: var(--muted);
+}

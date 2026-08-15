@@ -42,8 +42,8 @@ const canStartDiff = computed(
 
 function statusLabel(state: JsonDocumentState): string {
   if (state.status === 'empty') return '空'
-  if (state.status === 'valid') return 'Valid'
-  return 'Invalid'
+  if (state.status === 'valid') return '合法'
+  return '非法'
 }
 
 function statusDetail(state: JsonDocumentState): string {
@@ -216,7 +216,7 @@ function onStartDiff() {
         <span class="i-lucide-play" aria-hidden="true" />
         开始 Diff
       </button>
-      <p v-if="!canStartDiff" class="ui-cta-hint">两侧均 Valid 后可开始</p>
+      <p v-if="!canStartDiff" class="ui-cta-hint">两侧均合法后可开始</p>
     </div>
   </div>
 </template>

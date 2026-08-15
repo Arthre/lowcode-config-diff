@@ -1,0 +1,12 @@
+/* 全局样式入口。顺序固定：token → 主题动画 → 基础 → 原语 → 壳 → 语义 → 功能扩展。 */
+
+@use './tokens';
+@use './theme-transition';
+@use './base';
+@use './primitives';
+@use './layout';
+@use './semantic';
+
+/* 功能级样式放 features/，有文件后再在此 @use，例如：
+@use './features/editor';
+*/

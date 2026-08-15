@@ -1,0 +1,142 @@
+/* 应用壳：页眉 chrome、工作区、主题切换按钮 */
+
+.ui-page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100svh;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+/* 顶栏：半透明，无白底面板感 */
+.ui-page-header {
+  width: 100%;
+  background: color-mix(in srgb, var(--canvas) 22%, transparent);
+  border-bottom: none;
+  box-shadow: none;
+  backdrop-filter: blur(2px) saturate(1.02);
+  -webkit-backdrop-filter: blur(2px) saturate(1.02);
+}
+
+html.dark .ui-page-header {
+  background: color-mix(in srgb, var(--canvas) 18%, transparent);
+}
+
+.ui-page-header-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  width: min(100%, 1400px);
+  margin-inline: auto;
+  padding: 0.7rem 1.25rem 0.75rem;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .ui-page-header-inner {
+    padding-inline: 2rem;
+  }
+}
+
+.ui-page-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+}
+
+.ui-page-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.ui-page-header h1 {
+  font-size: 1.15rem;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.ui-page-header-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.85rem;
+}
+
+.ui-page-header .ui-flow {
+  padding: 0.2rem 0.35rem;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--code-bg) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+}
+
+.ui-page-header .ui-privacy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--accent-muted) 55%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.ui-page-header .ui-brand-mark {
+  width: 2rem;
+  height: 2rem;
+}
+
+.ui-page-header .ui-brand-mark .i-lucide-git-compare {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+/* 工作区：画布上的抬升面板区，明显低于顶栏 */
+.ui-page-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: min(100%, 1400px);
+  margin-inline: auto;
+  padding: 1.35rem 1.25rem 2.25rem;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .ui-page-body {
+    padding-inline: 2rem;
+  }
+}
+
+.ui-theme-toggle {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  color: var(--text-h);
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: none;
+  cursor: pointer;
+  transition:
+    background-color 0.15s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.15s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ui-theme-toggle:hover {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  color: var(--accent);
+  background: var(--surface);
+}
+
+.ui-theme-toggle .icon {
+  width: 1rem;
+  height: 1rem;
+}

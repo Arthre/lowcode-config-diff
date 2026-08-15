@@ -1,0 +1,97 @@
+/* 设计 token：亮色 :root / 暗色 html.dark。新颜色、圆角、阴影只改本文件。 */
+
+:root {
+  /* 画布与表面 — 冷灰 */
+  --canvas: #eef1f4;
+  --bg: var(--canvas);
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --border: #d5dbe3;
+  --border-subtle: #e4e9ef;
+  --code-bg: #f1f4f7;
+
+  /* 文字 */
+  --text: #5a6572;
+  --text-h: #0f1720;
+  --muted: #7b8794;
+
+  /* 操作强调 — 青绿 */
+  --accent: #0f766e;
+  --accent-hover: #0d9488;
+  --accent-muted: #ccfbf1;
+  --accent-bg: var(--accent-muted);
+  --accent-border: color-mix(in srgb, var(--accent) 45%, transparent);
+
+  /* 语义：两侧与 Diff */
+  --side-test: #0369a1;
+  --side-prod: #b45309;
+  --diff-added: #047857;
+  --diff-added-bg: #d1fae5;
+  --diff-removed: #b91c1c;
+  --diff-modified: #b45309;
+  --diff-modified-bg: #fef3c7;
+  --success: #047857;
+  --danger: #b91c1c;
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 32, 0.05), 0 2px 6px rgba(15, 23, 32, 0.04);
+  --shadow-md: 0 2px 4px rgba(15, 23, 32, 0.06), 0 8px 24px rgba(15, 23, 32, 0.08);
+  --shadow-lg: 0 4px 8px rgba(15, 23, 32, 0.06), 0 16px 40px rgba(15, 23, 32, 0.1);
+  --shadow: var(--shadow-md);
+  --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+
+  /* 字体 */
+  --sans: 'Sora', ui-sans-serif, system-ui, sans-serif;
+  --heading: var(--sans);
+  --mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+
+  /* 圆角 */
+  --radius-xs: 2px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  font: 15px/1.5 var(--sans);
+  letter-spacing: 0;
+  color-scheme: light;
+  color: var(--text);
+  background: var(--canvas);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @media (max-width: 1024px) {
+    font-size: 0.875rem;
+  }
+}
+
+html.dark {
+  color-scheme: dark;
+  --canvas: #0c1014;
+  --bg: var(--canvas);
+  --surface: #151b22;
+  --surface-raised: #1a222c;
+  --border: #2a3441;
+  --border-subtle: #222a34;
+  --code-bg: #121820;
+  --text: #9aa6b2;
+  --text-h: #eef2f6;
+  --muted: #7a8694;
+  --accent: #2dd4bf;
+  --accent-hover: #5eead4;
+  --accent-muted: rgba(45, 212, 191, 0.14);
+  --side-test: #38bdf8;
+  --side-prod: #fbbf24;
+  --diff-added: #34d399;
+  --diff-added-bg: rgba(52, 211, 153, 0.16);
+  --diff-removed: #f87171;
+  --diff-modified: #fbbf24;
+  --diff-modified-bg: rgba(251, 191, 36, 0.16);
+  --success: #34d399;
+  --danger: #f87171;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.28), 0 2px 8px rgba(0, 0, 0, 0.22);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.32), 0 10px 28px rgba(0, 0, 0, 0.32);
+  --shadow-lg: 0 4px 10px rgba(0, 0, 0, 0.35), 0 18px 44px rgba(0, 0, 0, 0.4);
+  --shadow: var(--shadow-md);
+}
