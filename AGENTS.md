@@ -66,7 +66,9 @@
 | `public/`         | 静态资源                                     |
 | `.docs/`          | 主要文档：工作流、specs、plans、模块活文档   |
 | `.husky/`         | Git hooks（lint-staged、commitlint）         |
-| `.cursor/`        | Cursor 规则等 IDE 薄层                       |
+| `.cursor/`        | Cursor 规则等 IDE 薄层（入库共享）           |
+| `.agents/`        | Agent Skills（入库共享）                     |
+| `.claude/`        | Claude 相关配置与 skills（入库共享）         |
 
 新增页面优先放 `src/views/`；可复用 UI 放 `src/components/`；跨页面状态放 `src/stores/`；HTTP 调用统一走 `src/utils/request.ts`（或后续抽离的 `src/api/`），页面内不要散落裸 `axios`。
 
@@ -158,6 +160,7 @@
 ## IDE 规则同步
 
 - Cursor 规则：`.cursor/rules/`（如 `commit-message.mdc`、`unit-test-chinese.mdc`）
+- Agent Skills：`.agents/skills/`（如 `git-commit`）；Claude 侧可对应 `.claude/`
 - VS Code / Cursor 工作区设置：`.vscode/settings.json`、`.vscode/extensions.json`
 - 规则只保留激活条件、核心约束和主文档链接；详细行为以 `.docs/` 与当前代码为准。
 - 若规则文件仍残留其他仓库业务描述，以本文件与 `.docs/` 为准，并择机清理规则内容。

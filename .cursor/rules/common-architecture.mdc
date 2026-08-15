@@ -1,0 +1,41 @@
+---
+description: 默认模板与 CRM 模板架构约束。修改 common、template-1、pageView、按钮路由、弹框或 FieldMapping 时应用。
+globs: apps/web-antd/src/views/common/**,apps/web-antd/src/views/crm-common/template-1/**,apps/web-antd/src/views/crm-common/pageView/**
+alwaysApply: false
+---
+
+# Common / CRM 架构规则
+
+## 文档优先级
+
+1. 当前代码与配置是运行事实。
+2. `.docs/` 是主要活文档；默认模板先读 `.docs/common/README.md` 与 `.docs/form-design/README.md`。
+3. CRM 实现约定以 `apps/web-antd/src/views/crm-common/docs/crm-template.md` 为准；`extraParams` 见同目录 `extra-params.md`；字典见 `dict.md`；PIMS 见 `pims.md`。
+4. `errorModal` 见 `.docs/crm-common/README.md`；按钮 POST 软失败见 `.docs/crm-common/business-soft-fail.md`。
+
+## 心智模型
+
+- 默认模板：`apps/web-antd/src/views/common/index.vue`
+- CRM 模板：`apps/web-antd/src/views/crm-common/template-1/index.vue`
+- 默认模板链路：`API → nav → tableGrid / searchGrid / formConfig / pageBtnList / navList / dict → 表格、搜索、按钮、弹框、Tab`
+- 默认模板由 `PAGE_BTN_ROUTER` 分发按钮，通过 PopupHost 打开注册弹框；PopupHost 采用按需实例化与动态加载。
+- CRM 模板拥有独立的 Tab、分组子表、按钮与 `actions/{componentKey}` 动态弹层；不要机械复制默认模板实现。
+- FieldMapping 只覆盖 nav 中已存在的字段、列和按钮，不构造缺失项。
+
+## 修改前
+
+- 先执行 `codegraph index`，再用 CodeGraph 建立调用与影响上下文。
+- 修改共享符号、默认模板核心模块或 FieldMapping 前必须执行 impact 分析。
+- 修改 `common/index.vue` 或其 composables 前，对照 Commit `68eb2a1` 检查无意外变化。
+- 阅读 `.docs/MAINTENANCE.md`，变更后同步对应模块活文档与 `crm-common/docs/`（若改 CRM 约定）。
+
+## 禁止事项
+
+- 未理解 FieldMapping 纯覆盖语义就修改 `form-schema-normalizer.ts`。
+- 在 `common/` 下新增重复弹框、module、component 或业务特例。
+- 解除 `common-popup-registry.ts` 中的 events 绑定。
+- 未经任务明确要求修改 `views/common/`。
+- 跨模板共享工具只验证一套模板。
+- CRM 新弹层不要回流历史扁平 `handle/`；只加 `actions/{componentKey}/`。
+
+新增弹框、按钮类型或 FieldMapping 时，先查 `.docs/common/README.md`、`.docs/form-design/README.md` 与 `crm-common/docs/crm-template.md`；禁止依据过时行号、数量或静态全量弹框描述直接实现。

@@ -1,0 +1,52 @@
+---
+description: Git 提交信息约定（Conventional Commits + 中文 subject/body）
+alwaysApply: true
+---
+
+# Commit Message
+
+```text
+feat: CRM 模板工具栏按钮接入勾选行校验
+
+复用默认模板 validateToolbarByConfig，在 handleAction 派发前校验勾选行；仅当按钮配置了 validation 时生效，不影响未配置的现有 CRM 按钮。
+```
+
+## 格式
+
+```text
+<type>: <中文 subject>
+
+<中文 body>
+```
+
+- **subject**：简体中文，说明「做了什么」；默认**不写 scope**（与仓库近期提交一致）
+- **body**：与 subject 之间空一行；写清「怎么做 / 为何这样 / 影响范围」，不逐行复述 diff
+- `type` 用英文；`commit-msg` 由 commitlint（`@vben/commitlint-config`）校验
+- 确需 scope 时须落在允许列表（workspace 包名，或 `project` / `style` / `lint` / `ci` / `dev` / `deploy` / `other`）
+- 一次提交一个逻辑改动；未经用户明确要求不创建提交、不推送
+- **可拆分时先确认**：`/commit` 或用户要求提交时，若变更可拆成多个逻辑独立 commit，先列出拆分方案，并用 `AskQuestion`（有则必用）弹出「拆分 / 合并为一个 / 调整分组」供点选；无该工具时改文字确认。**未确认前不执行 commit**
+- Cursor 参与撰写时可附 `Co-authored-by: Cursor <cursoragent@cursor.com>`
+
+## Type
+
+`feat` / `fix` / `docs` / `style` / `refactor` / `perf` / `test` / `build` / `ci` / `chore` / `revert` / `types` / `release`
+
+## 示例
+
+```text
+# ❌ BAD（英文 / 无 body / 非法 scope）
+feat: add toolbar row validation
+fix(form-design): change tab label to span
+
+# ✅ GOOD
+feat: CRM 模板工具栏按钮接入勾选行校验
+
+复用默认模板 validateToolbarByConfig，在 handleAction 派发前校验勾选行；仅当按钮配置了 validation 时生效，不影响未配置的现有 CRM 按钮。
+
+# ✅ GOOD（简单修复也可短 body）
+fix: 将 Tab 标签容器由 div 改为 span
+
+避免 Tab 标签使用块级 div，保证语义与布局正确。
+```
+
+用户说 `/commit` 或要求提交时，按 `.agents/skills/git-commit/SKILL.md` 执行，message 必须符合本规则。
