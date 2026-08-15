@@ -11,10 +11,13 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    DiffTree: typeof import('./../components/DiffTree.vue')['default']
     HelloWorld: typeof import('./../components/HelloWorld.vue')['default']
     JsonEditor: typeof import('./../components/JsonEditor.vue')['default']
     JsonInputArea: typeof import('./../components/JsonInputArea.vue')['default']
+    MergePreview: typeof import('./../components/MergePreview.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    ThemeToggle: typeof import('./../components/ThemeToggle.vue')['default']
   }
 }

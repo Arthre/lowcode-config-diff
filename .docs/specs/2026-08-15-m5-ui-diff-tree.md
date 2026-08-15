@@ -1,10 +1,10 @@
 # M5：UI Diff Tree
 
 **日期：** 2026-08-15  
-**状态：** 草案  
-**依赖：** [总览](./2026-08-15-v0.1-config-diff-merge.md)、[M2](./2026-08-15-m2-core-diff.md)、建议已有 [M4](./2026-08-15-m4-ui-json-input.md)  
-**关联计划：** （M2 完成后确认本切片再写 plan）  
-**影响模块：** `src/components/DiffTree`、选边状态
+**状态：** 已完成  
+**依赖：** [总览](./2026-08-15-v0.1-config-diff-merge.md)、[M2](./2026-08-15-m2-core-diff.md)、[M4](./2026-08-15-m4-ui-json-input.md)  
+**关联计划：** [`.docs/plans/archive/2026-08-15-m5-ui-diff-tree.md`](../plans/archive/2026-08-15-m5-ui-diff-tree.md)  
+**影响模块：** `src/components/DiffTree.vue`、`src/composables/diffTreeModel.ts`、`src/stores/diffSession.ts`、`HomeView`
 
 ---
 
@@ -25,7 +25,7 @@
 - [选边]：每叶 TEST | PROD；父级批量把后代**差异叶子**设为同一 side（可表现混合态）。
 - [批量]：全部选 TEST、全部选 PROD、恢复默认（按 M2 默认 side 表）。
 - [默认 side]：进入树时采用引擎默认 side（modified/added→test，removed→prod）。
-- [高危]：`removed` 等可加强视觉（实施时定）。
+- [高危]：`removed` 用更醒目样式（如红色标签）。
 
 ### ~ 修改（相对早期草案）
 
@@ -45,11 +45,16 @@
 ## 接口与规则
 
 - 输入：`DiffItem[]`（含默认 `side`）；开启「显示无差异」时另需 test/prod Config 以渲染相同子树。
-- 输出/状态：仅差异叶子的 side（或 id→side），供 M6 交给 `mergeConfig`。
+- 输出/状态：Pinia `diffSession` 持有可改 side 的叶子列表，供 M6 交给 `mergeConfig`。
 - merge **只吃差异叶子 + side**；显示无差异不影响合并结果。
 - Core `diffConfig` 仍只产出差异叶子；「显示无差异」纯属 UI 层。
 
-**建议：** `src/components/DiffTree`；状态用 Pinia 或 composable。
+**建议文件（收拢）：**
+
+- `src/composables/diffTreeModel.ts` — 纯函数：组树、批量 side、混合态（可单测）
+- `src/stores/diffSession.ts` — test/prod、leaves、showUnchanged
+- `src/components/DiffTree.vue` — 树 UI（递归节点写在同文件或必要子组件，勿再拆多文件）
+- `src/views/HomeView.vue` — 接入 `start-diff` payload → `diffConfig` → DiffTree
 
 ---
 
@@ -57,14 +62,14 @@
 
 1. 开始 Diff 后默认只看到有差异的节点，看不到双方相同的子树。
 2. 开启「显示无差异」后可看到相同节点；关闭后恢复仅差异。
-3. 无差异节点不可选边，且不改变合并结果。
+3. 无差异节点不可选边，且不进入 merge 叶子列表。
 4. 每叶可在 TEST / PROD 间切换；深层差异 path 正确。
 5. 父级批量只影响差异叶子；混合态可感知。
 6. 「全部选 TEST / 全部选 PROD / 恢复默认」正确；初始 side 符合 M2 默认表。
-7. 手工验收通过。
+7. 手工验收通过；树模型相关单测通过。
 
 ---
 
 ## 测试要点
 
-选边状态若抽成纯函数可单测；否则手工为主。
+`diffTreeModel`：组树（仅差异 / 含无差异）、批量设 side、混合态、恢复默认；UI 手工。

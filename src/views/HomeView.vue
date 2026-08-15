@@ -1,13 +1,15 @@
 <script setup lang="ts" name="HomeView">
-import { useAppStore } from '@/stores/app'
+import DiffTree from '@/components/DiffTree.vue'
 import JsonInputArea from '@/components/JsonInputArea.vue'
+import type { Config } from '@/core/types'
+import { useAppStore } from '@/stores/app'
+import { useDiffSession } from '@/stores/diffSession'
 
 const appStore = useAppStore()
+const diffSession = useDiffSession()
 
-const diffReady = ref(false)
-
-function onStartDiff() {
-  diffReady.value = true
+function onStartDiff(payload: { test: Config; prod: Config }) {
+  diffSession.startSession(payload.test, payload.prod)
 }
 </script>
 
@@ -24,13 +26,7 @@ function onStartDiff() {
 
     <section class="border border-[var(--border)] rounded p-4 text-left">
       <h2 class="text-lg font-medium m-0 mb-2">Diff</h2>
-      <p class="text-sm text-[var(--text)] m-0">
-        {{
-          diffReady
-            ? '已收到两侧合法配置（Diff 树将在后续切片实现）。'
-            : '两侧 JSON 均 Valid 并点击「开始 Diff」后，此处显示差异树。'
-        }}
-      </p>
+      <DiffTree />
     </section>
 
     <section class="border border-[var(--border)] rounded p-4 text-left">
