@@ -56,7 +56,7 @@
 
 - 创建：`src/path/to/file.ts`
 - 修改：`src/path/to/existing.ts:123-145`
-- 测试：`src/**/xxx.spec.ts`（Vitest）；并写明相关验收步骤
+- 测试：`src/**/xxx.test.ts`（Vitest）；并写明相关验收步骤
 
 **接口：**
 

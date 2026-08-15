@@ -40,10 +40,10 @@ src/core/
   path.ts           # formatPath
   parse.ts          # parseConfig
   format.ts         # formatConfig
-  equal.spec.ts
-  path.spec.ts
-  parse.spec.ts
-  format.spec.ts
+  equal.test.ts
+  path.test.ts
+  parse.test.ts
+  format.test.ts
 ```
 
 删除空占位目录（若仍为空且无文件）：`src/core/array/`、`src/core/diff/`、`src/core/merge/`、`src/core/parser/`。
@@ -60,7 +60,7 @@ src/core/
 
 - 创建：`src/core/types.ts`
 - 创建：`src/core/equal.ts`
-- 测试：`src/core/equal.spec.ts`
+- 测试：`src/core/equal.test.ts`
 
 **接口：**
 
@@ -73,7 +73,7 @@ src/core/
 
 - [x] **步骤 1：编写失败测试**
 
-创建 `src/core/equal.spec.ts`：
+创建 `src/core/equal.test.ts`：
 
 ```ts
 import { describe, expect, it } from 'vitest'
@@ -99,7 +99,7 @@ describe('deepEqual', () => {
 })
 ```
 
-- [x] **步骤 2：确认失败** 运行：`pnpm test:run src/core/equal.spec.ts`；预期：FAIL（模块不存在或导出缺失）
+- [x] **步骤 2：确认失败** 运行：`pnpm test:run src/core/equal.test.ts`；预期：FAIL（模块不存在或导出缺失）
 
 - [x] **步骤 3：编写最小实现**
 
@@ -143,7 +143,7 @@ export function deepEqual(a: unknown, b: unknown): boolean {
 }
 ```
 
-- [x] **步骤 4：确认通过** 运行：`pnpm test:run src/core/equal.spec.ts`；预期：PASS
+- [x] **步骤 4：确认通过** 运行：`pnpm test:run src/core/equal.test.ts`；预期：PASS
 
 - [ ] **步骤 5：提交**（仅当用户明确要求时）
 
@@ -156,7 +156,7 @@ export function deepEqual(a: unknown, b: unknown): boolean {
 **文件：**
 
 - 创建：`src/core/path.ts`
-- 测试：`src/core/path.spec.ts`
+- 测试：`src/core/path.test.ts`
 
 **接口：**
 
@@ -165,7 +165,7 @@ export function deepEqual(a: unknown, b: unknown): boolean {
 
 - [x] **步骤 1：编写失败测试**
 
-创建 `src/core/path.spec.ts`：
+创建 `src/core/path.test.ts`：
 
 ```ts
 import { describe, expect, it } from 'vitest'
@@ -186,7 +186,7 @@ describe('formatPath', () => {
 })
 ```
 
-- [x] **步骤 2：确认失败** 运行：`pnpm test:run src/core/path.spec.ts`；预期：FAIL
+- [x] **步骤 2：确认失败** 运行：`pnpm test:run src/core/path.test.ts`；预期：FAIL
 
 - [x] **步骤 3：编写最小实现**
 
@@ -201,7 +201,7 @@ export function formatPath(path: string[]): string {
 
 说明：展示用拼接；**不以**含 `.` 的字符串反解析为权威 path（规格要求）。
 
-- [x] **步骤 4：确认通过** 运行：`pnpm test:run src/core/path.spec.ts`；预期：PASS
+- [x] **步骤 4：确认通过** 运行：`pnpm test:run src/core/path.test.ts`；预期：PASS
 
 - [ ] **步骤 5：提交**（仅当用户明确要求时）
 
@@ -215,7 +215,7 @@ export function formatPath(path: string[]): string {
 
 - 修改：`src/core/types.ts`（追加 `ParseConfigError`）
 - 创建：`src/core/parse.ts`
-- 测试：`src/core/parse.spec.ts`
+- 测试：`src/core/parse.test.ts`
 
 **接口：**
 
@@ -226,7 +226,7 @@ export function formatPath(path: string[]): string {
 
 - [x] **步骤 1：编写失败测试**
 
-创建 `src/core/parse.spec.ts`：
+创建 `src/core/parse.test.ts`：
 
 ```ts
 import { describe, expect, it } from 'vitest'
@@ -273,7 +273,7 @@ describe('parseConfig', () => {
 })
 ```
 
-- [x] **步骤 2：确认失败** 运行：`pnpm test:run src/core/parse.spec.ts`；预期：FAIL
+- [x] **步骤 2：确认失败** 运行：`pnpm test:run src/core/parse.test.ts`；预期：FAIL
 
 - [x] **步骤 3：编写最小实现**
 
@@ -344,7 +344,7 @@ export function isConfig(value: unknown): value is Config {
 }
 ```
 
-- [x] **步骤 4：确认通过** 运行：`pnpm test:run src/core/parse.spec.ts`；预期：PASS
+- [x] **步骤 4：确认通过** 运行：`pnpm test:run src/core/parse.test.ts`；预期：PASS
 
 - [ ] **步骤 5：提交**（仅当用户明确要求时）
 
@@ -357,7 +357,7 @@ export function isConfig(value: unknown): value is Config {
 **文件：**
 
 - 创建：`src/core/format.ts`
-- 测试：`src/core/format.spec.ts`
+- 测试：`src/core/format.test.ts`
 
 **接口：**
 
@@ -366,7 +366,7 @@ export function isConfig(value: unknown): value is Config {
 
 - [x] **步骤 1：编写失败测试**
 
-创建 `src/core/format.spec.ts`：
+创建 `src/core/format.test.ts`：
 
 ```ts
 import { describe, expect, it } from 'vitest'
@@ -391,7 +391,7 @@ describe('formatConfig', () => {
 })
 ```
 
-- [x] **步骤 2：确认失败** 运行：`pnpm test:run src/core/format.spec.ts`；预期：FAIL
+- [x] **步骤 2：确认失败** 运行：`pnpm test:run src/core/format.test.ts`；预期：FAIL
 
 - [x] **步骤 3：编写最小实现**
 
@@ -405,7 +405,7 @@ export function formatConfig(config: Config): string {
 }
 ```
 
-- [x] **步骤 4：确认通过** 运行：`pnpm test:run src/core/format.spec.ts`；预期：PASS
+- [x] **步骤 4：确认通过** 运行：`pnpm test:run src/core/format.test.ts`；预期：PASS
 
 - [ ] **步骤 5：提交**（仅当用户明确要求时）
 
@@ -424,7 +424,7 @@ export function formatConfig(config: Config): string {
 
 - [x] **步骤 1：删除空占位目录** 若目录内无文件则删除，避免与扁平 `src/core/*.ts` 并存造成误导
 
-- [x] **步骤 2：全量单测** 运行：`pnpm test:run src/core`；预期：上述 spec 全部 PASS；`src/smoke.spec.ts` 仍可通过（可顺带 `pnpm test:run`）
+- [x] **步骤 2：全量单测** 运行：`pnpm test:run src/core`；预期：上述 spec 全部 PASS；`src/smoke.test.ts` 仍可通过（可顺带 `pnpm test:run`）
 
 - [x] **步骤 3：自检无 Vue 依赖** 确认 `src/core/**/*.ts`（不含 spec）无 `vue` / `pinia` / `document` / `window` 导入
 
