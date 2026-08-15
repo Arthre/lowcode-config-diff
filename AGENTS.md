@@ -133,6 +133,7 @@
   - 类型与构建：`pnpm build`
   - 不要使用其他仓库遗留命令（如 `pnpm dev:antd`、`pnpm check:type`）
 - 单元测试 `describe` / `it` 说明使用中文（见 `.cursor/rules/unit-test-chinese.mdc`）。
+- 单测文件统一使用 `*.test.ts` 后缀（不用 `*.spec.ts`）。
 
 ## AI 代理硬约束
 

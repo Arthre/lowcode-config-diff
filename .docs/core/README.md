@@ -38,6 +38,7 @@
 
 ## 测试命名
 
+项目统一使用 **`.test.ts`** 后缀（不用 `.spec.ts`）。
 单测与源文件同目录、同基名：`equal.ts` → `equal.test.ts`。不要按函数名另起文件（如 `diffConfig.test.ts`）。纯类型文件 `types.ts` 不单独建测，行为在 `parse` / `diff` / `merge` 的测试中覆盖。
 
 ## 验证

@@ -1,6 +1,6 @@
 ---
 description: 单元测试 describe/it 说明使用中文
-globs: '**/*.{test,spec}.{ts,tsx,js,jsx}'
+globs: '**/*.test.{ts,tsx,js,jsx}'
 alwaysApply: false
 ---
 
