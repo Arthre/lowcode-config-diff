@@ -1,6 +1,7 @@
 <script setup lang="ts" name="HomeView">
 import DiffTree from '@/components/DiffTree.vue'
 import JsonInputArea from '@/components/JsonInputArea.vue'
+import MergePreview from '@/components/MergePreview.vue'
 import type { Config } from '@/core/types'
 import { useAppStore } from '@/stores/app'
 import { useDiffSession } from '@/stores/diffSession'
@@ -31,7 +32,7 @@ function onStartDiff(payload: { test: Config; prod: Config }) {
 
     <section class="border border-[var(--border)] rounded p-4 text-left">
       <h2 class="text-lg font-medium m-0 mb-2">Result</h2>
-      <p class="text-sm text-[var(--text)] m-0">合并结果预览占位（本切片未实现）。</p>
+      <MergePreview />
     </section>
   </div>
 </template>

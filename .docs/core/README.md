@@ -34,7 +34,7 @@
 
 ## 尚未实现（Core）
 
-无。后续 UI 切片见 [`.docs/ui/README.md`](../ui/README.md)；M5 Diff 树 / M6 预览导出仍待实现。
+无。UI 主路径（含 M6 预览导出）见 [`.docs/ui/README.md`](../ui/README.md)（V0.1 UI 已完成）。
 
 ## 测试命名
 
