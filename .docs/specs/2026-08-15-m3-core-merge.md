@@ -1,9 +1,9 @@
 # M3：Core Merge
 
 **日期：** 2026-08-15  
-**状态：** 草案  
+**状态：** 已完成  
 **依赖：** [总览](./2026-08-15-v0.1-config-diff-merge.md)、[M1](./2026-08-15-m1-core-parse.md)、[M2](./2026-08-15-m2-core-diff.md)  
-**关联计划：** （M2 完成后确认本切片再写 plan）  
+**关联计划：** [`.docs/plans/archive/2026-08-15-m3-core-merge.md`](../plans/archive/2026-08-15-m3-core-merge.md)  
 **影响模块：** `src/core/merge.ts`
 
 ---
