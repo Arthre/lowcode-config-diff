@@ -35,10 +35,8 @@ pnpm-debug.log*
 *.sw?
 .DS_Store
 
-# Local index / lock（本机产物，勿入库）
+# Local index（本机产物，勿入库）
 .codegraph
-skills-lock.json
-.claude/settings.local.json
 
 # Generated
 src/types/auto-imports.d.ts
