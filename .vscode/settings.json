@@ -11,7 +11,7 @@
     "package.json": "pnpm-lock.yaml,pnpm-workspace.yaml,yarn.lock,package-lock.json,.npmrc,.nvmrc,skills-lock.json",
     "tsconfig.json": "tsconfig.*.json",
     "vite.config.ts": "uno.config.*,index.html",
-    "eslint.config.js": ".editorconfig,.prettier*,prettier.config.*,commitlint.config.*,stylelint.config.*",
+    "eslint.config.js": ".editorconfig,.prettier*,prettier.config.*,commitlint.config.*,stylelint.config.*,lint-staged.config.*",
     ".gitignore": ".gitattributes,.gitmodules",
     "README.md": "README*,LICENSE*,CHANGELOG*,CONTRIBUTING*"
   }
