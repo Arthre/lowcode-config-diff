@@ -55,10 +55,10 @@ function statusDetail(state: JsonDocumentState): string {
   return parts.join(' ')
 }
 
-function statusClass(state: JsonDocumentState): string {
-  if (state.status === 'valid') return 'text-green-600 dark:text-green-400'
-  if (state.status === 'invalid') return 'text-red-600 dark:text-red-400'
-  return 'text-[var(--text)]'
+function statusPillClass(state: JsonDocumentState): string {
+  if (state.status === 'valid') return 'ui-status-pill is-valid'
+  if (state.status === 'invalid') return 'ui-status-pill is-invalid'
+  return 'ui-status-pill is-empty'
 }
 
 function clearSide(side: 'test' | 'prod') {
@@ -84,7 +84,6 @@ function formatSide(side: 'test' | 'prod') {
     }
     return
   }
-  // 格式化失败：保持原文，立即显示 Invalid
   const evaluated = evaluateJsonDocument(current)
   const next: JsonDocumentState = {
     text: evaluated.text,
@@ -126,7 +125,6 @@ function onFileSelected(side: 'test' | 'prod', event: Event) {
 }
 
 function onStartDiff() {
-  // 点击时强制同步校验，避免 debounce 窗口内改坏 JSON 仍 emit 旧 Config
   const nextTest = evaluateJsonDocument(testText.value)
   const nextProd = evaluateJsonDocument(prodText.value)
   testState.value = nextTest
@@ -139,37 +137,29 @@ function onStartDiff() {
 </script>
 
 <template>
-  <div class="flex flex-col gap-4 text-left w-full">
-    <div class="grid gap-4 md:grid-cols-2">
-      <!-- TEST -->
-      <section class="flex flex-col gap-2 min-w-0">
-        <div class="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            class="px-3 py-1.5 text-sm rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text-h)] hover:bg-[var(--code-bg)]"
-            @click="importSide('test')"
-          >
-            导入
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 text-sm rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text-h)] hover:bg-[var(--code-bg)]"
-            @click="formatSide('test')"
-          >
-            格式化
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 text-sm rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text-h)] hover:bg-[var(--code-bg)]"
-            @click="clearSide('test')"
-          >
-            清空
-          </button>
-          <span class="text-sm font-medium" :class="statusClass(testState)">
+  <div class="flex flex-col gap-5 text-left w-full">
+    <div class="grid gap-5 md:grid-cols-2">
+      <section class="ui-editor-dock flex flex-col gap-2.5 min-w-0">
+        <div class="ui-toolbar">
+          <div class="ui-toolbar-actions">
+            <button type="button" class="ui-btn ui-btn-soft" @click="importSide('test')">
+              <span class="i-lucide-upload" aria-hidden="true" />
+              导入
+            </button>
+            <button type="button" class="ui-btn" @click="formatSide('test')">
+              <span class="i-lucide-align-left" aria-hidden="true" />
+              格式化
+            </button>
+            <button type="button" class="ui-btn ui-btn-danger" @click="clearSide('test')">
+              <span class="i-lucide-trash-2" aria-hidden="true" />
+              清空
+            </button>
+          </div>
+          <span class="ml-auto" :class="statusPillClass(testState)" role="status">
             {{ statusLabel(testState) }}
           </span>
         </div>
-        <p v-if="statusDetail(testState)" class="text-xs text-red-600 dark:text-red-400 m-0">
+        <p v-if="statusDetail(testState)" class="text-xs ui-status-invalid m-0" role="status">
           {{ statusDetail(testState) }}
         </p>
         <input
@@ -179,38 +169,30 @@ function onStartDiff() {
           class="hidden"
           @change="onFileSelected('test', $event)"
         />
-        <JsonEditor v-model="testText" label="TEST" />
+        <JsonEditor v-model="testText" label="TEST" side="test" />
       </section>
 
-      <!-- PROD -->
-      <section class="flex flex-col gap-2 min-w-0">
-        <div class="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            class="px-3 py-1.5 text-sm rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text-h)] hover:bg-[var(--code-bg)]"
-            @click="importSide('prod')"
-          >
-            导入
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 text-sm rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text-h)] hover:bg-[var(--code-bg)]"
-            @click="formatSide('prod')"
-          >
-            格式化
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1.5 text-sm rounded border border-[var(--border)] bg-[var(--bg)] text-[var(--text-h)] hover:bg-[var(--code-bg)]"
-            @click="clearSide('prod')"
-          >
-            清空
-          </button>
-          <span class="text-sm font-medium" :class="statusClass(prodState)">
+      <section class="ui-editor-dock flex flex-col gap-2.5 min-w-0">
+        <div class="ui-toolbar">
+          <div class="ui-toolbar-actions">
+            <button type="button" class="ui-btn ui-btn-soft" @click="importSide('prod')">
+              <span class="i-lucide-upload" aria-hidden="true" />
+              导入
+            </button>
+            <button type="button" class="ui-btn" @click="formatSide('prod')">
+              <span class="i-lucide-align-left" aria-hidden="true" />
+              格式化
+            </button>
+            <button type="button" class="ui-btn ui-btn-danger" @click="clearSide('prod')">
+              <span class="i-lucide-trash-2" aria-hidden="true" />
+              清空
+            </button>
+          </div>
+          <span class="ml-auto" :class="statusPillClass(prodState)" role="status">
             {{ statusLabel(prodState) }}
           </span>
         </div>
-        <p v-if="statusDetail(prodState)" class="text-xs text-red-600 dark:text-red-400 m-0">
+        <p v-if="statusDetail(prodState)" class="text-xs ui-status-invalid m-0" role="status">
           {{ statusDetail(prodState) }}
         </p>
         <input
@@ -220,24 +202,21 @@ function onStartDiff() {
           class="hidden"
           @change="onFileSelected('prod', $event)"
         />
-        <JsonEditor v-model="prodText" label="PROD" />
+        <JsonEditor v-model="prodText" label="PROD" side="prod" />
       </section>
     </div>
 
-    <div class="flex justify-center">
+    <div class="ui-cta-row">
       <button
         type="button"
-        class="px-5 py-2 text-sm rounded font-medium transition-opacity"
-        :class="
-          canStartDiff
-            ? 'bg-[var(--accent)] text-white hover:opacity-90'
-            : 'bg-[var(--border)] text-[var(--text)] opacity-60 cursor-not-allowed'
-        "
+        class="ui-btn ui-btn-primary min-w-44"
         :disabled="!canStartDiff"
         @click="onStartDiff"
       >
+        <span class="i-lucide-play" aria-hidden="true" />
         开始 Diff
       </button>
+      <p v-if="!canStartDiff" class="ui-cta-hint">两侧均 Valid 后可开始</p>
     </div>
   </div>
 </template>
