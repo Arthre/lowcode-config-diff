@@ -31,7 +31,7 @@ function setAtPath(root: Config, path: string[], value: JsonValue): Config {
     if (Array.isArray(value) || isPlainObject(value)) {
       return deepClone(value as Config)
     }
-    throw new Error('根 path 写入值必须是 object 或 array')
+    throw new Error('根 path 写入值必须是对象或数组')
   }
 
   const cloned = deepClone(value)

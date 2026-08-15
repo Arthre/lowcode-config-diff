@@ -33,9 +33,27 @@ describe('parseConfig', () => {
       expect(error).toBeInstanceOf(ParseConfigError)
       const parseError = error as ParseConfigError
       expect(parseError.message.length).toBeGreaterThan(0)
+      expect(parseError.message).not.toMatch(/Unexpected|JSON at position/i)
+      expect(parseError.message).toMatch(/JSON|语法|解析|不完整/)
       if (parseError.line !== undefined) {
         expect(parseError.line).toBeGreaterThanOrEqual(1)
       }
+    }
+  })
+
+  it('顶层非法时使用中文错误信息', () => {
+    expect(() => parseConfig('null')).toThrow('配置顶层必须是对象或数组')
+  })
+
+  it('非法 JSON 错误信息为中文', () => {
+    try {
+      parseConfig('{')
+      expect.unreachable()
+    } catch (error) {
+      expect(error).toBeInstanceOf(ParseConfigError)
+      const parseError = error as ParseConfigError
+      expect(parseError.message).not.toMatch(/Unexpected|end of JSON input/i)
+      expect(/[\u4e00-\u9fff]/.test(parseError.message)).toBe(true)
     }
   })
 })
