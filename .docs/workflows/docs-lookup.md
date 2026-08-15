@@ -1,6 +1,6 @@
 # 文档查询协议
 
-> **触发时机**：需要查询任何库、框架、SDK、API、CLI 工具或云服务的最新文档时。即使是你熟悉的库（Vue、Element Plus、Vite、UnoCSS 等），也应查询最新文档，训练数据可能不反映最近的变更。
+> **触发时机**：需要查询任何库、框架、SDK、API、CLI 工具或云服务的最新文档时。即使是你熟悉的库（Vue、Vite、UnoCSS 等），也应查询最新文档，训练数据可能不反映最近的变更。
 
 ## 核心原则
 
@@ -55,7 +55,6 @@
 | Vue Router      | `^5.2.0`  | https://router.vuejs.org/               |
 | Pinia           | `^4.0.3`  | https://pinia.vuejs.org/                |
 | Axios           | `^1.19.0` | https://axios-http.com/                 |
-| Element Plus    | `^2.14.4` | https://element-plus.org/               |
 | VueUse          | `^14.4.0` | https://vueuse.org/                     |
 | UnoCSS          | `^66.7.5` | https://unocss.dev/                     |
 | NProgress       | `^0.2.0`  | https://github.com/rstacruz/nprogress   |

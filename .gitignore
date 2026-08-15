@@ -1,106 +1,48 @@
+# Dependencies
 node_modules
-.DS_Store
+.pnpm-store
+
+# Build
 dist
 dist-ssr
-dist.zip
-dist.tar
-dist.war
-.nitro
-.output
-*-dist.zip
-*-dist.tar
-*-dist.war
 coverage
-*.local
-**/.vitepress/cache
-.cache
-.turbo
-.temp
-dev-dist
-.stylelintcache
-yarn.lock
-package-lock.json
-.VSCodeCounter
-**/backend-mock/data
-.omx
-.pnpm-store
-# local env files
-.env.local
-.env.*.local
-.eslintcache
 
+# Logs
 logs
 *.log
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
-vite.config.mts.*
-vite.config.mjs.*
-vite.config.js.*
-vite.config.ts.*
-pnpm-lock.yaml*
 
-# Editor directories and files
+# Env & local
+*.local
+.env.local
+.env.*.local
+
+# Caches
+.cache
+.temp
+.eslintcache
+.stylelintcache
+
+# Editor
 .idea
-# .vscode
+.history
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-.history
-.cursor
-.claude/
-.agent/
-.agents/
-.cline/
-.codebuddy/
-.codex/
-.commandcode/
-.continue/
-.crush/
-.factory/
-.gemini/
-.github/
-.goose/
-.junie/
-.kilocode/
-.kiro/
-.kode/
-.mcpjam/
-.mux/
-.neovate/
-.opencode/
-.openhands/
-.pi/
-.pochi/
-.qoder/
-.qwen/
-.roo/
-.trae/
-.windsurf/
-.zencoder/
-skills/
-.plan/
-skills-lock.json
-findings.md
-progress.md
-task_plan.md
+.DS_Store
 
-# CodeGraph local index (per-machine, do not commit)
+# IDE / agent local (本机工具，勿入库)
 .codegraph
+skills-lock.json
 
-# 本地验收截图/临时产物，勿入库
-artifacts/
+# Generated
+src/types/auto-imports.d.ts
 
-.ci-node-env
-
-# 本地凭证，切勿提交（含 key 文件）
-/key
-key
-key.*
+# Secrets
 *.pem
 id_rsa*
 *credentials*

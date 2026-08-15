@@ -17,7 +17,7 @@
 
 - **LowCode Config Diff**：低代码配置对比工具前端。
 - 单包 Vite 应用（非 monorepo），包管理器为 **pnpm**。
-- 技术栈：Vue 3、TypeScript、Vite、Element Plus、Vue Router、Pinia、Axios、UnoCSS。
+- 技术栈：Vue 3、TypeScript、Vite、Vue Router、Pinia、Axios、UnoCSS、VueUse。
 - 路径别名：`@` → `src/`（见 `vite.config.ts` / `tsconfig.app.json`）。
 
 ## 环境与命令
@@ -108,7 +108,7 @@
 - 使用具体业务语义命名，避免无上下文的 `data`、`list`、`info`。
 - 多参数复杂函数优先使用 Options 对象；完整规则见 `.docs/workflows/naming-convention.md`。
 - 应用内导入优先使用 `@/*`，避免过深的相对路径（如 `../../../`）。
-- `ref` / `computed` / Element Plus 组件等可由 unplugin 自动导入；不要为“看起来完整”而重复手写无关 import。
+- `ref` / `computed` / VueUse 等可由 unplugin 自动导入；不要为“看起来完整”而重复手写无关 import。
 
 ### API 与状态
 
@@ -118,7 +118,6 @@
 
 ### UI 与样式
 
-- UI 组件库为 Element Plus（按需自动注册）。
 - 样式优先 UnoCSS 原子类；全局样式放 `src/style.css`，避免无必要的深层耦合样式。
 
 ## Git 与验证
