@@ -1,0 +1,17 @@
+# Language overrides
+*.ts linguist-language=TypeScript
+*.tsx linguist-language=TypeScript
+*.d.ts linguist-language=TypeScript
+*.vue linguist-language=Vue
+
+# Vendored / generated (exclude from GitHub language stats)
+node_modules/ linguist-vendored=true
+dist/ linguist-generated=true
+build/ linguist-generated=true
+pnpm-lock.yaml linguist-generated=true
+src/types/auto-imports.d.ts linguist-generated=true
+src/types/components.d.ts linguist-generated=true
+
+# Project docs live under .docs/ (not docs/)
+.docs/ linguist-documentation=true
+*.md linguist-documentation=true
