@@ -8,6 +8,17 @@
 
 html {
   background-color: var(--canvas);
+  scroll-behavior: smooth;
+}
+
+[id^='section-'] {
+  scroll-margin-top: 1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 body {
@@ -79,4 +90,5 @@ pre {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  background: transparent;
 }

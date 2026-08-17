@@ -1,33 +1,36 @@
-# Vue 3 + TypeScript + Vite
+# LowCode Config Diff
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+纯前端的**低代码配置差异合并工具**。
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+把测试环境（TEST）与生产环境（PROD）的配置 JSON 放在一起对比，对每一处差异选择采用哪一侧，再生成合并后的结果并复制或下载。全程在浏览器中完成，不上传配置、不连库、不发布。
 
-## Scripts
+## 能做什么
 
-- `pnpm dev` — start dev server
-- `pnpm build` — type-check and build
-- `pnpm lint` / `pnpm lint:fix` — ESLint check / auto-fix
-- `pnpm format` — Prettier format
-- `pnpm test` / `pnpm test:run` — Vitest watch / single run
-- `pnpm test:coverage` — Vitest with coverage
+1. **导入或粘贴** TEST / PROD 两份 JSON（支持文件导入、格式化、清空）
+2. **查看差异**：默认只显示有差异的配置项；需要时可打开「显示无差异」对照上下文；复杂值可「展开对比」（行号、两侧并排或空态提示）
+3. **逐项选边**：每一处差异用单选在 TEST 与 PROD 之间选择；也可批量全部选 TEST / 全部选 PROD，或恢复默认
+4. **预览与导出**：按当前选择实时预览合并结果（含合并来源说明与高亮），可格式化或压缩后复制到剪贴板或下载为 `config.json`
 
-## Git commit convention
+## 默认怎么选
 
-Follow [Conventional Commits](https://www.conventionalcommits.org/). Subject may be Chinese.
+| 差异类型 | 含义             | 默认采用                     |
+| -------- | ---------------- | ---------------------------- |
+| 新增     | 仅 TEST 有       | TEST                         |
+| 删除     | 仅 PROD 有       | PROD（默认保留生产独有配置） |
+| 修改     | 两侧都有但值不同 | TEST                         |
 
-```text
-<type>(optional-scope): <subject>
+日常以测试配置推进；生产侧是否保留由你在树上自行决定。
 
-feat: 新增配置对比页面
-fix(diff): 修复深层对象比较遗漏
-docs: 更新 README
-```
+## 使用说明
 
-Common types: `feat` / `fix` / `docs` / `style` / `refactor` / `perf` / `test` / `chore` / `ci` / `build` / `revert`.
+1. 在左侧「输入」填入 TEST / PROD JSON，两侧均合法后点击「开始 Diff」
+2. 在「差异」树中为各项选择 TEST 或 PROD；需要时展开对比；右侧上方可查看选边统计并批量选边
+3. 右侧「结果」查看合并预览与「合并来源」，需要时「复制」或「下载 config.json」
 
-Hooks (husky):
+宽屏为双列布局（左输入/差异 · 右统计/结果）；窄屏纵向堆叠。界面支持亮色 / 暗色主题切换。刷新页面后已输入的配置不会保留，请自行妥善保存敏感内容。
 
-- `commit-msg` — commitlint validates the message
-- `pre-commit` — lint-staged runs Prettier + ESLint on staged files
+## 不在范围内
+
+- 后端保存、云端同步、登录权限
+- 对接低代码平台发布或 Git
+- 自动猜测数组元素身份（数组按整段比较）

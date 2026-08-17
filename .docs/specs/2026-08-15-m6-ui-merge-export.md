@@ -67,3 +67,10 @@
 ## 测试要点
 
 `summarizeMergeSides` 等纯函数单测；merge 正确性依赖 M3；UI 手工。
+
+---
+
+## 后续演进（非本切片范围，已落地）
+
+结果区由 `<pre>` 升级为只读 CM、压缩/格式化、合并来源列表与侧别高亮，见  
+[2026-08-17 Diff/Result JSON 规格](./2026-08-17-diff-result-json-viewer.md)。本 M6 文档保留切片当时的验收边界。

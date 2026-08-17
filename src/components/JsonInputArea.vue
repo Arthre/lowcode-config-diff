@@ -1,40 +1,26 @@
 <script setup lang="ts" name="JsonInputArea">
-import { watchDebounced } from '@vueuse/core'
 import type { Config } from '@/core/types'
-import {
-  evaluateJsonDocument,
-  formatJsonDocument,
-  type JsonDocumentState,
-} from '@/composables/useJsonDocument'
-import JsonEditor from '@/components/JsonEditor.vue'
+import { evaluateJsonDocument, type JsonDocumentState } from '@/composables/useJsonDocument'
 
 const emit = defineEmits<{
   'start-diff': [payload: { test: Config; prod: Config }]
 }>()
 
+type Side = 'test' | 'prod'
+
 const testText = ref('')
 const prodText = ref('')
+const testFileName = ref('')
+const prodFileName = ref('')
 const testState = shallowRef<JsonDocumentState>(evaluateJsonDocument(''))
 const prodState = shallowRef<JsonDocumentState>(evaluateJsonDocument(''))
 
 const testFileInput = ref<HTMLInputElement | null>(null)
 const prodFileInput = ref<HTMLInputElement | null>(null)
 
-watchDebounced(
-  testText,
-  (text) => {
-    testState.value = evaluateJsonDocument(text)
-  },
-  { debounce: 200, immediate: true },
-)
-
-watchDebounced(
-  prodText,
-  (text) => {
-    prodState.value = evaluateJsonDocument(text)
-  },
-  { debounce: 200, immediate: true },
-)
+/** 拖拽进入计数，避免子元素触发反复闪烁 */
+const testDragDepth = ref(0)
+const prodDragDepth = ref(0)
 
 const canStartDiff = computed(
   () => testState.value.status === 'valid' && prodState.value.status === 'valid',
@@ -61,67 +47,109 @@ function statusPillClass(state: JsonDocumentState): string {
   return 'ui-status-pill is-empty'
 }
 
-function clearSide(side: 'test' | 'prod') {
+function applyContent(side: Side, content: string, fileName: string) {
   if (side === 'test') {
-    testText.value = ''
-    testState.value = evaluateJsonDocument('')
+    testText.value = content
+    testFileName.value = fileName
+    testState.value = evaluateJsonDocument(content)
   } else {
-    prodText.value = ''
-    prodState.value = evaluateJsonDocument('')
+    prodText.value = content
+    prodFileName.value = fileName
+    prodState.value = evaluateJsonDocument(content)
   }
 }
 
-function formatSide(side: 'test' | 'prod') {
-  const current = side === 'test' ? testText.value : prodText.value
-  const result = formatJsonDocument(current)
-  if (result.ok) {
-    if (side === 'test') {
-      testText.value = result.text
-      testState.value = evaluateJsonDocument(result.text)
-    } else {
-      prodText.value = result.text
-      prodState.value = evaluateJsonDocument(result.text)
-    }
-    return
-  }
-  const evaluated = evaluateJsonDocument(current)
-  const next: JsonDocumentState = {
-    text: evaluated.text,
-    status: 'invalid',
-    errorMessage: result.message,
-    errorLine: evaluated.errorLine,
-    errorColumn: evaluated.errorColumn,
-  }
-  if (side === 'test') {
-    testState.value = next
-  } else {
-    prodState.value = next
-  }
+function clearSide(side: Side) {
+  applyContent(side, '', '')
 }
 
-function importSide(side: 'test' | 'prod') {
+function importSide(side: Side) {
   const input = side === 'test' ? testFileInput.value : prodFileInput.value
   input?.click()
 }
 
-function onFileSelected(side: 'test' | 'prod', event: Event) {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-  if (!file) return
-
+function readFile(side: Side, file: File) {
   const reader = new FileReader()
   reader.onload = () => {
     const content = typeof reader.result === 'string' ? reader.result : ''
-    if (side === 'test') {
-      testText.value = content
-      testState.value = evaluateJsonDocument(content)
-    } else {
-      prodText.value = content
-      prodState.value = evaluateJsonDocument(content)
+    applyContent(side, content, file.name)
+  }
+  reader.onerror = () => {
+    const next: JsonDocumentState = {
+      text: '',
+      status: 'invalid',
+      errorMessage: '读取文件失败，请重试',
     }
-    input.value = ''
+    if (side === 'test') {
+      testText.value = ''
+      testFileName.value = file.name
+      testState.value = next
+    } else {
+      prodText.value = ''
+      prodFileName.value = file.name
+      prodState.value = next
+    }
   }
   reader.readAsText(file)
+}
+
+function pickJsonFile(fileList: FileList | null | undefined): File | null {
+  if (!fileList || fileList.length === 0) return null
+  const files = Array.from(fileList)
+  const jsonLike = files.find(
+    (file) =>
+      file.type === 'application/json' ||
+      file.name.toLowerCase().endsWith('.json') ||
+      file.type === '' ||
+      file.type === 'text/plain',
+  )
+  return jsonLike ?? files[0] ?? null
+}
+
+function onFileSelected(side: Side, event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = pickJsonFile(input.files)
+  if (file) readFile(side, file)
+  input.value = ''
+}
+
+function onDragEnter(side: Side, event: DragEvent) {
+  event.preventDefault()
+  if (side === 'test') testDragDepth.value += 1
+  else prodDragDepth.value += 1
+}
+
+function onDragOver(event: DragEvent) {
+  event.preventDefault()
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy'
+}
+
+function onDragLeave(side: Side, event: DragEvent) {
+  event.preventDefault()
+  if (side === 'test') testDragDepth.value = Math.max(0, testDragDepth.value - 1)
+  else prodDragDepth.value = Math.max(0, prodDragDepth.value - 1)
+}
+
+function onDrop(side: Side, event: DragEvent) {
+  event.preventDefault()
+  if (side === 'test') testDragDepth.value = 0
+  else prodDragDepth.value = 0
+
+  const file = pickJsonFile(event.dataTransfer?.files)
+  if (!file) {
+    const hasContent = (side === 'test' ? testText.value : prodText.value).trim().length > 0
+    if (!hasContent) {
+      const next: JsonDocumentState = {
+        text: '',
+        status: 'invalid',
+        errorMessage: '请拖入 JSON 文件',
+      }
+      if (side === 'test') testState.value = next
+      else prodState.value = next
+    }
+    return
+  }
+  readFile(side, file)
 }
 
 function onStartDiff() {
@@ -137,72 +165,144 @@ function onStartDiff() {
 </script>
 
 <template>
-  <div class="flex flex-col gap-5 text-left w-full">
-    <div class="grid gap-5 md:grid-cols-2">
-      <section class="ui-editor-dock flex flex-col gap-2.5 min-w-0">
-        <div class="ui-toolbar">
-          <div class="ui-toolbar-actions">
-            <button type="button" class="ui-btn ui-btn-soft" @click="importSide('test')">
-              <span class="i-lucide-upload" aria-hidden="true" />
-              导入
-            </button>
-            <button type="button" class="ui-btn" @click="formatSide('test')">
-              <span class="i-lucide-align-left" aria-hidden="true" />
-              格式化
-            </button>
-            <button type="button" class="ui-btn ui-btn-danger" @click="clearSide('test')">
-              <span class="i-lucide-trash-2" aria-hidden="true" />
-              清空
-            </button>
-          </div>
-          <span class="ml-auto" :class="statusPillClass(testState)" role="status">
+  <div class="flex flex-col gap-4 text-left w-full">
+    <div class="grid gap-4 md:grid-cols-2">
+      <section
+        class="ui-dropzone"
+        :class="{
+          'is-dragging': testDragDepth > 0,
+          'is-valid': testState.status === 'valid',
+          'is-invalid': testState.status === 'invalid',
+        }"
+        @dragenter="onDragEnter('test', $event)"
+        @dragover="onDragOver"
+        @dragleave="onDragLeave('test', $event)"
+        @drop="onDrop('test', $event)"
+      >
+        <div class="ui-dropzone__head">
+          <span class="ui-label-test">TEST</span>
+          <span :class="statusPillClass(testState)" role="status">
             {{ statusLabel(testState) }}
           </span>
         </div>
-        <p v-if="statusDetail(testState)" class="text-xs ui-status-invalid m-0" role="status">
+
+        <button
+          type="button"
+          class="ui-dropzone__body"
+          aria-label="导入 TEST JSON 文件"
+          @click="importSide('test')"
+        >
+          <span class="i-lucide-upload-cloud ui-dropzone__icon" aria-hidden="true" />
+          <template v-if="testFileName">
+            <span class="ui-dropzone__file">{{ testFileName }}</span>
+            <span class="ui-dropzone__hint">点击更换，或拖入新的 JSON 文件</span>
+          </template>
+          <template v-else>
+            <span class="ui-dropzone__title">拖入 JSON 文件</span>
+            <span class="ui-dropzone__hint">或点击选择 `.json` 文件</span>
+          </template>
+        </button>
+
+        <p
+          v-if="statusDetail(testState)"
+          class="ui-dropzone__error ui-status-invalid"
+          role="status"
+        >
           {{ statusDetail(testState) }}
         </p>
+
+        <div class="ui-dropzone__actions">
+          <button type="button" class="ui-btn ui-btn-soft" @click="importSide('test')">
+            <span class="i-lucide-upload" aria-hidden="true" />
+            选择文件
+          </button>
+          <button
+            type="button"
+            class="ui-btn ui-btn-danger"
+            :disabled="testState.status === 'empty' && !testFileName"
+            @click="clearSide('test')"
+          >
+            <span class="i-lucide-trash-2" aria-hidden="true" />
+            清空
+          </button>
+        </div>
+
         <input
           ref="testFileInput"
           type="file"
-          accept=".json,application/json"
+          accept=".json,application/json,text/plain"
           class="hidden"
           @change="onFileSelected('test', $event)"
         />
-        <JsonEditor v-model="testText" label="TEST" side="test" />
       </section>
 
-      <section class="ui-editor-dock flex flex-col gap-2.5 min-w-0">
-        <div class="ui-toolbar">
-          <div class="ui-toolbar-actions">
-            <button type="button" class="ui-btn ui-btn-soft" @click="importSide('prod')">
-              <span class="i-lucide-upload" aria-hidden="true" />
-              导入
-            </button>
-            <button type="button" class="ui-btn" @click="formatSide('prod')">
-              <span class="i-lucide-align-left" aria-hidden="true" />
-              格式化
-            </button>
-            <button type="button" class="ui-btn ui-btn-danger" @click="clearSide('prod')">
-              <span class="i-lucide-trash-2" aria-hidden="true" />
-              清空
-            </button>
-          </div>
-          <span class="ml-auto" :class="statusPillClass(prodState)" role="status">
+      <section
+        class="ui-dropzone"
+        :class="{
+          'is-dragging': prodDragDepth > 0,
+          'is-valid': prodState.status === 'valid',
+          'is-invalid': prodState.status === 'invalid',
+        }"
+        @dragenter="onDragEnter('prod', $event)"
+        @dragover="onDragOver"
+        @dragleave="onDragLeave('prod', $event)"
+        @drop="onDrop('prod', $event)"
+      >
+        <div class="ui-dropzone__head">
+          <span class="ui-label-prod">PROD</span>
+          <span :class="statusPillClass(prodState)" role="status">
             {{ statusLabel(prodState) }}
           </span>
         </div>
-        <p v-if="statusDetail(prodState)" class="text-xs ui-status-invalid m-0" role="status">
+
+        <button
+          type="button"
+          class="ui-dropzone__body"
+          aria-label="导入 PROD JSON 文件"
+          @click="importSide('prod')"
+        >
+          <span class="i-lucide-upload-cloud ui-dropzone__icon" aria-hidden="true" />
+          <template v-if="prodFileName">
+            <span class="ui-dropzone__file">{{ prodFileName }}</span>
+            <span class="ui-dropzone__hint">点击更换，或拖入新的 JSON 文件</span>
+          </template>
+          <template v-else>
+            <span class="ui-dropzone__title">拖入 JSON 文件</span>
+            <span class="ui-dropzone__hint">或点击选择 `.json` 文件</span>
+          </template>
+        </button>
+
+        <p
+          v-if="statusDetail(prodState)"
+          class="ui-dropzone__error ui-status-invalid"
+          role="status"
+        >
           {{ statusDetail(prodState) }}
         </p>
+
+        <div class="ui-dropzone__actions">
+          <button type="button" class="ui-btn ui-btn-soft" @click="importSide('prod')">
+            <span class="i-lucide-upload" aria-hidden="true" />
+            选择文件
+          </button>
+          <button
+            type="button"
+            class="ui-btn ui-btn-danger"
+            :disabled="prodState.status === 'empty' && !prodFileName"
+            @click="clearSide('prod')"
+          >
+            <span class="i-lucide-trash-2" aria-hidden="true" />
+            清空
+          </button>
+        </div>
+
         <input
           ref="prodFileInput"
           type="file"
-          accept=".json,application/json"
+          accept=".json,application/json,text/plain"
           class="hidden"
           @change="onFileSelected('prod', $event)"
         />
-        <JsonEditor v-model="prodText" label="PROD" side="prod" />
       </section>
     </div>
 
@@ -216,7 +316,7 @@ function onStartDiff() {
         <span class="i-lucide-play" aria-hidden="true" />
         开始 Diff
       </button>
-      <p v-if="!canStartDiff" class="ui-cta-hint">两侧均合法后可开始</p>
+      <p v-if="!canStartDiff" class="ui-cta-hint">两侧均导入合法 JSON 后可开始</p>
     </div>
   </div>
 </template>

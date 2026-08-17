@@ -10,7 +10,7 @@
 | `src/core/equal.ts`  | `deepEqual`（忽略 object 键序，数组顺序敏感）                                                 |
 | `src/core/path.ts`   | `formatPath`（`[]` → `(root)`）                                                               |
 | `src/core/parse.ts`  | `parseConfig` / `isConfig`（根为 object 或 array）                                            |
-| `src/core/format.ts` | `formatConfig`（缩进 2）                                                                      |
+| `src/core/format.ts` | `formatConfig`（缩进 2）；`compressConfig`（无缩进）                                          |
 | `src/core/diff.ts`   | `diffConfig`（叶子 Diff + 默认 side；数组整段比较在本文件内，无独立 `array.ts`）              |
 | `src/core/merge.ts`  | `mergeConfig`（按叶 `side` 从 TEST/PROD 组装；内部 deepClone / path 设删，无独立 `clone.ts`） |
 
