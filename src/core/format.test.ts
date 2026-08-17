@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { deepEqual } from './equal'
-import { formatConfig } from './format'
+import { compressConfig, formatConfig } from './format'
 import { parseConfig } from './parse'
 
 describe('formatConfig', () => {
@@ -15,6 +15,18 @@ describe('formatConfig', () => {
   it('format 后再 parse 与原 Config 语义相等', () => {
     const config = { b: [null, { z: true }], a: 1 }
     const roundTrip = parseConfig(formatConfig(config))
+    expect(deepEqual(roundTrip, config)).toBe(true)
+  })
+})
+
+describe('compressConfig', () => {
+  it('object 无缩进单行 JSON', () => {
+    expect(compressConfig({ a: 1, b: [2] })).toBe('{"a":1,"b":[2]}')
+  })
+
+  it('compress 后再 parse 与原 Config 语义相等', () => {
+    const config = { b: [null, { z: true }], a: 1 }
+    const roundTrip = parseConfig(compressConfig(config))
     expect(deepEqual(roundTrip, config)).toBe(true)
   })
 })

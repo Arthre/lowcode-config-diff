@@ -11,9 +11,12 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    DiffLeafViewer: typeof import('./../components/DiffLeafViewer.vue')['default']
     DiffTree: typeof import('./../components/DiffTree.vue')['default']
+    JsonCodeViewer: typeof import('./../components/JsonCodeViewer.vue')['default']
     JsonEditor: typeof import('./../components/JsonEditor.vue')['default']
     JsonInputArea: typeof import('./../components/JsonInputArea.vue')['default']
+    JsonMergeViewer: typeof import('./../components/JsonMergeViewer.vue')['default']
     MergePreview: typeof import('./../components/MergePreview.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

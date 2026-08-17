@@ -33,6 +33,7 @@ export const useDiffSession = defineStore('diffSession', () => {
   }
 
   function setLeafSide(id: string, side: DiffSide) {
+    if (leaves.value.find((leaf) => leaf.id === id)?.side === side) return
     leaves.value = withSide(leaves.value, id, side)
   }
 
