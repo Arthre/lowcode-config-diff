@@ -4,6 +4,7 @@ node_modules
 
 # Build
 dist
+dist.*
 dist-ssr
 coverage
 
@@ -40,6 +41,7 @@ pnpm-debug.log*
 
 # Generated
 src/types/auto-imports.d.ts
+src/types/components.d.ts
 
 # Secrets
 *.pem
