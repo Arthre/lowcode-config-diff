@@ -48,6 +48,13 @@ function overlapsViewport(start: number, end: number, viewStart: number, viewEnd
   return start < viewEnd && end > viewStart
 }
 
+/** 上一条/下一条相对视口锚点的目标下标；到头绕回。 */
+export function chunkIndexAfterAnchor(anchorIndex: number, count: number, step: 1 | -1): number {
+  if (count <= 0) return -1
+  if (anchorIndex < 0) return step > 0 ? 0 : count - 1
+  return (anchorIndex + step + count) % count
+}
+
 /** 页眉差异锚点文案。current 为 1 起序号。 */
 export function chunkAnchorText(current: number, total: number): string {
   if (total <= 0) return '0 个差异块'

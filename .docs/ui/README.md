@@ -40,7 +40,7 @@
 | `src/components/DownloadMenu.vue`           | 下载菜单：原文 / 压缩                                                                                                             |
 | `src/composables/diffByLine.ts`             | MergeView `diffConfig.override`：按行对照，避免未改行并进同一块                                                                   |
 | `src/composables/chunkMinimapLayout.ts`     | 冲突带、视口与点击滚动换算                                                                                                        |
-| `src/composables/chunkNavAnchor.ts`         | 当前差异块下标与页眉锚点文案                                                                                                      |
+| `src/composables/chunkNavAnchor.ts`         | 视口锚点下标、上一条/下一条步进、页眉文案                                                                                         |
 | `src/composables/minimapSnapshot.ts`        | 按差异区间标记冲突行                                                                                                              |
 | `src/composables/placeTooltip.ts`           | 气泡方向与视口夹取                                                                                                                |
 | `src/composables/packRightDocDownload.ts`   | 右栏下载打包：合法则 `compressConfig`                                                                                             |
@@ -59,7 +59,7 @@
 
 打开即对照：满高可编辑 MergeView，导入收在栏头。无「开始 Diff」门禁。复制/下载只出右栏（`describeRightDocExport` 提示后仍导出）。刷新不恢复（store 无 persist）。
 
-- `TwoWayMergeEditor`：左参考、右结果；栏头点选/粘贴全文/清空，整栏拖入走 `importSide`（合法则格式化一次）；空栏居中提醒与虚线落区；编辑器内 Ctrl+V 仍是光标插入、不格式化；`→` 把参考块写入结果（`←` 暂时下线）；按行 diff；冲突点缩略轨（双侧都空时隐藏）；Ctrl+F 打开编辑器外查找条；上一条/下一条绕回；页眉当前块随视口滚动
+- `TwoWayMergeEditor`：左参考、右结果；栏头点选/粘贴全文/清空，整栏拖入走 `importSide`（合法则格式化一次）；空栏居中提醒与虚线落区；编辑器内 Ctrl+V 仍是光标插入、不格式化；`→` 把参考块写入结果（`←` 暂时下线）；按行 diff；冲突点缩略轨（双侧都空时隐藏）；Ctrl+F 打开编辑器外查找条；上一条/下一条从视口锚点步进并绕回；页眉当前块随视口滚动
 - 下载菜单：`config.json` 或压缩为 `config.min.json`（非法 JSON 仍导出原文）
 - Core `diffConfig` / `mergeConfig` 仍在源码，**UI 不调用**
 

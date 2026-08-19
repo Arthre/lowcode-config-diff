@@ -1,9 +1,5 @@
 <script setup lang="ts" name="TwoWayMergeEditor">
-import {
-  MergeView,
-  goToNextChunk as goToNextMergeChunk,
-  goToPreviousChunk,
-} from '@codemirror/merge'
+import { MergeView } from '@codemirror/merge'
 import {
   SearchQuery,
   findNext,
@@ -22,7 +18,7 @@ import {
   viewportBandOf,
   type ChunkBand,
 } from '@/composables/chunkMinimapLayout'
-import { activeChunkIndexInViewport } from '@/composables/chunkNavAnchor'
+import { activeChunkIndexInViewport, chunkIndexAfterAnchor } from '@/composables/chunkNavAnchor'
 import { changedLineFlags } from '@/composables/minimapSnapshot'
 import { createEditableJsonExtensions, mergeHighlightTheme } from '@/composables/codemirrorTheme'
 import { mergeViewDiffConfig } from '@/composables/diffByLine'
@@ -192,15 +188,37 @@ function closeSearch() {
 }
 
 function goToNextChunk() {
-  if (!mergeView) return
-  goToNextMergeChunk(mergeView.b)
-  requestAnimationFrame(() => emitChunksIfChanged())
+  goToChunkFromAnchor(1)
 }
 
 function goToPrevChunk() {
+  goToChunkFromAnchor(-1)
+}
+
+/** 以上一条/下一条相对当前视口锚点跳转，滚到目标块顶并选中。 */
+function goToChunkFromAnchor(step: 1 | -1) {
   if (!mergeView) return
-  goToPreviousChunk(mergeView.b)
-  requestAnimationFrame(() => emitChunksIfChanged())
+  const { chunks } = mergeView
+  const count = chunks.length
+  if (count === 0) return
+  const scroller = mergeView.dom
+  const bands = chunkViewportBands()
+  const anchor = activeChunkIndexInViewport(
+    bands,
+    scroller.scrollTop,
+    scroller.scrollTop + scroller.clientHeight,
+  )
+  const target = chunkIndexAfterAnchor(anchor, count, step)
+  const chunk = chunks[target]
+  const band = bands[target]
+  if (!chunk || !band) return
+  const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight)
+  scroller.scrollTop = Math.min(band.start, maxTop)
+  const from = Math.min(chunk.fromB, mergeView.b.state.doc.length)
+  mergeView.b.dispatch({
+    selection: { anchor: from },
+    userEvent: 'select.byChunk',
+  })
 }
 
 function openFilePicker(side: MergeSide) {

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { activeChunkIndexInViewport, activeChunkIndexOf, chunkAnchorText } from './chunkNavAnchor'
+import {
+  activeChunkIndexInViewport,
+  activeChunkIndexOf,
+  chunkAnchorText,
+  chunkIndexAfterAnchor,
+} from './chunkNavAnchor'
 
 const chunks = [
   { fromA: 0, toA: 10, fromB: 0, toB: 8 },
@@ -68,6 +73,41 @@ describe('activeChunkIndexInViewport', () => {
 
   it('零高度标记落在视口顶边时仍命中', () => {
     expect(activeChunkIndexInViewport([{ start: 200, end: 200 }], 200, 300)).toBe(0)
+  })
+})
+
+describe('chunkIndexAfterAnchor', () => {
+  it('无差异块时为 -1', () => {
+    expect(chunkIndexAfterAnchor(0, 0, 1)).toBe(-1)
+    expect(chunkIndexAfterAnchor(-1, 0, -1)).toBe(-1)
+  })
+
+  it('下一条从当前锚点前进一块', () => {
+    expect(chunkIndexAfterAnchor(0, 3, 1)).toBe(1)
+    expect(chunkIndexAfterAnchor(1, 3, 1)).toBe(2)
+  })
+
+  it('下一条在末块绕回第一块', () => {
+    expect(chunkIndexAfterAnchor(2, 3, 1)).toBe(0)
+  })
+
+  it('上一条从当前锚点后退一块', () => {
+    expect(chunkIndexAfterAnchor(2, 3, -1)).toBe(1)
+    expect(chunkIndexAfterAnchor(1, 3, -1)).toBe(0)
+  })
+
+  it('上一条在首块绕回末块', () => {
+    expect(chunkIndexAfterAnchor(0, 3, -1)).toBe(2)
+  })
+
+  it('尚未锚到具体块时下一条取第一块、上一条取末块', () => {
+    expect(chunkIndexAfterAnchor(-1, 4, 1)).toBe(0)
+    expect(chunkIndexAfterAnchor(-1, 4, -1)).toBe(3)
+  })
+
+  it('仅一块时下一步仍落在该块', () => {
+    expect(chunkIndexAfterAnchor(0, 1, 1)).toBe(0)
+    expect(chunkIndexAfterAnchor(0, 1, -1)).toBe(0)
   })
 })
 
