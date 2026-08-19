@@ -2,7 +2,7 @@
 
 纯 TypeScript Diff/Merge 基础能力，**禁止**依赖 Vue / Pinia / DOM。
 
-## 当前状态（M1 / M2 / M3 已完成）
+## 当前状态
 
 | 文件                 | 职责                                                                                          |
 | -------------------- | --------------------------------------------------------------------------------------------- |
@@ -13,6 +13,11 @@
 | `src/core/format.ts` | `formatConfig`（缩进 2）；`compressConfig`（无缩进）                                          |
 | `src/core/diff.ts`   | `diffConfig`（叶子 Diff + 默认 side；数组整段比较在本文件内，无独立 `array.ts`）              |
 | `src/core/merge.ts`  | `mergeConfig`（按叶 `side` 从 TEST/PROD 组装；内部 deepClone / path 设删，无独立 `clone.ts`） |
+
+### 与现行 UI 的关系
+
+- **仍被 UI 间接使用：** `parseConfig` / `formatConfig`（经 `useJsonDocument` → 导入格式化与右栏导出提示）
+- **备用、UI 不调用：** `diffConfig` / `mergeConfig` 及叶级选边模型；主路径文本合并由 CodeMirror `MergeView` 完成。引擎与单测保留，不删
 
 ### Diff 类型（`types.ts`）
 
@@ -32,9 +37,7 @@
 - [`.docs/plans/archive/2026-08-15-m2-core-diff.md`](../plans/archive/2026-08-15-m2-core-diff.md)
 - [`.docs/plans/archive/2026-08-15-m3-core-merge.md`](../plans/archive/2026-08-15-m3-core-merge.md)
 
-## 尚未实现（Core）
-
-无。UI 主路径（含 M6 预览导出）见 [`.docs/ui/README.md`](../ui/README.md)（V0.1 UI 已完成）。
+现行 UI 主路径见 [`.docs/ui/README.md`](../ui/README.md)。
 
 ## 测试命名
 

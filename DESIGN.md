@@ -129,19 +129,19 @@ components:
 
 ## Overview
 
-Operate 模式的配置 Diff 工作台：冷灰画布托起白表面面板，青绿只用于主行动与焦点。语义色承载 TEST/PROD 与 Diff 类型；扫读优先于装饰。宽屏为输入/Diff | 统计+结果双列；访客成功标准是完成「输入 → 选边 → 导出」，不是停留欣赏。
+Operate 模式的可编辑双栏文本合并工作台：冷灰画布托起表面与导入坞，青绿用于导入、复制/下载与焦点。语义色区分「参考」与「结果」侧标签；扫读优先于装饰。访客成功标准是完成「导入 → 块级 `→` / 编辑 → 导出右栏」，不是停留欣赏。
 
 ## Colors
 
-| 角色                  | 用途                                |
-| --------------------- | ----------------------------------- |
-| canvas                | 页面底                              |
-| surface / raised      | 输入、Diff、Result 面板             |
-| accent                | 「开始 Diff」、下载等主操作、焦点环 |
-| side-test / side-prod | 双栏标签与选边                      |
-| diff-*                | 叶子类型徽章                        |
-| success / danger      | Valid / Invalid、复制反馈           |
-| code-bg               | 编辑器外框与 JSON 预览底            |
+| 角色                  | 用途                                       |
+| --------------------- | ------------------------------------------ |
+| canvas                | 页面底                                     |
+| surface / raised      | 导入坞、面板表面                           |
+| accent                | 下载等主操作、导入强调、焦点环、`→` 控件色 |
+| side-test / side-prod | 「参考」/「结果」侧标签色点                |
+| diff-*                | 设计系统保留语义色（Merge 高亮走 CM 主题） |
+| success / danger      | 导入/导出状态提示                          |
+| code-bg               | Merge 编辑器外框与代码底                   |
 
 暗色主题单独设计 elevation（更深 canvas、略亮 surface），禁止把浅色紫系机械反转。Token 挂在 `html.dark`（非仅 `prefers-color-scheme`），以便手动切换。
 
@@ -160,20 +160,16 @@ Operate 模式的配置 Diff 工作台：冷灰画布托起白表面面板，青
 
 ## Layout
 
-- **宽屏双列工作台（≥1100px，且已开始 Diff）**：输入+Diff | 选边统计+结果；可拖拽分隔条调整占比（默认约 70/30，`localStorage` 键 `lcd-workspace-main-pct`）；拖拽仅改 CSS 变量、松手再持久化；右栏 sticky 且高度铺满视口；**页面自然滚动**；差异卡片高度随内容；差异叶头（`.ui-diff-leaf-head`）滚动时吸顶
-- **未开始 Diff**：单列，隐藏右栏与分隔条
-- **左栏**：输入 → 差异（主决策区；差异标题含显示无差异与批量选边）
-- **右栏**：选边统计 → 合并来源 → 结果预览与导出（整栏 sticky 满高、结果区吃剩余高度并由编辑器内滚动）；结果标题旁图标操作（格式化/压缩/复制/下载，悬停 `title`）；摘要为副标题；无页面导航跳转
-- **窄屏**：纵向堆叠 左栏 → 右栏（无分隔条；仍仅在 Diff 开始后显示右栏）
-- **页眉 = 全宽半透明层**（透 canvas，不用白色 surface；轻模糊分层），不吸顶、不高卡片
-- 差异是核心决策区：标题字号高于输入 / 结果，图标带 accent 底，数量使用独立计数块
-- 组内紧、区间松；面板圆角 `lg`，内边距 `lg`
-- 桌面双栏拖拽导入；小屏输入区纵向堆叠
-- 不做 01/02/03 步骤编号、不做指标仪表盘
+- **满高单列工作台**：页眉 → 双栏 Merge（栏头导入）；`.ui-workspace` 纵向 flex，Merge `flex: 1; min-height: 0` 吃剩余高度；视口高 `.ui-page` `100svh` + `overflow: hidden`
+- **Merge 双栏**：左参考、右结果，始终左右并排；中间 revert 槽放置 `→`；宿主可 `overflow-x: auto`；右侧双栏代码缩略快照（字符色块 + 视口框）；查找条在栏头与编辑器之间，不覆盖代码
+- **窄屏**：仍左右并排并可横滑；**禁止** `.cm-mergeViewEditors { flex-direction: column }`（纵向堆叠会对错 revert 行）
+- **页眉 = 全宽半透明层**（透 canvas，不用白色 surface；轻模糊分层），不吸顶、不高卡片；工具：差异块计数、上一条/下一条、查找、复制、下载菜单（原文 / 压缩）、`ThemeToggle`、隐私提示
+- **无** Diff 树、选边分栏、拖拽分隔条、`lcd-workspace-main-pct` 占比持久化
+- 组内紧、区间松；导入坞圆角 `md`；不做 01/02/03 步骤编号、不做指标仪表盘
 
 ## Elevation & Depth
 
-- 阴影梯级：`sm`（编辑器坞、品牌标、弱表面）、`md`（默认）、`lg`（主面板 raised）
+- 阴影梯级：`sm`（导入坞、品牌标、弱表面）、`md`（拖拽强调）、`lg`（raised 面板）
 - 面板：淡边框 + 软偏移阴影（非零模糊）；阴影加强时边框略淡，避免发脏
 - 背景：冷灰底 + 顶部极淡青绿径向光 + 细点阵纹理（固定附着，非装饰 glow）
 - 禁止彩色光晕、厚色左边框装饰条
@@ -182,7 +178,7 @@ Operate 模式的配置 Diff 工作台：冷灰画布托起白表面面板，青
 
 - 集合：Iconify **Lucide**（UnoCSS `presetIcons`，类名 `i-lucide-*`）
 - 尺寸约 16–18px；按钮内与文字 `gap` 对齐；装饰图标 `aria-hidden`
-- 品牌：`git-compare`；流程/分区：`file-json` / `list-tree` / `file-output`；工具：`upload` / `align-left` / `trash-2` / `play` / `copy` / `download`；主题：`sun` / `moon`
+- 品牌：`git-compare`；导入/会话：`upload` / `clipboard` / `trash-2`；导出：`copy` / `download`；查找：`search`；主题：`sun` / `moon`
 
 ## Shapes
 
@@ -191,14 +187,13 @@ Operate 模式的配置 Diff 工作台：冷灰画布托起白表面面板，青
 
 ## Components
 
-- **Primary button：** 实心 accent；禁用时用 `accent-muted` 底而非死灰
-- **Soft button：** 浅绿底 accent 字（导入等次主操作）
-- **Ghost button：** 透明底 + 细边框（格式化等）
-- **Danger ghost：** 危险色字与淡边框（清空）
-- **Panel：** raised 白卡用于当前主工作区；未激活 Diff/结果用虚线弱表面 `panel-muted`
-- **Status pill：** Valid/Invalid/空，带色点，不与工具按钮同形
-- **Diff badges：** added 绿底、removed 实心红、modified 琥珀底
-- **Side radios：** 用色点/强调字色区分 TEST vs PROD
+- **Primary button：** 实心 accent（页眉下载等）；禁用时用 `accent-muted` 底而非死灰
+- **Soft button：** 浅绿底 accent 字（选择文件、粘贴为该侧全文）
+- **Ghost / 默认按钮：** 透明或弱边框（块导航等）
+- **Danger：** 危险色字与淡边框（清空）
+- **Dropzone：** 导入坞；拖拽中 accent 描边；错误时 danger 描边 + 中文提示
+- **Side labels：** `.ui-label-test` / `.ui-label-prod` 色点标签（参考 / 结果），无选边 radio
+- **Merge revert：** 中间 `→`，`aria-label`「将此差异写入右侧」
 
 ## Do's and Don'ts
 
@@ -207,6 +202,7 @@ Operate 模式的配置 Diff 工作台：冷灰画布托起白表面面板，青
 - 用语义色表达状态，并辅以文字标签
 - 主操作唯一高饱和色（青绿）
 - mono 仅用于 path 与 JSON
+- 窄屏保持并排 Merge，靠横滑而不是改 column
 
 **Don't**
 
@@ -214,3 +210,4 @@ Operate 模式的配置 Diff 工作台：冷灰画布托起白表面面板，青
 - gradient text、emoji 图标、大面积装饰玻璃
 - 厚 `border-left` 色条当卡片装饰
 - 满屏等宽扮「技术感」
+- 把 Merge 双栏改成上下堆叠

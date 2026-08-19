@@ -8,29 +8,29 @@ web
 
 ## Stack
 
-Vue 3 + TypeScript + Vite + Pinia + Vue Router + UnoCSS + VueUse + Vitest（仓库既有；包管理器 pnpm）
+Vue 3 + TypeScript + Vite + Pinia + Vue Router + UnoCSS + VueUse + Vitest + CodeMirror 6（`@codemirror/merge`）；包管理器 pnpm
 
 ## Users
 
-低代码 / 配置工程师与测试同学：需要对照 **TEST** 与 **PROD** 两份配置 JSON，决定每一处差异采用哪一侧，再导出合并结果。场景多为上线前对齐、生产紧急改动回灌测试配置。
+低代码 / 配置工程师与测试同学：需要对照 **参考** 与 **结果** 两份配置文本，按差异块把左侧写入右侧，再复制或下载右栏。场景多为上线前对齐、生产紧急改动回灌测试配置。
 
 ## Product Purpose
 
-纯前端的 **配置差异合并工具**：导入 TEST / PROD JSON → 计算叶子差异 → 逐叶选择 TEST | PROD → 实时合并预览 → 复制或下载 `config.json`。成功标准是主路径可走通、Core Diff/Merge 单测可证、用户 JSON 默认不出域。
+纯前端的 **可编辑双栏文本合并工作台**：导入两侧 JSON 文本 → 满高 MergeView 对照与编辑 → 中间 `→` 将左块写入右栏 → 复制或下载右栏（默认 `config.json`）。成功标准是主路径可走通、用户 JSON 默认不出域。
 
 ## Positioning
 
-不是通用文本 Diff，也不是连库发布工具；专门面向低代码配置 JSON，用「每叶选边组装」而非「是否应用补丁 / 单一 PROD 基线」。
+面向低代码配置 JSON 的**文本差异合并**（CodeMirror 差异块），不是结构按叶选边组装，也不是连库发布工具。V0.1 的「每叶 TEST | PROD」已退出主路径。
 
 ## Operating Context
 
-单页工作台：未开始 Diff 时单列（仅输入/差异空态）；开始后宽屏双列（可拖拽调占比并本地持久化；右栏 sticky 满视口高）。左栏输入 → Diff 树；右栏选边统计 → 合并来源 → Result。无侧栏导航跳转。离线可用；刷新不恢复敏感内容。文档真相源在 `.docs/`；Core 在 `src/core/`，禁止依赖 Vue。
+单页工作台：页眉（品牌、隐私提示、差异块导航、复制/下载、ThemeToggle）→ 满高双栏 Merge（栏头含文件名与导入图标）。打开即对照，**无**「开始 Diff」门禁。左右始终并排；窄屏宿主可横滑，**禁止**把 Merge 改成上下堆叠。无侧栏导航跳转。离线可用；刷新不恢复会话内容。文档真相源在 `.docs/`；Core 在 `src/core/`，禁止依赖 Vue。
 
 ## Capabilities and Constraints
 
-- 已具备：parse / `formatConfig` / `compressConfig`、`diffConfig`、`mergeConfig`、双栏拖拽/点选 JSON 导入、Diff 树（默认仅差异、radio 选边、展开对比 + Merge/两列空态）、合并来源列表（右栏统计下方，点击定位结果高亮）、Merge 预览（格式化侧别高亮、压缩切换、复制/下载）
-- 约束：无后端、无云端保存、无 Git/发布；数组 V0.1 整段比较；merge 只吃差异叶子
-- 术语：`added`（仅 TEST 有）、`removed`（仅 PROD 有）、`modified`、`side: 'test' | 'prod'`
+- 已具备：Merge 栏头点选/粘贴全文/清空，编辑器上拖入文件（合法 object/array 根则格式化一次）、可编辑 MergeView（左参考、右结果）、按行差异块、代码缩略快照、栏头外查找条、块级 `→`、上一条/下一条（绕回）、复制/下载/压缩下载右栏（非法 JSON 提示后仍导出）、亮/暗主题切换
+- Core 仍含 `parseConfig` / `formatConfig` / `compressConfig`、`diffConfig`、`mergeConfig`；**现行 UI 不调用** `diffConfig` / `mergeConfig`（仅导入校验/格式化与引擎单测仍用 Core）
+- 约束：无后端、无云端保存、无 Git/发布；文本 diff，不忽略键序/空白；本包无体积上限
 - （推断）首要语言为简体中文 UI；未单独确认无障碍标准
 
 ## Brand Commitments
@@ -40,14 +40,15 @@ Vue 3 + TypeScript + Vite + Pinia + Vue Router + UnoCSS + VueUse + Vitest（仓�
 
 ## Evidence on Hand
 
-- 规格与归档计划：`.docs/specs/`、`.docs/plans/archive/`（M1–M6；2026-08-17 Diff/Result JSON 与选边/高亮增量）
-- 实现：`src/core/*`、`src/components/*`、`src/views/HomeView.vue`
+- 现行规格与计划：`.docs/specs/2026-08-18-*`、`.docs/plans/2026-08-18-*`（M1–M4；计划待确认归档，链接仍在 `plans/`）
+- 历史：`.docs/specs/2026-08-15-v0.1-config-diff-merge.md`（主路径已被取代，正文保留）与 `.docs/plans/archive/`
+- 实现：`src/views/HomeView.vue`、`TwoWayMergeEditor` / `mergeWorkspace`、`src/core/*`（备用引擎）
 - 不得虚构客户评价、基准数据或部署案例
 
 ## Product Principles
 
-1. 默认以 TEST 推进；仅 PROD 独有 key 默认保留 PROD。
-2. Diff Engine 与 UI 解耦；正确性优先。
+1. 左栏为参考、右栏为结果；复制/下载只认右栏。
+2. Diff Engine（Core）与 UI 解耦；文本合并正确性优先于结构猜测。
 3. 用户配置默认只在客户端处理。
 4. 歧义时保持简单并回写规格。
 5. 界面服务任务完成（Operate），品牌落在精确细节而非装饰。
