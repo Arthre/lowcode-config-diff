@@ -1,10 +1,12 @@
-/* 应用壳：页眉 chrome、双列工作区、主题切换按钮 */
+/* 应用壳：页眉 chrome、满高单列工作区、主题切换按钮 */
 
 .ui-page {
   display: flex;
   flex-direction: column;
   width: 100%;
   min-height: 100svh;
+  height: 100svh;
+  overflow: hidden;
   text-align: left;
   box-sizing: border-box;
   background: transparent;
@@ -62,13 +64,6 @@ html.dark .ui-page-header {
   gap: 0.4rem 0.85rem;
 }
 
-.ui-page-header .ui-flow {
-  padding: 0.2rem 0.35rem;
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--code-bg) 70%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
-}
-
 .ui-page-header .ui-privacy {
   display: inline-flex;
   align-items: center;
@@ -92,296 +87,18 @@ html.dark .ui-page-header {
   height: 1.05rem;
 }
 
-/*
- * 工作壳
- * 未开始 Diff：单列；开始后宽屏双列；差异卡片高度随内容
- */
+/* 工作壳：吃剩余高度的 Merge（满高单列 flex） */
 .ui-workspace {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 0;
   width: 100%;
   margin-inline: auto;
-  flex: 1 0 auto;
   padding: 1rem clamp(2rem, 6vw, 4.5rem) 1.5rem;
   box-sizing: border-box;
   background: transparent;
-}
-
-.ui-workspace-main,
-.ui-workspace-side {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: 1rem;
-  background: transparent;
-}
-
-.ui-workspace-diff {
-  min-width: 0;
-  height: auto;
-  overflow: visible;
-}
-
-.ui-workspace-result {
-  min-width: 0;
-}
-
-.ui-workspace-splitter {
-  display: none;
-}
-
-.ui-input-collapsed {
-  padding-block: 0.85rem;
-}
-
-/* 结果等填满型面板：标题 + 可滚动正文（差异区不用） */
-.ui-panel--fill {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  min-height: 0;
-}
-
-.ui-workspace-diff.ui-panel--fill {
-  overflow: visible;
-}
-
-.ui-panel-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-/* 结果区：在右栏内撑满剩余高度；卡片裁剪编辑器 */
-.ui-workspace-result.ui-panel--fill {
-  flex: 1 1 auto;
-  overflow: hidden;
-  min-height: 0;
-  min-width: 0;
-}
-
-.ui-workspace-result .ui-panel-body {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  overflow: hidden;
-  min-height: 0;
-  min-width: 0;
-}
-
-/* 右侧：选边统计（结果上方，与左栏输入无关） */
-.ui-side-summary {
-  display: grid;
-  gap: 0.45rem;
-  width: 100%;
-  padding: 0.55rem 0.65rem;
-  box-sizing: border-box;
-  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
-  align-self: stretch;
-}
-
-.ui-side-summary__label {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.625rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-}
-
-.ui-side-summary__row {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: stretch;
-  gap: 0.35rem 0.5rem;
-  min-width: 0;
-}
-
-.ui-side-summary__counts {
-  display: flex;
-  flex: 1 1 11rem;
-  flex-direction: row;
-  gap: 0.3rem;
-  min-width: 0;
-}
-
-.ui-side-summary__stat {
-  display: flex;
-  flex: 1 1 0;
-  flex-direction: row;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.35rem;
-  min-width: 0;
-  padding: 0.3rem 0.45rem;
-  border-radius: var(--radius-sm);
-  background: var(--code-bg);
-  color: var(--text);
-  font-size: 0.6875rem;
-  font-weight: 500;
-}
-
-.ui-side-summary__stat strong {
-  color: var(--text-h);
-  font-size: 0.875rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.2;
-}
-
-.ui-side-summary__stat--test {
-  color: var(--side-test);
-}
-
-.ui-side-summary__stat--test strong {
-  color: var(--side-test);
-}
-
-.ui-side-summary__stat--prod {
-  color: var(--side-prod);
-}
-
-.ui-side-summary__stat--prod strong {
-  color: var(--side-prod);
-}
-
-.ui-side-summary__actions {
-  display: flex;
-  flex: 1 1 12rem;
-  flex-direction: row;
-  gap: 0.25rem;
-  min-width: 0;
-}
-
-.ui-side-summary__side,
-.ui-side-summary__reset {
-  display: flex;
-  flex: 1 1 0;
-  min-height: 1.75rem;
-  min-width: 0;
-  align-items: center;
-  justify-content: center;
-  padding: 0.25rem 0.35rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.ui-side-summary__side--test {
-  color: var(--side-test);
-}
-
-.ui-side-summary__side--prod {
-  color: var(--side-prod);
-}
-
-.ui-side-summary__side:disabled,
-.ui-side-summary__reset:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.ui-side-summary__side:hover:not(:disabled),
-.ui-side-summary__reset:hover:not(:disabled) {
-  background: var(--code-bg);
-}
-
-/* 右栏：合并来源（选边统计下方、结果上方；可点击定位结果） */
-.ui-merge-sources {
-  display: grid;
-  gap: 0.35rem;
-  min-width: 0;
-  padding: 0.55rem 0.7rem;
-  box-sizing: border-box;
-  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
-}
-
-.ui-merge-sources__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.35rem 0.75rem;
-}
-
-.ui-merge-sources__hint {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.6875rem;
-  line-height: 1.35;
-}
-
-.ui-merge-sources__list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  max-height: 10rem;
-  overflow: auto;
-}
-
-.ui-merge-sources__item {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem 0.45rem;
-  max-width: 100%;
-  padding: 0.3rem 0.5rem;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  background: var(--code-bg);
-  color: inherit;
-  font: inherit;
-  font-size: 0.6875rem;
-  line-height: 1.35;
-  text-align: left;
-  cursor: pointer;
-  transition:
-    border-color 0.15s ease,
-    background-color 0.15s ease;
-}
-
-.ui-merge-sources__item:hover {
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
-  background: color-mix(in srgb, var(--accent-muted) 55%, var(--code-bg));
-}
-
-.ui-merge-sources__item:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-
-.ui-merge-sources__path {
-  min-width: 0;
-  color: var(--text-h);
-  font-family: var(--font-mono, ui-monospace, monospace);
-  overflow-wrap: anywhere;
-}
-
-.ui-merge-sources__effect {
-  color: var(--muted);
-}
-
-.ui-diff-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 0.65rem;
-  max-width: 100%;
 }
 
 .ui-result-toolbar {
@@ -390,86 +107,6 @@ html.dark .ui-page-header {
   align-items: center;
   gap: 0.4rem 0.5rem;
   flex-shrink: 0;
-}
-
-/* 宽屏且已开始 Diff：可拖拽调占比；右栏粘性满屏高；页面自然滚动 */
-@media (min-width: 1100px) {
-  .ui-workspace.is-split {
-    --workspace-main-pct: 70%;
-    grid-template-columns:
-      minmax(18rem, var(--workspace-main-pct))
-      0.65rem
-      minmax(16rem, 1fr);
-    gap: 0.75rem 0;
-    align-items: start;
-  }
-
-  .ui-workspace.is-split .ui-workspace-splitter {
-    display: flex;
-    align-items: stretch;
-    justify-content: center;
-    align-self: stretch;
-    width: 0.65rem;
-    margin-block: 0.15rem;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    cursor: col-resize;
-    touch-action: none;
-    user-select: none;
-  }
-
-  .ui-workspace-splitter__grip {
-    display: block;
-    width: 0.2rem;
-    margin-block: 0.35rem;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--border) 88%, var(--muted));
-    transition: background-color 0.15s ease;
-  }
-
-  .ui-workspace-splitter:hover .ui-workspace-splitter__grip,
-  .ui-workspace-splitter:focus-visible .ui-workspace-splitter__grip,
-  .ui-workspace.is-resizing .ui-workspace-splitter__grip {
-    background: color-mix(in srgb, var(--accent) 70%, var(--border));
-  }
-
-  .ui-workspace-splitter:focus-visible {
-    outline: 2px solid var(--focus-ring);
-    outline-offset: 2px;
-  }
-
-  .ui-workspace.is-split .ui-workspace-side {
-    position: sticky;
-    top: 0.75rem;
-    align-self: start;
-    /* 视口内满高：统计/来源固定，结果区吃掉剩余高度 */
-    height: calc(100svh - 1.5rem);
-    max-height: calc(100svh - 1.5rem);
-    overflow: hidden;
-  }
-
-  .ui-side-summary,
-  .ui-merge-sources {
-    flex-shrink: 0;
-  }
-
-  .ui-workspace-result {
-    min-width: 0;
-    max-width: 100%;
-  }
-}
-
-/* 拖拽分栏时禁用选取，减轻重绘干扰 */
-html.is-workspace-resizing,
-html.is-workspace-resizing * {
-  cursor: col-resize !important;
-  user-select: none !important;
-}
-
-html.is-workspace-resizing .ui-workspace-main,
-html.is-workspace-resizing .ui-workspace-side {
-  pointer-events: none;
 }
 
 .ui-theme-toggle {
