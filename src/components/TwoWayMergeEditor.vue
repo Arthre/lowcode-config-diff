@@ -22,22 +22,22 @@ import {
   viewportBandOf,
   type ChunkBand,
 } from '@/composables/chunkMinimapLayout'
+import { activeChunkIndexInViewport } from '@/composables/chunkNavAnchor'
 import { changedLineFlags } from '@/composables/minimapSnapshot'
 import { createEditableJsonExtensions, mergeHighlightTheme } from '@/composables/codemirrorTheme'
 import { mergeViewDiffConfig } from '@/composables/diffByLine'
+import { sideFromClientX } from '@/composables/sideFromClientX'
 import { useMergeSideImport } from '@/composables/useMergeSideImport'
 import { useMergeWorkspace, type MergeSide } from '@/stores/mergeWorkspace'
 
 const workspace = useMergeWorkspace()
-const emit = defineEmits<{ chunks: [count: number] }>()
+const emit = defineEmits<{ chunks: [count: number, current: number] }>()
 const {
   leftDragDepth,
   rightDragDepth,
   leftError,
   rightError,
   onFileSelected,
-  enterDrag,
-  leaveDrag,
   dropFiles,
   pasteAsFullSide,
   clearSide,
@@ -59,30 +59,57 @@ const leftChanged = ref<boolean[]>([])
 const rightChanged = ref<boolean[]>([])
 const viewportBand = ref<ChunkBand>({ start: 0, end: 1 })
 let mergeView: MergeView | null = null
-/** 上次已通知的差异块数量；-1 保证挂载后必 emit 一次 */
+/** 上次已通知的差异块数量与当前下标；-1 保证挂载后必 emit 一次 */
 let lastChunkCount = -1
+let lastChunkCurrent = -1
 
-const revertHint = '将此差异写入右侧'
+const leftEmpty = computed(() => workspace.leftDoc.length === 0)
+const rightEmpty = computed(() => workspace.rightDoc.length === 0)
+const showMinimap = computed(() => !leftEmpty.value || !rightEmpty.value)
 
-/** 由 MergeView 父节点绑 click，这里只负责按钮外观 */
+const revertToRightHint = '将此差异写入结果'
+
+/** 只提供 a-to-b；← 暂时下线，控件必须是 button 以便库设置 top */
 function renderRevertControl() {
-  const button = document.createElement('button')
-  button.type = 'button'
-  button.textContent = '→'
-  button.title = revertHint
-  button.setAttribute('aria-label', revertHint)
-  return button
+  const toRight = document.createElement('button')
+  toRight.type = 'button'
+  toRight.textContent = '→'
+  toRight.setAttribute('aria-label', revertToRightHint)
+  toRight.title = revertToRightHint
+  return toRight
 }
 
-/** 仅当 chunks.length 变化时通知父组件 */
+/** 块数量或视口锚点变化时通知父组件 */
 function emitChunksIfChanged() {
   if (!mergeView) return
   const count = mergeView.chunks.length
-  if (count !== lastChunkCount) {
+  const scroller = mergeView.dom
+  const index = activeChunkIndexInViewport(
+    chunkViewportBands(),
+    scroller.scrollTop,
+    scroller.scrollTop + scroller.clientHeight,
+  )
+  const current = count === 0 || index < 0 ? 0 : index + 1
+  const countChanged = count !== lastChunkCount
+  if (countChanged || current !== lastChunkCurrent) {
     lastChunkCount = count
-    emit('chunks', count)
+    lastChunkCurrent = current
+    emit('chunks', count, current)
   }
   refreshMinimap()
+}
+
+function chunkViewportBands() {
+  if (!mergeView) return []
+  const view = mergeView.b
+  const docLength = view.state.doc.length
+  return mergeView.chunks.map((chunk) => {
+    const from = Math.min(chunk.fromB, docLength)
+    const toPos = Math.min(Math.max(from, chunk.toB - 1), docLength)
+    const startBlock = view.lineBlockAt(from)
+    const endBlock = view.lineBlockAt(toPos)
+    return { start: startBlock.top, end: Math.max(endBlock.bottom, startBlock.top) }
+  })
 }
 
 function refreshMinimap() {
@@ -165,11 +192,15 @@ function closeSearch() {
 }
 
 function goToNextChunk() {
-  if (mergeView) goToNextMergeChunk(mergeView.b)
+  if (!mergeView) return
+  goToNextMergeChunk(mergeView.b)
+  requestAnimationFrame(() => emitChunksIfChanged())
 }
 
 function goToPrevChunk() {
-  if (mergeView) goToPreviousChunk(mergeView.b)
+  if (!mergeView) return
+  goToPreviousChunk(mergeView.b)
+  requestAnimationFrame(() => emitChunksIfChanged())
 }
 
 function openFilePicker(side: MergeSide) {
@@ -177,39 +208,43 @@ function openFilePicker(side: MergeSide) {
   input?.click()
 }
 
-function sideFromNode(node: EventTarget | null): MergeSide | null {
-  if (!mergeView || !(node instanceof Node)) return null
-  if (mergeView.a.dom.contains(node)) return 'left'
-  if (mergeView.b.dom.contains(node)) return 'right'
-  return null
+function sideFromPointer(clientX: number): MergeSide | null {
+  if (!mergeView) return null
+  return sideFromClientX(
+    clientX,
+    mergeView.a.dom.getBoundingClientRect(),
+    mergeView.b.dom.getBoundingClientRect(),
+  )
+}
+
+function highlightDropSide(side: MergeSide | null) {
+  leftDragDepth.value = side === 'left' ? 1 : 0
+  rightDragDepth.value = side === 'right' ? 1 : 0
 }
 
 function onHostDragEnter(event: DragEvent) {
   event.preventDefault()
-  const side = sideFromNode(event.target)
-  if (side) enterDrag(side)
+  highlightDropSide(sideFromPointer(event.clientX))
 }
 
 function onHostDragOver(event: DragEvent) {
   event.preventDefault()
   if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy'
+  highlightDropSide(sideFromPointer(event.clientX))
 }
 
 function onHostDragLeave(event: DragEvent) {
   event.preventDefault()
+  const frame = hostRef.value?.parentElement
   const next = event.relatedTarget
-  if (next instanceof Node && hostRef.value?.contains(next)) {
-    const side = sideFromNode(event.target)
-    if (side) leaveDrag(side)
-    return
-  }
-  leftDragDepth.value = 0
-  rightDragDepth.value = 0
+  if (next instanceof Node && frame?.contains(next)) return
+  highlightDropSide(null)
 }
 
 function onHostDrop(event: DragEvent) {
   event.preventDefault()
-  const side = sideFromNode(event.target)
+  const side = sideFromPointer(event.clientX)
+  highlightDropSide(null)
   if (side) dropFiles(side, event.dataTransfer?.files)
 }
 
@@ -243,8 +278,8 @@ onMounted(() => {
     diffConfig: mergeViewDiffConfig,
   })
   emitChunksIfChanged()
-  mergeView.dom.addEventListener('scroll', refreshMinimap, { passive: true })
-  window.addEventListener('resize', refreshMinimap)
+  mergeView.dom.addEventListener('scroll', emitChunksIfChanged, { passive: true })
+  window.addEventListener('resize', emitChunksIfChanged)
 })
 
 /** store 因导入/清空变化时，只替换该侧文档，保留另一侧 Undo 历史 */
@@ -271,8 +306,8 @@ watch(
 )
 
 onBeforeUnmount(() => {
-  mergeView?.dom.removeEventListener('scroll', refreshMinimap)
-  window.removeEventListener('resize', refreshMinimap)
+  mergeView?.dom.removeEventListener('scroll', emitChunksIfChanged)
+  window.removeEventListener('resize', emitChunksIfChanged)
   mergeView?.destroy()
   mergeView = null
 })
@@ -416,8 +451,7 @@ onBeforeUnmount(() => {
     />
     <div class="two-way-merge-stage">
       <div
-        ref="hostRef"
-        class="two-way-merge-host flex-1 min-h-0"
+        class="two-way-merge-frame flex-1 min-h-0"
         :class="{
           'is-dragging-left': leftDragDepth > 0,
           'is-dragging-right': rightDragDepth > 0,
@@ -426,10 +460,31 @@ onBeforeUnmount(() => {
         @dragover="onHostDragOver"
         @dragleave="onHostDragLeave"
         @drop="onHostDrop"
-      />
+      >
+        <div ref="hostRef" class="two-way-merge-host flex-1 min-h-0" />
+        <div v-if="leftEmpty" class="two-way-merge-empty two-way-merge-empty--left">
+          <div class="two-way-merge-empty__card">
+            <span class="i-lucide-upload two-way-merge-empty__icon" aria-hidden="true" />
+            <strong>还没有参考配置</strong>
+            <p>把 JSON 拖到此栏，或用栏头上传 / 粘贴</p>
+            <button type="button" class="ui-btn ui-btn-soft" @click="openFilePicker('left')">
+              选择文件
+            </button>
+          </div>
+        </div>
+        <div v-if="rightEmpty" class="two-way-merge-empty two-way-merge-empty--right">
+          <div class="two-way-merge-empty__card">
+            <span class="i-lucide-upload two-way-merge-empty__icon" aria-hidden="true" />
+            <strong>还没有结果配置</strong>
+            <p>把 JSON 拖到此栏，或用栏头上传 / 粘贴</p>
+            <button type="button" class="ui-btn ui-btn-soft" @click="openFilePicker('right')">
+              选择文件
+            </button>
+          </div>
+        </div>
+      </div>
       <DiffMinimap
-        :left-text="workspace.leftDoc"
-        :right-text="workspace.rightDoc"
+        v-if="showMinimap"
         :left-changed="leftChanged"
         :right-changed="rightChanged"
         :viewport="viewportBand"
@@ -448,7 +503,7 @@ onBeforeUnmount(() => {
   overflow-x: auto;
 }
 
-/* 与 MergeView 三列对齐：左右各 50%，中间 1.6em revert 槽 */
+/* 与 MergeView 三列对齐：左右均分剩余宽度，中间 2.4em revert 槽 */
 .two-way-merge-labels {
   display: flex;
   align-items: center;
@@ -461,7 +516,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  flex: 1 1 50%;
+  flex: 1 1 0;
   min-width: 0;
 }
 
@@ -504,8 +559,8 @@ onBeforeUnmount(() => {
 }
 
 .two-way-merge-labels__revert {
-  flex: 0 0 1.6em;
-  width: 1.6em;
+  flex: 0 0 2.4em;
+  width: 2.4em;
 }
 
 .two-way-merge-status {
@@ -517,12 +572,85 @@ onBeforeUnmount(() => {
   line-height: 1.35;
 }
 
+.two-way-merge-frame {
+  position: relative;
+  display: flex;
+  min-height: 0;
+}
+
 .two-way-merge-host {
+  position: relative;
   min-height: 0;
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--code-bg);
+}
+
+.two-way-merge-empty {
+  position: absolute;
+  top: 0.55rem;
+  bottom: 0.55rem;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.two-way-merge-empty--left {
+  left: 0.5rem;
+  width: calc((100% - 2.4em) / 2 - 0.75rem);
+}
+
+.two-way-merge-empty--right {
+  right: 0.5rem;
+  width: calc((100% - 2.4em) / 2 - 0.75rem);
+}
+
+.two-way-merge-empty__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  max-width: 18rem;
+  padding: 1.25rem 1rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  color: var(--text);
+  text-align: center;
+}
+
+.two-way-merge-empty__icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--accent);
+}
+
+.two-way-merge-empty__card strong {
+  color: var(--text-h);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.two-way-merge-empty__card p {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.two-way-merge-empty__card .ui-btn {
+  pointer-events: auto;
+  margin-top: 0.25rem;
+}
+
+.two-way-merge-frame.is-dragging-left .two-way-merge-empty--left .two-way-merge-empty__card,
+.two-way-merge-frame.is-dragging-right .two-way-merge-empty--right .two-way-merge-empty__card {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent-muted) 72%, var(--surface));
 }
 
 .two-way-merge-stage {
@@ -543,8 +671,8 @@ onBeforeUnmount(() => {
   display: none !important;
 }
 
-.two-way-merge-host.is-dragging-left :deep(.cm-merge-a),
-.two-way-merge-host.is-dragging-right :deep(.cm-merge-b) {
+.two-way-merge-frame.is-dragging-left :deep(.cm-merge-a),
+.two-way-merge-frame.is-dragging-right :deep(.cm-merge-b) {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
@@ -557,11 +685,28 @@ onBeforeUnmount(() => {
 :deep(.cm-mergeViewEditors) {
   display: flex;
   flex-direction: row;
+  min-height: 100%;
 }
 
 :deep(.cm-mergeViewEditor) {
-  flex: 1 1 50%;
+  flex: 1 1 0;
   min-width: 0;
+  min-height: 100%;
+}
+
+:deep(.cm-editor),
+:deep(.cm-scroller) {
+  min-height: 100%;
+}
+
+:deep(.cm-merge-revert) {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 2.4em;
+  width: 2.4em;
+  min-width: 2.4em;
+  min-height: 100%;
+  background: color-mix(in srgb, var(--border-subtle) 70%, var(--code-bg));
 }
 
 :deep(.cm-merge-revert button) {

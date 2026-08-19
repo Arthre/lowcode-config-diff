@@ -3,6 +3,7 @@ import DownloadMenu from '@/components/DownloadMenu.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import TwoWayMergeEditor from '@/components/TwoWayMergeEditor.vue'
 import UiTooltip from '@/components/UiTooltip.vue'
+import { chunkAnchorText } from '@/composables/chunkNavAnchor'
 import {
   describeRightDocExport,
   type RightDocExportHint,
@@ -21,12 +22,15 @@ const mergeEditorRef = ref<{
   openSearch: () => boolean
 } | null>(null)
 const chunkCount = ref(0)
+const chunkCurrent = ref(0)
 const statusText = ref('')
+const chunkAnchor = computed(() => chunkAnchorText(chunkCurrent.value, chunkCount.value))
 
 let statusClearTimer: ReturnType<typeof setTimeout> | undefined
 
-function onChunks(n: number) {
-  chunkCount.value = n
+function onChunks(count: number, current: number) {
+  chunkCount.value = count
+  chunkCurrent.value = current
 }
 
 function exportHintText(hint: RightDocExportHint): string | null {
@@ -90,7 +94,9 @@ onBeforeUnmount(() => {
             本地处理 · 不上传
           </span>
           <div class="ui-result-toolbar" role="toolbar" aria-label="差异导航与导出">
-            <span class="text-sm text-[var(--text-h)] tabular-nums">{{ chunkCount }} 个差异块</span>
+            <span class="text-sm text-[var(--text-h)] tabular-nums" aria-live="polite">{{
+              chunkAnchor
+            }}</span>
             <button type="button" class="ui-btn" @click="mergeEditorRef?.goToPrevChunk()">
               上一条
             </button>

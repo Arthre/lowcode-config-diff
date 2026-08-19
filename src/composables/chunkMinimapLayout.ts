@@ -33,3 +33,21 @@ export function scrollTopFromClick(
 ): number {
   return clickRatio * Math.max(0, scrollHeight - clientHeight)
 }
+
+/** 把冲突行标记收成缩略轨上的 0–1 区间。 */
+export function conflictBandsOf(changed: readonly boolean[]): ChunkBand[] {
+  const lineCount = changed.length
+  if (lineCount <= 0) return []
+  const bands: ChunkBand[] = []
+  let index = 0
+  while (index < lineCount) {
+    if (!changed[index]) {
+      index += 1
+      continue
+    }
+    const start = index
+    while (index < lineCount && changed[index]) index += 1
+    bands.push({ start: start / lineCount, end: index / lineCount })
+  }
+  return bands
+}

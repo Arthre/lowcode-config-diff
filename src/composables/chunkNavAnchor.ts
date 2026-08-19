@@ -1,0 +1,56 @@
+export type ChunkNavRange = {
+  fromA: number
+  toA: number
+  fromB: number
+  toB: number
+}
+
+/** 与 @codemirror/merge moveByChunk 一致：from ≤ pos 且尚未越过 to。 */
+export function activeChunkIndexOf(
+  chunks: readonly ChunkNavRange[],
+  pos: number,
+  side: 'a' | 'b',
+): number {
+  if (chunks.length === 0) return -1
+  let lastPast = -1
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i]
+    if (!chunk) continue
+    const from = side === 'b' ? chunk.fromB : chunk.fromA
+    const to = side === 'b' ? chunk.toB : chunk.toA
+    if (from <= pos && !(to < pos)) return i
+    if (to < pos) lastPast = i
+  }
+  if (lastPast >= 0) return lastPast
+  return 0
+}
+
+/** 视口与差异块纵向区间重叠时取最上一块；空白处取已经过的一块。 */
+export function activeChunkIndexInViewport(
+  bands: readonly { start: number; end: number }[],
+  viewStart: number,
+  viewEnd: number,
+): number {
+  if (bands.length === 0) return -1
+  let lastPast = -1
+  for (let i = 0; i < bands.length; i++) {
+    const band = bands[i]
+    if (!band) continue
+    if (overlapsViewport(band.start, band.end, viewStart, viewEnd)) return i
+    if (band.end <= viewStart) lastPast = i
+  }
+  if (lastPast >= 0) return lastPast
+  return 0
+}
+
+function overlapsViewport(start: number, end: number, viewStart: number, viewEnd: number): boolean {
+  if (end <= start) return start >= viewStart && start < viewEnd
+  return start < viewEnd && end > viewStart
+}
+
+/** 页眉差异锚点文案。current 为 1 起序号。 */
+export function chunkAnchorText(current: number, total: number): string {
+  if (total <= 0) return '0 个差异块'
+  if (current <= 0) return `${total} 个差异块`
+  return `${current} / ${total} 个差异块`
+}

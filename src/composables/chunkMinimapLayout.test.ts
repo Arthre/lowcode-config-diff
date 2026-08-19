@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { chunkBandsOf, scrollTopFromClick, viewportBandOf } from './chunkMinimapLayout'
+import {
+  chunkBandsOf,
+  conflictBandsOf,
+  scrollTopFromClick,
+  viewportBandOf,
+} from './chunkMinimapLayout'
 
 describe('chunkBandsOf', () => {
   it('文档为空时无标记', () => {
@@ -24,5 +29,22 @@ describe('viewportBandOf', () => {
 describe('scrollTopFromClick', () => {
   it('点击比例映射到可滚动范围', () => {
     expect(scrollTopFromClick(0.5, 100, 300)).toBe(100)
+  })
+})
+
+describe('conflictBandsOf', () => {
+  it('无冲突行时无标记', () => {
+    expect(conflictBandsOf([false, false, false])).toEqual([])
+  })
+
+  it('把连续冲突行收成 0–1 区间', () => {
+    expect(conflictBandsOf([false, true, true, false])).toEqual([{ start: 0.25, end: 0.75 }])
+  })
+
+  it('不相邻的冲突行分成多段', () => {
+    expect(conflictBandsOf([true, false, true])).toEqual([
+      { start: 0, end: 1 / 3 },
+      { start: 2 / 3, end: 1 },
+    ])
   })
 })
