@@ -1,33 +1,77 @@
-import { describe, expect, it } from 'vitest'
-import type { DiffItem } from '@/core/types'
-import { buildMergeSummaryText, summarizeMergeSides } from './exportConfig'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { copyText, downloadJsonFile } from './exportConfig'
 
-function leaf(partial: Partial<DiffItem> & Pick<DiffItem, 'id' | 'type' | 'side'>): DiffItem {
-  return { path: [partial.id], ...partial }
-}
+describe('copyText', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
+  })
 
-describe('summarizeMergeSides', () => {
-  it('统计 test/prod 数量', () => {
-    const leaves = [
-      leaf({ id: 'a', type: 'modified', side: 'test' }),
-      leaf({ id: 'b', type: 'added', side: 'test' }),
-      leaf({ id: 'c', type: 'removed', side: 'prod' }),
-    ]
-    expect(summarizeMergeSides(leaves)).toEqual({ total: 3, testCount: 2, prodCount: 1 })
+  it('把给定字符串交给 clipboard.writeText', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    vi.stubGlobal('navigator', { clipboard: { writeText } })
+
+    await copyText('{"a":1}')
+
+    expect(writeText).toHaveBeenCalledTimes(1)
+    expect(writeText).toHaveBeenCalledWith('{"a":1}')
   })
 })
 
-describe('buildMergeSummaryText', () => {
-  it('无差异时说明与 TEST 一致', () => {
-    expect(buildMergeSummaryText([])).toMatch(/无差异/)
+describe('downloadJsonFile', () => {
+  const objectUrl = 'blob:mock-config'
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue(objectUrl)
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
   })
 
-  it('有差异时包含总数与取 PROD 数', () => {
-    const text = buildMergeSummaryText([
-      leaf({ id: 'a', type: 'modified', side: 'test' }),
-      leaf({ id: 'c', type: 'removed', side: 'prod' }),
-    ])
-    expect(text).toContain('2')
-    expect(text).toMatch(/PROD/)
+  afterEach(() => {
+    vi.clearAllTimers()
+    vi.useRealTimers()
+    vi.restoreAllMocks()
+    document.body.replaceChildren()
+  })
+
+  it('默认文件名为 config.json', () => {
+    let filename = ''
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      filename = this.download
+    })
+
+    downloadJsonFile('{"a":1}')
+
+    expect(filename).toBe('config.json')
+  })
+
+  it('可传入自定义 filename', () => {
+    let filename = ''
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      filename = this.download
+    })
+
+    downloadJsonFile('{"a":1}', 'merged.json')
+
+    expect(filename).toBe('merged.json')
+  })
+
+  it('点击后移除 anchor', () => {
+    let inDocumentOnClick = false
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      inDocumentOnClick = document.body.contains(this)
+    })
+
+    downloadJsonFile('{"a":1}')
+
+    expect(inDocumentOnClick).toBe(true)
+    expect(document.querySelector('a[download]')).toBeNull()
   })
 })

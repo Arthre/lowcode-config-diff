@@ -1,25 +1,3 @@
-import type { DiffItem } from '@/core/types'
-
-export function summarizeMergeSides(leaves: DiffItem[]): {
-  total: number
-  testCount: number
-  prodCount: number
-} {
-  let testCount = 0
-  let prodCount = 0
-  for (const leaf of leaves) {
-    if (leaf.side === 'test') testCount += 1
-    else if (leaf.side === 'prod') prodCount += 1
-  }
-  return { total: leaves.length, testCount, prodCount }
-}
-
-export function buildMergeSummaryText(leaves: DiffItem[]): string {
-  const { total, prodCount } = summarizeMergeSides(leaves)
-  if (total === 0) return '无差异，结果与 TEST 一致'
-  return `共 ${total} 项差异，其中 ${prodCount} 项取 PROD`
-}
-
 export async function copyText(text: string): Promise<void> {
   await navigator.clipboard.writeText(text)
 }
