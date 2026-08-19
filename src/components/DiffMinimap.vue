@@ -1,9 +1,9 @@
 <script setup lang="ts" name="DiffMinimap">
-import { conflictBandsOf, type ChunkBand } from '@/composables/chunkMinimapLayout'
+import type { ChunkBand } from '@/composables/chunkMinimapLayout'
 
 const props = defineProps<{
-  leftChanged: readonly boolean[]
-  rightChanged: readonly boolean[]
+  leftBands: readonly ChunkBand[]
+  rightBands: readonly ChunkBand[]
   viewport: ChunkBand
 }>()
 
@@ -12,8 +12,6 @@ const emit = defineEmits<{
 }>()
 
 const trackRef = ref<HTMLElement | null>(null)
-const leftBands = computed(() => conflictBandsOf(props.leftChanged))
-const rightBands = computed(() => conflictBandsOf(props.rightChanged))
 
 function ratioFromEvent(event: PointerEvent): number {
   const track = trackRef.value
@@ -54,7 +52,7 @@ function onPointerMove(event: PointerEvent) {
     />
     <span class="diff-minimap__col diff-minimap__col--left">
       <span
-        v-for="(band, index) in leftBands"
+        v-for="(band, index) in props.leftBands"
         :key="`l-${index}`"
         class="diff-minimap__band diff-minimap__band--left"
         :style="{
@@ -65,7 +63,7 @@ function onPointerMove(event: PointerEvent) {
     </span>
     <span class="diff-minimap__col diff-minimap__col--right">
       <span
-        v-for="(band, index) in rightBands"
+        v-for="(band, index) in props.rightBands"
         :key="`r-${index}`"
         class="diff-minimap__band diff-minimap__band--right"
         :style="{

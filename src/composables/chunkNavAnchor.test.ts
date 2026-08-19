@@ -4,6 +4,7 @@ import {
   activeChunkIndexOf,
   chunkAnchorText,
   chunkIndexAfterAnchor,
+  chunkNavTargetIndex,
 } from './chunkNavAnchor'
 
 const chunks = [
@@ -73,6 +74,27 @@ describe('activeChunkIndexInViewport', () => {
 
   it('零高度标记落在视口顶边时仍命中', () => {
     expect(activeChunkIndexInViewport([{ start: 200, end: 200 }], 200, 300)).toBe(0)
+  })
+
+  it('滚到块顶但 scrollTop 取整偏上且视口仍盖住该块时取该块', () => {
+    const bands = [
+      { start: 0, end: 80 },
+      { start: 100.6, end: 180 },
+      { start: 300, end: 360 },
+    ]
+    expect(activeChunkIndexInViewport(bands, 100, 700)).toBe(1)
+  })
+})
+
+describe('chunkNavTargetIndex', () => {
+  it('取整后的块顶视口下，下一条前进一块、上一条只退一块', () => {
+    const bands = [
+      { start: 0, end: 80 },
+      { start: 100.6, end: 180 },
+      { start: 300, end: 360 },
+    ]
+    expect(chunkNavTargetIndex(bands, 100, 600, 1)).toBe(2)
+    expect(chunkNavTargetIndex(bands, 100, 600, -1)).toBe(0)
   })
 })
 

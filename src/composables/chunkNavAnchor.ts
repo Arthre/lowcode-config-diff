@@ -55,6 +55,21 @@ export function chunkIndexAfterAnchor(anchorIndex: number, count: number, step: 
   return (anchorIndex + step + count) % count
 }
 
+/**
+ * 用像素重叠锚点算上一条/下一条目标。
+ * 必须走视口重叠，不能用视口顶文档位置：scrollTop 取整后会落在块前空隙，
+ * 下一条会停在原地、上一条会连退两块。
+ */
+export function chunkNavTargetIndex(
+  bands: readonly { start: number; end: number }[],
+  scrollTop: number,
+  clientHeight: number,
+  step: 1 | -1,
+): number {
+  const anchor = activeChunkIndexInViewport(bands, scrollTop, scrollTop + clientHeight)
+  return chunkIndexAfterAnchor(anchor, bands.length, step)
+}
+
 /** 页眉差异锚点文案。current 为 1 起序号。 */
 export function chunkAnchorText(current: number, total: number): string {
   if (total <= 0) return '0 个差异块'

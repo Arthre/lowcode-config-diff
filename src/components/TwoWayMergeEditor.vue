@@ -18,8 +18,8 @@ import {
   viewportBandOf,
   type ChunkBand,
 } from '@/composables/chunkMinimapLayout'
-import { activeChunkIndexInViewport, chunkIndexAfterAnchor } from '@/composables/chunkNavAnchor'
-import { changedLineFlags } from '@/composables/minimapSnapshot'
+import { activeChunkIndexInViewport, chunkNavTargetIndex } from '@/composables/chunkNavAnchor'
+import { conflictBandsFromOffsetRanges } from '@/composables/minimapSnapshot'
 import { createEditableJsonExtensions, mergeHighlightTheme } from '@/composables/codemirrorTheme'
 import { mergeViewDiffConfig } from '@/composables/diffByLine'
 import { sideFromClientX } from '@/composables/sideFromClientX'
@@ -51,10 +51,12 @@ const searchCase = ref(false)
 const searchRegexp = ref(false)
 const searchWord = ref(false)
 const searchSide = ref<MergeSide>('right')
-const leftChanged = ref<boolean[]>([])
-const rightChanged = ref<boolean[]>([])
+const leftBands = ref<ChunkBand[]>([])
+const rightBands = ref<ChunkBand[]>([])
 const viewportBand = ref<ChunkBand>({ start: 0, end: 1 })
 let mergeView: MergeView | null = null
+/** 差异块像素带；只在文档/块数/尺寸变化时重测，滚动只做重叠判断。 */
+let cachedChunkBands: { start: number; end: number }[] = []
 /** 上次已通知的差异块数量与当前下标；-1 保证挂载后必 emit 一次 */
 let lastChunkCount = -1
 let lastChunkCurrent = -1
@@ -75,31 +77,65 @@ function renderRevertControl() {
   return toRight
 }
 
-/** 块数量或视口锚点变化时通知父组件 */
-function emitChunksIfChanged() {
+function lineAt0(
+  doc: { length: number; lineAt: (pos: number) => { number: number } },
+  offset: number,
+): number {
+  if (doc.length === 0) return 0
+  return doc.lineAt(Math.max(0, Math.min(offset, doc.length))).number - 1
+}
+
+/** 页眉锚点与视口带随滚动更新；冲突快照与块像素带只在文档或块数量变化时重建。 */
+function syncEditorChrome(rebuildLayout: boolean) {
   if (!mergeView) return
-  const count = mergeView.chunks.length
   const scroller = mergeView.dom
+  const count = mergeView.chunks.length
+  const shouldLayout = rebuildLayout || count !== lastChunkCount
+  if (shouldLayout) {
+    refreshChunkBands()
+    refreshMinimapSnapshot()
+  }
   const index = activeChunkIndexInViewport(
-    chunkViewportBands(),
+    cachedChunkBands,
     scroller.scrollTop,
     scroller.scrollTop + scroller.clientHeight,
   )
   const current = count === 0 || index < 0 ? 0 : index + 1
-  const countChanged = count !== lastChunkCount
-  if (countChanged || current !== lastChunkCurrent) {
+  if (count !== lastChunkCount || current !== lastChunkCurrent) {
     lastChunkCount = count
     lastChunkCurrent = current
     emit('chunks', count, current)
   }
-  refreshMinimap()
+  const nextViewport = viewportBandOf(
+    scroller.scrollTop,
+    scroller.clientHeight,
+    scroller.scrollHeight,
+  )
+  if (
+    nextViewport.start !== viewportBand.value.start ||
+    nextViewport.end !== viewportBand.value.end
+  ) {
+    viewportBand.value = nextViewport
+  }
 }
 
-function chunkViewportBands() {
-  if (!mergeView) return []
+function onMergeScroll() {
+  syncEditorChrome(false)
+}
+
+function onWindowResize() {
+  refreshChunkBands()
+  syncEditorChrome(false)
+}
+
+function refreshChunkBands() {
+  if (!mergeView) {
+    cachedChunkBands = []
+    return
+  }
   const view = mergeView.b
   const docLength = view.state.doc.length
-  return mergeView.chunks.map((chunk) => {
+  cachedChunkBands = mergeView.chunks.map((chunk) => {
     const from = Math.min(chunk.fromB, docLength)
     const toPos = Math.min(Math.max(from, chunk.toB - 1), docLength)
     const startBlock = view.lineBlockAt(from)
@@ -108,23 +144,21 @@ function chunkViewportBands() {
   })
 }
 
-function refreshMinimap() {
+function refreshMinimapSnapshot() {
   if (!mergeView) return
-  const scroller = mergeView.dom
-  const leftText = mergeView.a.state.doc.toString()
-  const rightText = mergeView.b.state.doc.toString()
-  leftChanged.value = changedLineFlags(
-    leftText,
+  const leftDoc = mergeView.a.state.doc
+  const rightDoc = mergeView.b.state.doc
+  leftBands.value = conflictBandsFromOffsetRanges(
+    leftDoc.lines,
+    leftDoc.length,
     mergeView.chunks.map((chunk) => ({ from: chunk.fromA, to: chunk.toA })),
+    (offset) => lineAt0(leftDoc, offset),
   )
-  rightChanged.value = changedLineFlags(
-    rightText,
+  rightBands.value = conflictBandsFromOffsetRanges(
+    rightDoc.lines,
+    rightDoc.length,
     mergeView.chunks.map((chunk) => ({ from: chunk.fromB, to: chunk.toB })),
-  )
-  viewportBand.value = viewportBandOf(
-    scroller.scrollTop,
-    scroller.clientHeight,
-    scroller.scrollHeight,
+    (offset) => lineAt0(rightDoc, offset),
   )
 }
 
@@ -146,7 +180,7 @@ function createSideListener(side: 'left' | 'right') {
         workspace.setRightDoc(next)
       }
     }
-    emitChunksIfChanged()
+    syncEditorChrome(update.docChanged)
   })
 }
 
@@ -202,22 +236,23 @@ function goToChunkFromAnchor(step: 1 | -1) {
   const count = chunks.length
   if (count === 0) return
   const scroller = mergeView.dom
-  const bands = chunkViewportBands()
-  const anchor = activeChunkIndexInViewport(
-    bands,
+  if (cachedChunkBands.length !== count) refreshChunkBands()
+  const target = chunkNavTargetIndex(
+    cachedChunkBands,
     scroller.scrollTop,
-    scroller.scrollTop + scroller.clientHeight,
+    scroller.clientHeight,
+    step,
   )
-  const target = chunkIndexAfterAnchor(anchor, count, step)
   const chunk = chunks[target]
-  const band = bands[target]
+  const band = cachedChunkBands[target]
   if (!chunk || !band) return
+  const from = Math.min(chunk.fromB, mergeView.b.state.doc.length)
   const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight)
   scroller.scrollTop = Math.min(band.start, maxTop)
-  const from = Math.min(chunk.fromB, mergeView.b.state.doc.length)
   mergeView.b.dispatch({
     selection: { anchor: from },
     userEvent: 'select.byChunk',
+    scrollIntoView: false,
   })
 }
 
@@ -295,9 +330,9 @@ onMounted(() => {
     gutter: true,
     diffConfig: mergeViewDiffConfig,
   })
-  emitChunksIfChanged()
-  mergeView.dom.addEventListener('scroll', emitChunksIfChanged, { passive: true })
-  window.addEventListener('resize', emitChunksIfChanged)
+  syncEditorChrome(true)
+  mergeView.dom.addEventListener('scroll', onMergeScroll, { passive: true })
+  window.addEventListener('resize', onWindowResize)
 })
 
 /** store 因导入/清空变化时，只替换该侧文档，保留另一侧 Undo 历史 */
@@ -324,8 +359,8 @@ watch(
 )
 
 onBeforeUnmount(() => {
-  mergeView?.dom.removeEventListener('scroll', emitChunksIfChanged)
-  window.removeEventListener('resize', emitChunksIfChanged)
+  mergeView?.dom.removeEventListener('scroll', onMergeScroll)
+  window.removeEventListener('resize', onWindowResize)
   mergeView?.destroy()
   mergeView = null
 })
@@ -503,8 +538,8 @@ onBeforeUnmount(() => {
       </div>
       <DiffMinimap
         v-if="showMinimap"
-        :left-changed="leftChanged"
-        :right-changed="rightChanged"
+        :left-bands="leftBands"
+        :right-bands="rightBands"
         :viewport="viewportBand"
         @jump="onMinimapJump"
       />

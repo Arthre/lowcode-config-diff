@@ -31,7 +31,7 @@
 | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `src/styles/`                               | 设计系统：`tokens` / `theme-transition` / `base` / `primitives` / `layout` / `semantic`（侧标签、状态色）；功能扩展见 `features/` |
 | `src/views/HomeView.vue`                    | 工作台：满高 `TwoWayMergeEditor`；页眉主题切换、块导航（当前/总数）、查找、复制、下载/压缩下载                                    |
-| `src/components/TwoWayMergeEditor.vue`      | 可编辑 MergeView：栏头导入；分栏空态；查找条在编辑器外；右侧冲突点缩略轨；中间仅 `→`；按行 diff                                   |
+| `src/components/TwoWayMergeEditor.vue`      | 可编辑 MergeView：栏头导入；分栏空态；查找条在编辑器外；右侧冲突点缩略轨；中间仅 `→`；按行 diff；滚动只更新视口锚点               |
 | `src/composables/sideFromClientX.ts`        | 拖放按横坐标判栏                                                                                                                  |
 | `src/composables/chunkRevertChange.ts`      | 差异块写回公式（保留；`←` UI 暂时下线）                                                                                           |
 | `src/components/MergeSearchDock.vue`        | 栏头与编辑器之间的查找/替换条                                                                                                     |
@@ -41,7 +41,7 @@
 | `src/composables/diffByLine.ts`             | MergeView `diffConfig.override`：按行对照，避免未改行并进同一块                                                                   |
 | `src/composables/chunkMinimapLayout.ts`     | 冲突带、视口与点击滚动换算                                                                                                        |
 | `src/composables/chunkNavAnchor.ts`         | 视口锚点下标、上一条/下一条步进、页眉文案                                                                                         |
-| `src/composables/minimapSnapshot.ts`        | 按差异区间标记冲突行                                                                                                              |
+| `src/composables/minimapSnapshot.ts`        | 按差异区间收成冲突带（行起点索引 + 偏移区间，避免滚动时扫全文）                                                                   |
 | `src/composables/placeTooltip.ts`           | 气泡方向与视口夹取                                                                                                                |
 | `src/composables/packRightDocDownload.ts`   | 右栏下载打包：合法则 `compressConfig`                                                                                             |
 | `src/composables/pickJsonFile.ts`           | 从文件列表优先取出 JSON                                                                                                           |
@@ -59,7 +59,7 @@
 
 打开即对照：满高可编辑 MergeView，导入收在栏头。无「开始 Diff」门禁。复制/下载只出右栏（`describeRightDocExport` 提示后仍导出）。刷新不恢复（store 无 persist）。
 
-- `TwoWayMergeEditor`：左参考、右结果；栏头点选/粘贴全文/清空，整栏拖入走 `importSide`（合法则格式化一次）；空栏居中提醒与虚线落区；编辑器内 Ctrl+V 仍是光标插入、不格式化；`→` 把参考块写入结果（`←` 暂时下线）；按行 diff；冲突点缩略轨（双侧都空时隐藏）；Ctrl+F 打开编辑器外查找条；上一条/下一条从视口锚点步进并绕回；页眉当前块随视口滚动
+- `TwoWayMergeEditor`：左参考、右结果；栏头点选/粘贴全文/清空，整栏拖入走 `importSide`（合法则格式化一次）；空栏居中提醒与虚线落区；编辑器内 Ctrl+V 仍是光标插入、不格式化；`→` 把参考块写入结果（`←` 暂时下线）；按行 diff；冲突点缩略轨（双侧都空时隐藏，滚动不重算冲突带）；Ctrl+F 打开编辑器外查找条；上一条/下一条按视口与块像素带重叠锚点步进并绕回（滚动不重测每块 `lineBlockAt`）；页眉当前块随视口滚动
 - 下载菜单：`config.json` 或压缩为 `config.min.json`（非法 JSON 仍导出原文）
 - Core `diffConfig` / `mergeConfig` 仍在源码，**UI 不调用**
 
@@ -72,8 +72,8 @@
 
 ## 规格与计划
 
-- 规格（已完成）：[可编辑双栏合并总览](../specs/2026-08-18-editable-two-way-merge.md)、[M1](../specs/2026-08-18-m1-merge-workspace.md)、[M2](../specs/2026-08-18-m2-two-way-editor.md)、[M3](../specs/2026-08-18-m3-home-import.md)、[M4](../specs/2026-08-18-m4-remove-legacy-ui.md)、[空态与双向采纳](../specs/2026-08-19-empty-drop-bidirectional-revert.md)、[块导航锚点](../specs/2026-08-19-revert-unlock-chunk-anchor.md)（`←` 暂时下线）
-- 计划（未归档）：[空态与双向采纳](../plans/2026-08-19-empty-drop-bidirectional-revert.md)、[块导航锚点](../plans/2026-08-19-revert-unlock-chunk-anchor.md)
+- 规格（已完成）：[可编辑双栏合并总览](../specs/2026-08-18-editable-two-way-merge.md)、[M1](../specs/2026-08-18-m1-merge-workspace.md)、[M2](../specs/2026-08-18-m2-two-way-editor.md)、[M3](../specs/2026-08-18-m3-home-import.md)、[M4](../specs/2026-08-18-m4-remove-legacy-ui.md)、[空态与双向采纳](../specs/2026-08-19-empty-drop-bidirectional-revert.md)、[块导航锚点](../specs/2026-08-19-revert-unlock-chunk-anchor.md)（`←` 暂时下线）、[块导航滚动性能](../specs/2026-08-19-chunk-nav-scroll-perf.md)
+- 计划（未归档）：[空态与双向采纳](../plans/2026-08-19-empty-drop-bidirectional-revert.md)、[块导航锚点](../plans/2026-08-19-revert-unlock-chunk-anchor.md)、[块导航滚动性能](../plans/2026-08-19-chunk-nav-scroll-perf.md)
 - 计划（已归档）：[总索引](../plans/archive/2026-08-18-editable-two-way-merge.md)、[M1](../plans/archive/2026-08-18-m1-merge-workspace.md)、[M2](../plans/archive/2026-08-18-m2-two-way-editor.md)、[M3](../plans/archive/2026-08-18-m3-home-import.md)、[M4](../plans/archive/2026-08-18-m4-remove-legacy-ui.md)
 - 历史规格：[V0.1 总览](../specs/2026-08-15-v0.1-config-diff-merge.md)、[M4 输入](../specs/2026-08-15-m4-ui-json-input.md)、[M5](../specs/2026-08-15-m5-ui-diff-tree.md)、[M6](../specs/2026-08-15-m6-ui-merge-export.md)、[Diff/Result JSON](../specs/2026-08-17-diff-result-json-viewer.md)
 
