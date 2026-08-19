@@ -27,4 +27,4 @@ YYYY-MM-DD-<主题>.md
 
 ## 最近完成
 
-可编辑双栏合并（2026-08-18）：[总览](./2026-08-18-editable-two-way-merge.md) 与 M1–M4 切片规格均已完成。对应计划见 [`.docs/plans/archive/`](../plans/archive/)。
+[中间槽延迟写回与块导航锚点](./2026-08-19-revert-unlock-chunk-anchor.md)（`←` 暂时下线，视口锚点已落地）；[空态、拖放命中与双向采纳](./2026-08-19-empty-drop-bidirectional-revert.md)；可编辑双栏合并（2026-08-18）：[总览](./2026-08-18-editable-two-way-merge.md) 与 M1–M4。对应计划见 [`.docs/plans/archive/`](../plans/archive/)。

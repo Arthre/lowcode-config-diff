@@ -161,9 +161,9 @@ Operate 模式的可编辑双栏文本合并工作台：冷灰画布托起表面
 ## Layout
 
 - **满高单列工作台**：页眉 → 双栏 Merge（栏头导入）；`.ui-workspace` 纵向 flex，Merge `flex: 1; min-height: 0` 吃剩余高度；视口高 `.ui-page` `100svh` + `overflow: hidden`
-- **Merge 双栏**：左参考、右结果，始终左右并排；中间 revert 槽放置 `→`；宿主可 `overflow-x: auto`；右侧双栏代码缩略快照（字符色块 + 视口框）；查找条在栏头与编辑器之间，不覆盖代码
+- **Merge 双栏**：左参考、右结果，始终左右并排；中间 revert 槽 `→` 采纳参考（`←` 写回参考暂时下线）；宿主可 `overflow-x: auto`；右侧冲突点缩略轨（双侧都空时隐藏）；空栏居中提醒 + 虚线落区；查找条在栏头与编辑器之间，不覆盖代码
 - **窄屏**：仍左右并排并可横滑；**禁止** `.cm-mergeViewEditors { flex-direction: column }`（纵向堆叠会对错 revert 行）
-- **页眉 = 全宽半透明层**（透 canvas，不用白色 surface；轻模糊分层），不吸顶、不高卡片；工具：差异块计数、上一条/下一条、查找、复制、下载菜单（原文 / 压缩）、`ThemeToggle`、隐私提示
+- **页眉 = 全宽半透明层**（透 canvas，不用白色 surface；轻模糊分层），不吸顶、不高卡片；工具：差异块当前/总数、上一条/下一条、查找、复制、下载菜单（原文 / 压缩）、`ThemeToggle`、隐私提示
 - **无** Diff 树、选边分栏、拖拽分隔条、`lcd-workspace-main-pct` 占比持久化
 - 组内紧、区间松；导入坞圆角 `md`；不做 01/02/03 步骤编号、不做指标仪表盘
 
@@ -191,9 +191,9 @@ Operate 模式的可编辑双栏文本合并工作台：冷灰画布托起表面
 - **Soft button：** 浅绿底 accent 字（选择文件、粘贴为该侧全文）
 - **Ghost / 默认按钮：** 透明或弱边框（块导航等）
 - **Danger：** 危险色字与淡边框（清空）
-- **Dropzone：** 导入坞；拖拽中 accent 描边；错误时 danger 描边 + 中文提示
+- **Dropzone：** 空栏虚线落区与拖入 accent 描边；栏头导入；错误时 danger 描边 + 中文提示
 - **Side labels：** `.ui-label-test` / `.ui-label-prod` 色点标签（参考 / 结果），无选边 radio
-- **Merge revert：** 中间 `→`，`aria-label`「将此差异写入右侧」
+- **Merge revert：** 中间 `→`（写入结果）；`←` 写回参考暂时下线
 
 ## Do's and Don'ts
 

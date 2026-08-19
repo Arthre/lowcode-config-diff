@@ -16,7 +16,7 @@ Vue 3 + TypeScript + Vite + Pinia + Vue Router + UnoCSS + VueUse + Vitest + Code
 
 ## Product Purpose
 
-纯前端的 **可编辑双栏文本合并工作台**：导入两侧 JSON 文本 → 满高 MergeView 对照与编辑 → 中间 `→` 将左块写入右栏 → 复制或下载右栏（默认 `config.json`）。成功标准是主路径可走通、用户 JSON 默认不出域。
+纯前端的 **可编辑双栏文本合并工作台**：导入两侧 JSON 文本 → 满高 MergeView 对照与编辑 → 中间 `→` 将参考块写入结果 → 复制或下载右栏（默认 `config.json`）。成功标准是主路径可走通、用户 JSON 默认不出域。
 
 ## Positioning
 
@@ -28,7 +28,7 @@ Vue 3 + TypeScript + Vite + Pinia + Vue Router + UnoCSS + VueUse + Vitest + Code
 
 ## Capabilities and Constraints
 
-- 已具备：Merge 栏头点选/粘贴全文/清空，编辑器上拖入文件（合法 object/array 根则格式化一次）、可编辑 MergeView（左参考、右结果）、按行差异块、代码缩略快照、栏头外查找条、块级 `→`、上一条/下一条（绕回）、复制/下载/压缩下载右栏（非法 JSON 提示后仍导出）、亮/暗主题切换
+- 已具备：Merge 栏头点选/粘贴全文/清空，整栏拖入文件（合法 object/array 根则格式化一次）、分栏空态提醒与虚线落区、可编辑 MergeView（左参考、右结果）、按行差异块、冲突点缩略轨（双侧都空时隐藏）、栏头外查找条、块级 `→`（采纳参考）、上一条/下一条（当前 / 总数，绕回）、复制/下载/压缩下载右栏（非法 JSON 提示后仍导出）、亮/暗主题切换
 - Core 仍含 `parseConfig` / `formatConfig` / `compressConfig`、`diffConfig`、`mergeConfig`；**现行 UI 不调用** `diffConfig` / `mergeConfig`（仅导入校验/格式化与引擎单测仍用 Core）
 - 约束：无后端、无云端保存、无 Git/发布；文本 diff，不忽略键序/空白；本包无体积上限
 - （推断）首要语言为简体中文 UI；未单独确认无障碍标准
@@ -40,7 +40,7 @@ Vue 3 + TypeScript + Vite + Pinia + Vue Router + UnoCSS + VueUse + Vitest + Code
 
 ## Evidence on Hand
 
-- 现行规格与计划：`.docs/specs/2026-08-18-*`、`.docs/plans/archive/2026-08-18-*`（M1–M4 已归档）
+- 现行规格与计划：`.docs/specs/2026-08-18-*`、`.docs/specs/2026-08-19-empty-drop-bidirectional-revert.md`、`.docs/specs/2026-08-19-revert-unlock-chunk-anchor.md`、`.docs/plans/archive/2026-08-18-*`、`.docs/plans/2026-08-19-empty-drop-bidirectional-revert.md`、`.docs/plans/2026-08-19-revert-unlock-chunk-anchor.md`
 - 历史：`.docs/specs/2026-08-15-v0.1-config-diff-merge.md`（主路径已被取代，正文保留）与 `.docs/plans/archive/`
 - 实现：`src/views/HomeView.vue`、`TwoWayMergeEditor` / `mergeWorkspace`、`src/core/*`（备用引擎）
 - 不得虚构客户评价、基准数据或部署案例

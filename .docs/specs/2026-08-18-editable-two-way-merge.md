@@ -10,7 +10,7 @@
 
 ## 一句话口径
 
-> 左栏 TEST 为参考、右栏为结果；双侧可编辑；按文本差异块把左侧拷到右侧；复制/下载只认右栏。结构按叶选边退出主路径。
+> 左栏为参考、右栏为结果；双侧可编辑；按文本差异块把参考写入结果；复制/下载只认右栏。结构按叶选边退出主路径。
 
 各切片不得改写此口径。细节 delta 只写在对应切片规格里。
 
@@ -19,10 +19,10 @@
 ## 数据流
 
 ```text
-导入/粘贴 TEST ──► leftDoc
-导入/粘贴 PROD ──► rightDoc  ──► 复制 / 下载
+导入/粘贴 参考 ──► leftDoc
+导入/粘贴 结果 ──► rightDoc  ──► 复制 / 下载
          │              │
-         └── MergeView（revertControls a-to-b →）──┘
+         └── MergeView（→ 采纳参考 a-to-b）──┘
 ```
 
 ---
@@ -32,7 +32,7 @@
 | 项          | 锁定                                                                                                                                                              |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 编辑器      | CodeMirror 6 **MergeView**；不启用 `collapseUnchanged`                                                                                                            |
-| 中间区      | `revertControls: 'a-to-b'` + 自定义 `→`；不自绘第三列；不可拖宽                                                                                                   |
+| 中间区      | `revertControls: 'a-to-b'`；中间只显示 `→`。`←`（结果块写回参考）**暂时下线**。不自绘可拖宽第三列                                                                 |
 | 滚动        | 外层统一同步；**无**关闭开关；无页眉「采纳当前块」                                                                                                                |
 | 窄屏        | **仍左右并排**，宿主 `overflow-x: auto`；**禁止**把 `.cm-mergeViewEditors` 改成 `column`（revert 按钮按行对齐，纵向堆叠会对错行）                                 |
 | 仅导入 TEST | 右栏保持**空**。左满右空时差异通常是**整份一块**；第一次 `→` 等于把左侧全文写入结果（预期，不是 bug）                                                             |
@@ -46,14 +46,14 @@
 | 键序/空白   | 文本 diff，**不**忽略键序或空白。V0.1 `deepEqual` 视为相同的「仅键序不同」在此会显示为差异（已接受）                                                              |
 | 整文件 diff | `diffConfig.override` 为按行 `diffByLine`；行种类过多时退回 `{ scanLimit: 10000, timeout: 1000 }`。**禁止**沿用叶级 `800/250`                                     |
 | 大文件      | 本包无体积上限、不做虚拟列表；过大可能卡顿，不单开切片                                                                                                            |
-| 块导航      | 上一条/下一条按 `mergeView.chunks`；以当前滚动/光标之后（前）一块为准；到头**绕回**                                                                               |
-| 不做        | `←`、Unified、双模式、拷当前行、忽略空白、脏确认、Monaco、后端                                                                                                    |
+| 块导航      | 上一条/下一条按 `mergeView.chunks`，滚入视口；页眉「当前 / 总数 个差异块」随视口最上重叠块变化；到头**绕回**                                                      |
+| 不做        | Unified、双模式、拷当前行、忽略空白、脏确认、Monaco、后端；`←` 写回参考暂时下线                                                                                   |
 
 ### 编辑器 ↔ store 同步（M2 必须遵守）
 
 现有 `JsonMergeViewer`「doc 一变就 destroy 重建」**不得**用于可写整页。
 
-1. **键入 / `→` / 编辑器 Undo：** 只允许 `editor → store`（`docChanged` 且字符串确有变化才 `setLeftDoc` / `setRightDoc`）。**禁止**因这次 store 更新再 watch 去重建 MergeView。
+1. **键入 / `→` / `←` / 编辑器 Undo：** 只允许 `editor → store`（`docChanged` 且字符串确有变化才 `setLeftDoc` / `setRightDoc`）。**禁止**因这次 store 更新再 watch 去重建 MergeView。
 2. **导入 / 清空：** 只对**被改的那一侧** `dispatch` 替换文档；**禁止**为换一侧而 `destroy` 整个 MergeView（另一侧 Undo 必须保留）。
 3. 比较用文档字符串是否相等，不用对象引用。
 4. 可写扩展必须含 `@codemirror/commands` 的 `history()`、`historyKeymap` 与 `defaultKeymap`。**`defaultKeymap` 不含 Undo**；没有 `historyKeymap` 则 Ctrl+Z 不存在。

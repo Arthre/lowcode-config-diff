@@ -22,7 +22,7 @@
 - 暗色选择器：`html.dark`（`index.html` FOUC 脚本与之对齐）
 - 动画：亮→暗亮色圆形*收回*、暗→亮亮色圆形*进入*（约 340ms，CSS 首帧驱动 + 暗色过渡底，抑白闪）；无 API / 减少动效时瞬时切换
 - 页眉：全宽扁平 chrome（非面板）；工作区：满高双栏 Merge（`layout.scss` 单列 flex，Merge 吃剩余高度）
-- 页眉工具：块计数、上一条/下一条、查找、复制、下载菜单（含压缩下载）；保留 `ThemeToggle` 与「本地处理 · 不上传」
+- 页眉工具：当前/总数块计数、上一条/下一条、查找、复制、下载菜单（含压缩下载）；保留 `ThemeToggle` 与「本地处理 · 不上传」
 - 单测：`src/composables/useThemeToggle.test.ts`（存储键与揭示半径）
 
 ## 当前状态
@@ -30,15 +30,18 @@
 | 文件                                        | 职责                                                                                                                              |
 | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `src/styles/`                               | 设计系统：`tokens` / `theme-transition` / `base` / `primitives` / `layout` / `semantic`（侧标签、状态色）；功能扩展见 `features/` |
-| `src/views/HomeView.vue`                    | 工作台：满高 `TwoWayMergeEditor`；页眉主题切换、块导航、查找、复制、下载/压缩下载                                                 |
-| `src/components/TwoWayMergeEditor.vue`      | 可编辑 MergeView：栏头导入；查找条在编辑器外；右侧代码缩略快照；中间 `→`；按行 diff                                               |
+| `src/views/HomeView.vue`                    | 工作台：满高 `TwoWayMergeEditor`；页眉主题切换、块导航（当前/总数）、查找、复制、下载/压缩下载                                    |
+| `src/components/TwoWayMergeEditor.vue`      | 可编辑 MergeView：栏头导入；分栏空态；查找条在编辑器外；右侧冲突点缩略轨；中间仅 `→`；按行 diff                                   |
+| `src/composables/sideFromClientX.ts`        | 拖放按横坐标判栏                                                                                                                  |
+| `src/composables/chunkRevertChange.ts`      | 差异块写回公式（保留；`←` UI 暂时下线）                                                                                           |
 | `src/components/MergeSearchDock.vue`        | 栏头与编辑器之间的查找/替换条                                                                                                     |
-| `src/components/DiffMinimap.vue`            | 双侧代码快照缩略图，点击/拖动跳转                                                                                                 |
+| `src/components/DiffMinimap.vue`            | 冲突点缩略轨，点击/拖动跳转                                                                                                       |
 | `src/components/UiTooltip.vue`              | 按钮说明气泡（默认朝上，空间不够则翻转）                                                                                          |
 | `src/components/DownloadMenu.vue`           | 下载菜单：原文 / 压缩                                                                                                             |
 | `src/composables/diffByLine.ts`             | MergeView `diffConfig.override`：按行对照，避免未改行并进同一块                                                                   |
-| `src/composables/chunkMinimapLayout.ts`     | 缩略图视口与点击滚动换算                                                                                                          |
-| `src/composables/minimapSnapshot.ts`        | 缩略快照行标记、色块与画布绘制                                                                                                    |
+| `src/composables/chunkMinimapLayout.ts`     | 冲突带、视口与点击滚动换算                                                                                                        |
+| `src/composables/chunkNavAnchor.ts`         | 当前差异块下标与页眉锚点文案                                                                                                      |
+| `src/composables/minimapSnapshot.ts`        | 按差异区间标记冲突行                                                                                                              |
 | `src/composables/placeTooltip.ts`           | 气泡方向与视口夹取                                                                                                                |
 | `src/composables/packRightDocDownload.ts`   | 右栏下载打包：合法则 `compressConfig`                                                                                             |
 | `src/composables/pickJsonFile.ts`           | 从文件列表优先取出 JSON                                                                                                           |
@@ -56,7 +59,7 @@
 
 打开即对照：满高可编辑 MergeView，导入收在栏头。无「开始 Diff」门禁。复制/下载只出右栏（`describeRightDocExport` 提示后仍导出）。刷新不恢复（store 无 persist）。
 
-- `TwoWayMergeEditor`：左参考、右结果；栏头点选/粘贴全文/清空，编辑器上拖入走 `importSide`（合法则格式化一次）；编辑器内 Ctrl+V 仍是光标插入、不格式化；`→` 把左块写入右侧；按行 diff；代码缩略快照；Ctrl+F 打开编辑器外查找条；上一条/下一条绕回
+- `TwoWayMergeEditor`：左参考、右结果；栏头点选/粘贴全文/清空，整栏拖入走 `importSide`（合法则格式化一次）；空栏居中提醒与虚线落区；编辑器内 Ctrl+V 仍是光标插入、不格式化；`→` 把参考块写入结果（`←` 暂时下线）；按行 diff；冲突点缩略轨（双侧都空时隐藏）；Ctrl+F 打开编辑器外查找条；上一条/下一条绕回；页眉当前块随视口滚动
 - 下载菜单：`config.json` 或压缩为 `config.min.json`（非法 JSON 仍导出原文）
 - Core `diffConfig` / `mergeConfig` 仍在源码，**UI 不调用**
 
@@ -69,7 +72,8 @@
 
 ## 规格与计划
 
-- 规格（已完成）：[可编辑双栏合并总览](../specs/2026-08-18-editable-two-way-merge.md)、[M1](../specs/2026-08-18-m1-merge-workspace.md)、[M2](../specs/2026-08-18-m2-two-way-editor.md)、[M3](../specs/2026-08-18-m3-home-import.md)、[M4](../specs/2026-08-18-m4-remove-legacy-ui.md)
+- 规格（已完成）：[可编辑双栏合并总览](../specs/2026-08-18-editable-two-way-merge.md)、[M1](../specs/2026-08-18-m1-merge-workspace.md)、[M2](../specs/2026-08-18-m2-two-way-editor.md)、[M3](../specs/2026-08-18-m3-home-import.md)、[M4](../specs/2026-08-18-m4-remove-legacy-ui.md)、[空态与双向采纳](../specs/2026-08-19-empty-drop-bidirectional-revert.md)、[块导航锚点](../specs/2026-08-19-revert-unlock-chunk-anchor.md)（`←` 暂时下线）
+- 计划（未归档）：[空态与双向采纳](../plans/2026-08-19-empty-drop-bidirectional-revert.md)、[块导航锚点](../plans/2026-08-19-revert-unlock-chunk-anchor.md)
 - 计划（已归档）：[总索引](../plans/archive/2026-08-18-editable-two-way-merge.md)、[M1](../plans/archive/2026-08-18-m1-merge-workspace.md)、[M2](../plans/archive/2026-08-18-m2-two-way-editor.md)、[M3](../plans/archive/2026-08-18-m3-home-import.md)、[M4](../plans/archive/2026-08-18-m4-remove-legacy-ui.md)
 - 历史规格：[V0.1 总览](../specs/2026-08-15-v0.1-config-diff-merge.md)、[M4 输入](../specs/2026-08-15-m4-ui-json-input.md)、[M5](../specs/2026-08-15-m5-ui-diff-tree.md)、[M6](../specs/2026-08-15-m6-ui-merge-export.md)、[Diff/Result JSON](../specs/2026-08-17-diff-result-json-viewer.md)
 
