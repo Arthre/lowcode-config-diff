@@ -2,7 +2,7 @@
 
 **日期：** 2026-08-18  
 **状态：** 已完成  
-**关联计划：** [总计划索引](../plans/2026-08-18-editable-two-way-merge.md)  
+**关联计划：** [总计划索引](../plans/archive/2026-08-18-editable-two-way-merge.md)  
 **切片：** [M1 会话与纯逻辑](./2026-08-18-m1-merge-workspace.md) → [M2 Merge 宿主](./2026-08-18-m2-two-way-editor.md) → [M3 导入条与换壳](./2026-08-18-m3-home-import.md) → [M4 删除旧 UI 与文档](./2026-08-18-m4-remove-legacy-ui.md)  
 **不改动：** `src/core/diff.ts` / `merge.ts` 保留但退出主路径；不删引擎单测
 
@@ -72,12 +72,12 @@ M2 **不修改** `HomeView`、不新增长期路由。组件先落地，手工�
                                  └─ M3 导入条 + Home 换壳 ─┴─ M4 删旧 UI + 文档
 ```
 
-| 切片 | 规格                                                       | 计划                                               | 交付                                                   | 状态   |
-| ---- | ---------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------ | ------ |
-| M1   | [m1-merge-workspace](./2026-08-18-m1-merge-workspace.md)   | [plan](../plans/2026-08-18-m1-merge-workspace.md)  | store + `prepareImportText` + `describeRightDocExport` | 已完成 |
-| M2   | [m2-two-way-editor](./2026-08-18-m2-two-way-editor.md)     | [plan](../plans/2026-08-18-m2-two-way-editor.md)   | `TwoWayMergeEditor`                                    | 已完成 |
-| M3   | [m3-home-import](./2026-08-18-m3-home-import.md)           | [plan](../plans/2026-08-18-m3-home-import.md)      | `ImportBar` + 重写 `HomeView`                          | 已完成 |
-| M4   | [m4-remove-legacy-ui](./2026-08-18-m4-remove-legacy-ui.md) | [plan](../plans/2026-08-18-m4-remove-legacy-ui.md) | 删选边 UI、瘦身 export、sync 文档                      | 已完成 |
+| 切片 | 规格                                                       | 计划                                                       | 交付                                                   | 状态   |
+| ---- | ---------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------ | ------ |
+| M1   | [m1-merge-workspace](./2026-08-18-m1-merge-workspace.md)   | [plan](../plans/archive/2026-08-18-m1-merge-workspace.md)  | store + `prepareImportText` + `describeRightDocExport` | 已完成 |
+| M2   | [m2-two-way-editor](./2026-08-18-m2-two-way-editor.md)     | [plan](../plans/archive/2026-08-18-m2-two-way-editor.md)   | `TwoWayMergeEditor`                                    | 已完成 |
+| M3   | [m3-home-import](./2026-08-18-m3-home-import.md)           | [plan](../plans/archive/2026-08-18-m3-home-import.md)      | `ImportBar` + 重写 `HomeView`                          | 已完成 |
+| M4   | [m4-remove-legacy-ui](./2026-08-18-m4-remove-legacy-ui.md) | [plan](../plans/archive/2026-08-18-m4-remove-legacy-ui.md) | 删选边 UI、瘦身 export、sync 文档                      | 已完成 |
 
 顺序：M1 → M2 与 M3 均依赖 M1；**M3 依赖 M2**（换壳时挂上编辑器）；M4 必须在 M3 换壳之后。
 

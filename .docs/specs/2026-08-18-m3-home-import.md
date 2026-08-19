@@ -3,7 +3,7 @@
 **日期：** 2026-08-18  
 **状态：** 已完成  
 **依赖：** [总览](./2026-08-18-editable-two-way-merge.md)、[M1](./2026-08-18-m1-merge-workspace.md)、[M2](./2026-08-18-m2-two-way-editor.md)  
-**关联计划：** [`.docs/plans/2026-08-18-m3-home-import.md`](../plans/2026-08-18-m3-home-import.md)  
+**关联计划：** [`.docs/plans/archive/2026-08-18-m3-home-import.md`](../plans/archive/2026-08-18-m3-home-import.md)  
 **影响模块：** `src/components/ImportBar.vue`、`src/views/HomeView.vue`、`src/styles/layout.scss`  
 **不改动：** 暂不删除旧组件文件（M4 删）；保留 `ThemeToggle`
 

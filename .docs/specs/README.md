@@ -27,4 +27,4 @@ YYYY-MM-DD-<主题>.md
 
 ## 最近完成
 
-可编辑双栏合并（2026-08-18）：[总览](./2026-08-18-editable-two-way-merge.md) 与 M1–M4 切片规格均已完成。对应计划仍在 `.docs/plans/`，**待确认后再归档**（不要自行移入 `archive/`）。
+可编辑双栏合并（2026-08-18）：[总览](./2026-08-18-editable-two-way-merge.md) 与 M1–M4 切片规格均已完成。对应计划见 [`.docs/plans/archive/`](../plans/archive/)。

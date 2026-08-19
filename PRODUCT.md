@@ -40,7 +40,7 @@ Vue 3 + TypeScript + Vite + Pinia + Vue Router + UnoCSS + VueUse + Vitest + Code
 
 ## Evidence on Hand
 
-- 现行规格与计划：`.docs/specs/2026-08-18-*`、`.docs/plans/2026-08-18-*`（M1–M4；计划待确认归档，链接仍在 `plans/`）
+- 现行规格与计划：`.docs/specs/2026-08-18-*`、`.docs/plans/archive/2026-08-18-*`（M1–M4 已归档）
 - 历史：`.docs/specs/2026-08-15-v0.1-config-diff-merge.md`（主路径已被取代，正文保留）与 `.docs/plans/archive/`
 - 实现：`src/views/HomeView.vue`、`TwoWayMergeEditor` / `mergeWorkspace`、`src/core/*`（备用引擎）
 - 不得虚构客户评价、基准数据或部署案例

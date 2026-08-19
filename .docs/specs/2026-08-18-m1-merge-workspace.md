@@ -3,7 +3,7 @@
 **日期：** 2026-08-18  
 **状态：** 已完成  
 **依赖：** [总览](./2026-08-18-editable-two-way-merge.md)  
-**关联计划：** [`.docs/plans/2026-08-18-m1-merge-workspace.md`](../plans/2026-08-18-m1-merge-workspace.md)  
+**关联计划：** [`.docs/plans/archive/2026-08-18-m1-merge-workspace.md`](../plans/archive/2026-08-18-m1-merge-workspace.md)  
 **影响模块：** `src/composables/prepareImportText.ts`、`src/composables/describeRightDocExport.ts`、`src/stores/mergeWorkspace.ts`  
 **不改动：** `HomeView`、选边 UI、`exportConfig` 选边摘要（仍给旧壳用）、`src/core/diff.ts` / `merge.ts`
 

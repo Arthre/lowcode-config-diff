@@ -1,15 +1,15 @@
 # M3：导入条与工作台换壳 实施计划
 
-> **给 Agent 执行者：** 使用 [子代理驱动开发](../workflows/subagent-driven-development.md) 或 [执行计划](../workflows/executing-plans.md)。未经用户明确要求不要 `git commit`。**未经用户确认不要把本计划移入 `plans/archive/`。**
+> **给 Agent 执行者：** 使用 [子代理驱动开发](../../workflows/subagent-driven-development.md) 或 [执行计划](../../workflows/executing-plans.md)。未经用户明确要求不要 `git commit`。
 
-**日期：** 2026-08-18 **状态：** 已完成（待确认归档） **关联设计：** `.docs/specs/2026-08-18-m3-home-import.md`  
+**日期：** 2026-08-18 **状态：** 已完成 **关联设计：** `.docs/specs/2026-08-18-m3-home-import.md`  
 **目标：** 主路径改为 ImportBar + TwoWayMergeEditor + 页眉导出  
 **依赖：** M1 store、M2 `TwoWayMergeEditor`  
 **技术栈：** Vue 3、现有 `copyText` / `downloadJsonFile`
 
 ## Global Constraints
 
-- 见 [总览](../specs/2026-08-18-editable-two-way-merge.md) 与 [M3 规格](../specs/2026-08-18-m3-home-import.md)
+- 见 [总览](../../specs/2026-08-18-editable-two-way-merge.md) 与 [M3 规格](../../specs/2026-08-18-m3-home-import.md)
 - 保留 `ThemeToggle`；无滚动开关；无「采纳当前块」；无脏标记
 - 粘贴按钮文案「粘贴为该侧全文」：`navigator.clipboard.readText()` → `importSide`；失败中文提示。不要做成编辑器光标插入
 - 导入条右侧展示名是「结果」不是「PROD」
@@ -105,4 +105,4 @@ function onDownload() {
 ### 任务 3：本切片验证
 
 - [x] `pnpm lint`；`pnpm build`
-- [ ] 规格状态改为「已完成（待归档）」；**不要**把本计划移入 `archive/`
+- [x] 规格状态改为「已完成」；计划已移入 `plans/archive/`

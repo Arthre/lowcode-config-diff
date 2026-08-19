@@ -3,7 +3,7 @@
 **日期：** 2026-08-18  
 **状态：** 已完成  
 **依赖：** [总览](./2026-08-18-editable-two-way-merge.md)、[M1](./2026-08-18-m1-merge-workspace.md)  
-**关联计划：** [`.docs/plans/2026-08-18-m2-two-way-editor.md`](../plans/2026-08-18-m2-two-way-editor.md)  
+**关联计划：** [`.docs/plans/archive/2026-08-18-m2-two-way-editor.md`](../plans/archive/2026-08-18-m2-two-way-editor.md)  
 **影响模块：** `src/composables/codemirrorTheme.ts`、`src/components/TwoWayMergeEditor.vue`  
 **不改动：** `HomeView` 主路径（本切片可不挂页；M3 再接入）；不删只读 `JsonMergeViewer`
 

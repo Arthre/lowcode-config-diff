@@ -1,8 +1,8 @@
 # M4：删除选边 UI 并同步文档 实施计划
 
-> **给 Agent 执行者：** 使用 [子代理驱动开发](../workflows/subagent-driven-development.md) 或 [执行计划](../workflows/executing-plans.md)。未经用户明确要求不要 `git commit`。**未经用户确认不要把任何计划移入 `plans/archive/`。**
+> **给 Agent 执行者：** 使用 [子代理驱动开发](../../workflows/subagent-driven-development.md) 或 [执行计划](../../workflows/executing-plans.md)。未经用户明确要求不要 `git commit`。
 
-**日期：** 2026-08-18 **状态：** 已完成（待确认归档） **关联设计：** `.docs/specs/2026-08-18-m4-remove-legacy-ui.md`  
+**日期：** 2026-08-18 **状态：** 已完成 **关联设计：** `.docs/specs/2026-08-18-m4-remove-legacy-ui.md`  
 **目标：** 删除死代码、瘦身 export、sync 活文档  
 **依赖：** M3 已换壳，主路径不再引用下列文件
 
@@ -11,7 +11,7 @@
 - 不删 `src/core/diff.ts` / `merge.ts` 及其测试
 - 不改 `package.json` / lockfile（即使 `vue-codemirror` 在删 `JsonEditor` 后无引用，本切片也不卸载）
 - V0.1 总览只加取代说明，不删正文
-- **未经用户确认不要把 M1–M4 或总计划移入 `plans/archive/`**
+- M1–M4 与总计划已移入 `plans/archive/`
 - 未经用户明确要求不要 `git commit`
 - 验证：`pnpm test:run`、`pnpm lint`、`pnpm build`
 
@@ -61,8 +61,8 @@
 - [x] `.docs/ui/README.md`：当前状态表改为 ImportBar / TwoWayMergeEditor / mergeWorkspace；去掉已删文件行
 - [x] `.docs/core/README.md`：`diff`/`merge` 备用、UI 不调用
 - [x] `.docs/specs/2026-08-15-v0.1-config-diff-merge.md` 文首加：主路径已被 `2026-08-18-editable-two-way-merge` 取代
-- [x] 总览与 M1–M4 规格标「已完成」；**不要**把 plan 移入 `plans/archive/`（等用户确认）；计划状态写「已完成（待确认归档）」
-- [x] 总计划索引同步状态（链接仍指向 `plans/` 非 `archive/`）
+- [x] 总览与 M1–M4 规格标「已完成」；计划已移入 `plans/archive/`
+- [x] 总计划索引同步状态（链接指向 `plans/archive/`）
 
 ---
 

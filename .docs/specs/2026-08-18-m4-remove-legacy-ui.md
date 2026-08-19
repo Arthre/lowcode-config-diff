@@ -3,7 +3,7 @@
 **日期：** 2026-08-18  
 **状态：** 已完成  
 **依赖：** [总览](./2026-08-18-editable-two-way-merge.md)、[M3](./2026-08-18-m3-home-import.md)（主路径已换壳）  
-**关联计划：** [`.docs/plans/2026-08-18-m4-remove-legacy-ui.md`](../plans/2026-08-18-m4-remove-legacy-ui.md)  
+**关联计划：** [`.docs/plans/archive/2026-08-18-m4-remove-legacy-ui.md`](../plans/archive/2026-08-18-m4-remove-legacy-ui.md)  
 **影响模块：** 旧选边组件 / store / composable；`exportConfig`；`PRODUCT.md`、`DESIGN.md`、`.docs/ui`、`.docs/core`、V0.1 总览
 
 ---
@@ -43,4 +43,4 @@
 2. `pnpm test:run`、`pnpm lint`、`pnpm build` 通过
 3. Core 单测仍绿
 4. `PRODUCT.md` / `DESIGN.md` / `.docs/ui/README.md` / `.docs/core/README.md` 与代码一致
-5. 本包总览与 M1–M4 规格状态可标「已完成」；对应 plan **等用户确认后再归档**（不要自行移入 `archive/`）
+5. 本包总览与 M1–M4 规格状态为「已完成」；对应 plan 已移入 `plans/archive/`

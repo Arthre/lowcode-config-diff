@@ -70,7 +70,7 @@
 ## 规格与计划
 
 - 规格（已完成）：[可编辑双栏合并总览](../specs/2026-08-18-editable-two-way-merge.md)、[M1](../specs/2026-08-18-m1-merge-workspace.md)、[M2](../specs/2026-08-18-m2-two-way-editor.md)、[M3](../specs/2026-08-18-m3-home-import.md)、[M4](../specs/2026-08-18-m4-remove-legacy-ui.md)
-- 计划（已完成，待确认归档；链接仍在 `plans/`）：[总索引](../plans/2026-08-18-editable-two-way-merge.md)、[M1](../plans/2026-08-18-m1-merge-workspace.md)、[M2](../plans/2026-08-18-m2-two-way-editor.md)、[M3](../plans/2026-08-18-m3-home-import.md)、[M4](../plans/2026-08-18-m4-remove-legacy-ui.md)
+- 计划（已归档）：[总索引](../plans/archive/2026-08-18-editable-two-way-merge.md)、[M1](../plans/archive/2026-08-18-m1-merge-workspace.md)、[M2](../plans/archive/2026-08-18-m2-two-way-editor.md)、[M3](../plans/archive/2026-08-18-m3-home-import.md)、[M4](../plans/archive/2026-08-18-m4-remove-legacy-ui.md)
 - 历史规格：[V0.1 总览](../specs/2026-08-15-v0.1-config-diff-merge.md)、[M4 输入](../specs/2026-08-15-m4-ui-json-input.md)、[M5](../specs/2026-08-15-m5-ui-diff-tree.md)、[M6](../specs/2026-08-15-m6-ui-merge-export.md)、[Diff/Result JSON](../specs/2026-08-17-diff-result-json-viewer.md)
 
 ## 相对 V0.1

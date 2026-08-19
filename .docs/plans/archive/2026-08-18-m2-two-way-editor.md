@@ -1,15 +1,15 @@
 # M2：可编辑双栏 Merge 宿主 实施计划
 
-> **给 Agent 执行者：** 使用 [子代理驱动开发](../workflows/subagent-driven-development.md) 或 [执行计划](../workflows/executing-plans.md)。未经用户明确要求不要 `git commit`。
+> **给 Agent 执行者：** 使用 [子代理驱动开发](../../workflows/subagent-driven-development.md) 或 [执行计划](../../workflows/executing-plans.md)。未经用户明确要求不要 `git commit`。
 
-**日期：** 2026-08-18 **状态：** 已完成（待确认归档） **关联设计：** `.docs/specs/2026-08-18-m2-two-way-editor.md`  
+**日期：** 2026-08-18 **状态：** 已完成 **关联设计：** `.docs/specs/2026-08-18-m2-two-way-editor.md`  
 **目标：** 新建读 store 的可编辑 MergeView，含块级 `→` 与 chunk 导航  
 **依赖：** M1 `useMergeWorkspace` 已存在  
 **技术栈：** Vue 3、`@codemirror/merge` MergeView
 
 ## Global Constraints
 
-- 见 [总览](../specs/2026-08-18-editable-two-way-merge.md)「锁定决策」与「编辑器 ↔ store 同步」以及 [M2 规格](../specs/2026-08-18-m2-two-way-editor.md)
+- 见 [总览](../../specs/2026-08-18-editable-two-way-merge.md)「锁定决策」与「编辑器 ↔ store 同步」以及 [M2 规格](../../specs/2026-08-18-m2-two-way-editor.md)
 - `revertControls: 'a-to-b'`；不传 `collapseUnchanged`；不自绘第三列
 - `diffConfig: { scanLimit: 10000, timeout: 1000 }`；禁止抄叶级 `800/250`
 - 可写扩展必须含 `history()` + `historyKeymap` + `defaultKeymap`；禁止 `readOnly`、禁止 focusScroll 门禁

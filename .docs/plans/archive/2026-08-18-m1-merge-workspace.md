@@ -1,15 +1,15 @@
 # M1：文档会话与导入/导出纯逻辑 实施计划
 
-> **给 Agent 执行者：** 使用 [子代理驱动开发](../workflows/subagent-driven-development.md) 或 [执行计划](../workflows/executing-plans.md)。未经用户明确要求不要 `git commit`。
+> **给 Agent 执行者：** 使用 [子代理驱动开发](../../workflows/subagent-driven-development.md) 或 [执行计划](../../workflows/executing-plans.md)。未经用户明确要求不要 `git commit`。
 
-**日期：** 2026-08-18 **状态：** 已完成（待确认归档） **关联设计：** `.docs/specs/2026-08-18-m1-merge-workspace.md`  
+**日期：** 2026-08-18 **状态：** 已完成 **关联设计：** `.docs/specs/2026-08-18-m1-merge-workspace.md`  
 **目标：** 交付 store 与导入/导出纯函数，不换 UI  
 **架构：** `prepareImportText` → `importSide`；`describeRightDocExport` 只描述右栏  
 **技术栈：** Pinia、Vitest、现有 `parseConfig` / `formatConfig` / `evaluateJsonDocument` / `formatJsonDocument`
 
 ## Global Constraints
 
-- 约束见 [总览](../specs/2026-08-18-editable-two-way-merge.md) 与 [M1 规格](../specs/2026-08-18-m1-merge-workspace.md)
+- 约束见 [总览](../../specs/2026-08-18-editable-two-way-merge.md) 与 [M1 规格](../../specs/2026-08-18-m1-merge-workspace.md)
 - 本切片不改 `HomeView`、不删 `diffSession`、不瘦身 `exportConfig`
 - 编辑器同步协议属 M2；本切片只保证 `importSide` 覆盖该侧字符串、**不改另一侧**
 - 文案中文；`describe` / `it` 中文
