@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   chunkBandsOf,
   conflictBandsOf,
+  createMinimapDragSession,
   scrollTopFromClick,
   viewportBandOf,
 } from './chunkMinimapLayout'
@@ -24,11 +25,41 @@ describe('viewportBandOf', () => {
   it('scrollHeight 为 0 时铺满', () => {
     expect(viewportBandOf(0, 0, 0)).toEqual({ start: 0, end: 1 })
   })
+
+  it('scrollTop 超出文档时滑块仍夹在轨道内', () => {
+    const band = viewportBandOf(500, 50, 200)
+    expect(band.start).toBeGreaterThanOrEqual(0)
+    expect(band.end).toBeLessThanOrEqual(1)
+    expect(band.start).toBeLessThan(band.end)
+    expect(band.end - band.start).toBeGreaterThanOrEqual(0.04)
+  })
 })
 
 describe('scrollTopFromClick', () => {
   it('点击比例映射到可滚动范围', () => {
     expect(scrollTopFromClick(0.5, 100, 300)).toBe(100)
+  })
+})
+
+describe('createMinimapDragSession', () => {
+  it('拖动中沿用按下时的高度，不因 scrollHeight 变化跳位', () => {
+    const session = createMinimapDragSession()
+    expect(session.scrollTopForRatio(0.5, { clientHeight: 100, scrollHeight: 300 })).toBe(100)
+    expect(session.scrollTopForRatio(0.5, { clientHeight: 100, scrollHeight: 800 })).toBe(100)
+    session.end()
+    expect(session.scrollTopForRatio(0.5, { clientHeight: 100, scrollHeight: 800 })).toBe(350)
+  })
+
+  it('拖动中滑块比例跟手且不超出轨道', () => {
+    const session = createMinimapDragSession()
+    const live = { clientHeight: 100, scrollHeight: 500 }
+    const band = session.viewportForRatio(0.8, live)
+    expect(band.start).toBeGreaterThanOrEqual(0)
+    expect(band.end).toBeLessThanOrEqual(1)
+    expect(band.start).toBeLessThan(band.end)
+    const later = session.viewportForRatio(0.8, { clientHeight: 100, scrollHeight: 2000 })
+    expect(later).toEqual(band)
+    session.end()
   })
 })
 

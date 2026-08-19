@@ -14,7 +14,7 @@ import DiffMinimap from '@/components/DiffMinimap.vue'
 import MergeSearchDock from '@/components/MergeSearchDock.vue'
 import UiTooltip from '@/components/UiTooltip.vue'
 import {
-  scrollTopFromClick,
+  createMinimapDragSession,
   viewportBandOf,
   type ChunkBand,
 } from '@/composables/chunkMinimapLayout'
@@ -57,6 +57,8 @@ const viewportBand = ref<ChunkBand>({ start: 0, end: 1 })
 let mergeView: MergeView | null = null
 /** 差异块像素带；只在文档/块数/尺寸变化时重测，滚动只做重叠判断。 */
 let cachedChunkBands: { start: number; end: number }[] = []
+const minimapDrag = createMinimapDragSession()
+let minimapDragging = false
 /** 上次已通知的差异块数量与当前下标；-1 保证挂载后必 emit 一次 */
 let lastChunkCount = -1
 let lastChunkCurrent = -1
@@ -120,6 +122,7 @@ function syncEditorChrome(rebuildLayout: boolean) {
 }
 
 function onMergeScroll() {
+  if (minimapDragging) return
   syncEditorChrome(false)
 }
 
@@ -164,8 +167,17 @@ function refreshMinimapSnapshot() {
 
 function onMinimapJump(ratio: number) {
   if (!mergeView) return
+  minimapDragging = true
   const scroller = mergeView.dom
-  scroller.scrollTop = scrollTopFromClick(ratio, scroller.clientHeight, scroller.scrollHeight)
+  const live = { clientHeight: scroller.clientHeight, scrollHeight: scroller.scrollHeight }
+  scroller.scrollTop = minimapDrag.scrollTopForRatio(ratio, live)
+  viewportBand.value = minimapDrag.viewportForRatio(ratio, live)
+}
+
+function onMinimapDragEnd() {
+  minimapDragging = false
+  minimapDrag.end()
+  syncEditorChrome(false)
 }
 
 /** 键入 / → / Undo：仅字符串确有变化时回写 store，避免与 watch 形成环 */
@@ -542,6 +554,7 @@ onBeforeUnmount(() => {
         :right-bands="rightBands"
         :viewport="viewportBand"
         @jump="onMinimapJump"
+        @drag-end="onMinimapDragEnd"
       />
     </div>
   </div>
@@ -552,6 +565,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-width: 0;
   min-height: 0;
   overflow-x: auto;
 }
@@ -628,11 +642,13 @@ onBeforeUnmount(() => {
 .two-way-merge-frame {
   position: relative;
   display: flex;
+  min-width: 0;
   min-height: 0;
 }
 
 .two-way-merge-host {
   position: relative;
+  min-width: 0;
   min-height: 0;
   overflow: hidden;
   border: 1px solid var(--border);
@@ -710,6 +726,7 @@ onBeforeUnmount(() => {
   position: relative;
   display: flex;
   flex: 1;
+  min-width: 0;
   min-height: 0;
   gap: 0.35rem;
 }
@@ -732,12 +749,17 @@ onBeforeUnmount(() => {
 
 :deep(.cm-mergeView) {
   height: 100%;
-  overflow: auto;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 :deep(.cm-mergeViewEditors) {
   display: flex;
   flex-direction: row;
+  min-width: 0;
   min-height: 100%;
 }
 
@@ -749,7 +771,13 @@ onBeforeUnmount(() => {
 
 :deep(.cm-editor),
 :deep(.cm-scroller) {
+  min-width: 0;
   min-height: 100%;
+}
+
+:deep(.cm-scroller) {
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 :deep(.cm-merge-revert) {

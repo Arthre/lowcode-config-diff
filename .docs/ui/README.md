@@ -35,7 +35,7 @@
 | `src/composables/sideFromClientX.ts`        | 拖放按横坐标判栏                                                                                                                  |
 | `src/composables/chunkRevertChange.ts`      | 差异块写回公式（保留；`←` UI 暂时下线）                                                                                           |
 | `src/components/MergeSearchDock.vue`        | 栏头与编辑器之间的查找/替换条                                                                                                     |
-| `src/components/DiffMinimap.vue`            | 冲突点缩略轨，点击/拖动跳转                                                                                                       |
+| `src/components/DiffMinimap.vue`            | 冲突点缩略轨；拖动跟手、滑块夹在轨道内；宿主 flex 收缩避免横向条                                                                  |
 | `src/components/UiTooltip.vue`              | 按钮说明气泡（默认朝上，空间不够则翻转）                                                                                          |
 | `src/components/DownloadMenu.vue`           | 下载菜单：原文 / 压缩                                                                                                             |
 | `src/composables/diffByLine.ts`             | MergeView `diffConfig.override`：按行对照，避免未改行并进同一块                                                                   |

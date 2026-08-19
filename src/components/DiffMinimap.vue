@@ -9,9 +9,13 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   jump: [ratio: number]
+  dragEnd: []
 }>()
 
 const trackRef = ref<HTMLElement | null>(null)
+let dragPointerId: number | null = null
+let rafId = 0
+let pendingRatio: number | null = null
 
 function ratioFromEvent(event: PointerEvent): number {
   const track = trackRef.value
@@ -21,16 +25,74 @@ function ratioFromEvent(event: PointerEvent): number {
   return Math.min(1, Math.max(0, (event.clientY - box.top) / box.height))
 }
 
-function onPointerDown(event: PointerEvent) {
-  event.preventDefault()
-  trackRef.value?.setPointerCapture(event.pointerId)
-  emit('jump', ratioFromEvent(event))
+function flushJump() {
+  rafId = 0
+  const ratio = pendingRatio
+  pendingRatio = null
+  if (ratio !== null) emit('jump', ratio)
 }
 
-function onPointerMove(event: PointerEvent) {
-  if (!event.buttons) return
-  emit('jump', ratioFromEvent(event))
+function queueJump(ratio: number, immediate: boolean) {
+  if (immediate) {
+    pendingRatio = null
+    if (rafId) {
+      cancelAnimationFrame(rafId)
+      rafId = 0
+    }
+    emit('jump', ratio)
+    return
+  }
+  pendingRatio = ratio
+  if (!rafId) rafId = requestAnimationFrame(flushJump)
 }
+
+function onWindowPointerMove(event: PointerEvent) {
+  if (dragPointerId !== event.pointerId) return
+  event.preventDefault()
+  queueJump(ratioFromEvent(event), false)
+}
+
+function onWindowPointerUp(event: PointerEvent) {
+  if (dragPointerId !== event.pointerId) return
+  stopDrag()
+}
+
+function stopDrag() {
+  const pointerId = dragPointerId
+  dragPointerId = null
+  window.removeEventListener('pointermove', onWindowPointerMove)
+  window.removeEventListener('pointerup', onWindowPointerUp)
+  window.removeEventListener('pointercancel', onWindowPointerUp)
+  if (pointerId !== null) {
+    const track = trackRef.value
+    if (track?.hasPointerCapture(pointerId)) track.releasePointerCapture(pointerId)
+  }
+  if (rafId) {
+    cancelAnimationFrame(rafId)
+    rafId = 0
+  }
+  if (pendingRatio !== null) {
+    emit('jump', pendingRatio)
+    pendingRatio = null
+  }
+  emit('dragEnd')
+}
+
+function onPointerDown(event: PointerEvent) {
+  event.preventDefault()
+  if (dragPointerId !== null) stopDrag()
+  dragPointerId = event.pointerId
+  trackRef.value?.setPointerCapture(event.pointerId)
+  window.addEventListener('pointermove', onWindowPointerMove, { passive: false })
+  window.addEventListener('pointerup', onWindowPointerUp)
+  window.addEventListener('pointercancel', onWindowPointerUp)
+  queueJump(ratioFromEvent(event), true)
+}
+
+onBeforeUnmount(() => {
+  if (dragPointerId !== null) stopDrag()
+  else if (rafId) cancelAnimationFrame(rafId)
+})
 </script>
 
 <template>
@@ -41,7 +103,6 @@ function onPointerMove(event: PointerEvent) {
     aria-label="冲突缩略图"
     aria-orientation="vertical"
     @pointerdown="onPointerDown"
-    @pointermove="onPointerMove"
   >
     <span
       class="diff-minimap__viewport"
@@ -80,6 +141,7 @@ function onPointerMove(event: PointerEvent) {
   position: relative;
   flex: 0 0 0.9rem;
   width: 0.9rem;
+  min-width: 0.9rem;
   min-height: 0;
   align-self: stretch;
   overflow: hidden;
@@ -87,6 +149,9 @@ function onPointerMove(event: PointerEvent) {
   border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--code-bg) 88%, var(--surface));
   cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  overscroll-behavior: contain;
 }
 
 .diff-minimap__viewport {
