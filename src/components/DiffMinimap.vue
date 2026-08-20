@@ -58,15 +58,14 @@ function onWindowPointerUp(event: PointerEvent) {
 }
 
 function stopDrag() {
+  if (dragPointerId === null) return
   const pointerId = dragPointerId
   dragPointerId = null
   window.removeEventListener('pointermove', onWindowPointerMove)
   window.removeEventListener('pointerup', onWindowPointerUp)
   window.removeEventListener('pointercancel', onWindowPointerUp)
-  if (pointerId !== null) {
-    const track = trackRef.value
-    if (track?.hasPointerCapture(pointerId)) track.releasePointerCapture(pointerId)
-  }
+  const track = trackRef.value
+  if (track?.hasPointerCapture(pointerId)) track.releasePointerCapture(pointerId)
   if (rafId) {
     cancelAnimationFrame(rafId)
     rafId = 0
@@ -103,6 +102,7 @@ onBeforeUnmount(() => {
     aria-label="冲突缩略图"
     aria-orientation="vertical"
     @pointerdown="onPointerDown"
+    @lostpointercapture="stopDrag"
   >
     <span
       class="diff-minimap__viewport"

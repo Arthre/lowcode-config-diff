@@ -3,7 +3,7 @@ import { evaluateJsonDocument } from '@/composables/useJsonDocument'
 export type RightDocExportHint =
   { kind: 'empty' } | { kind: 'valid' } | { kind: 'invalid'; message: string }
 
-/** 描述右栏文档导出状态，只提示不阻断 */
+/** 描述右栏文档状态：empty / valid / invalid。下载是否放行由 guardRightDocDownload 决定。 */
 export function describeRightDocExport(rightDoc: string): RightDocExportHint {
   const state = evaluateJsonDocument(rightDoc)
 

@@ -59,4 +59,17 @@ describe('resolveTooltipPlacement', () => {
     )
     expect(placed.left).toBe(8)
   })
+
+  it('宽气泡在右侧触发器上会夹进视口而不越过右缘', () => {
+    const wide = { width: 256, height: 40 }
+    const placed = resolveTooltipPlacement(
+      { top: 12, left: 300, width: 88, height: 28 },
+      wide,
+      'bottom',
+      viewport,
+    )
+    expect(placed.placement).toBe('bottom')
+    expect(placed.left).toBe(136)
+    expect(placed.top).toBe(48)
+  })
 })

@@ -25,6 +25,7 @@ export default defineConfig({
     'i-lucide-play',
     'i-lucide-copy',
     'i-lucide-download',
+    'i-lucide-chevron-left',
     'i-lucide-chevron-right',
     'i-lucide-sun',
     'i-lucide-moon',

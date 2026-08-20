@@ -29,6 +29,9 @@ importers:
       '@codemirror/view':
         specifier: ^6.43.8
         version: 6.43.8
+      '@lottiefiles/dotlottie-vue':
+        specifier: ^0.11.26
+        version: 0.11.26(vue@3.5.41(typescript@6.0.3))
       '@vueuse/core':
         specifier: ^14.4.0
         version: 14.4.0(vue@3.5.41(typescript@6.0.3))
@@ -401,6 +404,16 @@ packages:
 
   '@lezer/lr@1.4.10':
     resolution: {integrity: sha512-rnCpTIBafOx4mRp43xOxDJbFipJm/c0cia/V5TiGlhmMa+wsSdoGmUN3w5Bqrks/09Q/D4tNAmWaT8p6NRi77A==}
+
+  '@lottiefiles/dotlottie-vue@0.11.26':
+    resolution: {integrity: sha512-1AYQC17/ule+jI2Jxvj5xPAS/8ikuIkSpnTTZ/MT1mfwZ3T9Cyi1uD5kbwyCVPv95/Y6IYbOPMkEX86rTIaGGQ==}
+    engines: {node: '>=18.17.0', npm: '>=9.5.0'}
+    peerDependencies:
+      vue: ^3.3.4
+
+  '@lottiefiles/dotlottie-web@0.79.2':
+    resolution: {integrity: sha512-9/LBOmTqhrFOB6298tD9BEfCmTESHKL51u8meNQF7lgsSsdFMC2Xx7jd/jZTC5svWXzcE2qZ0XvaoGbopIUElw==}
+    engines: {node: '>=18.17.0', npm: '>=9.5.0'}
 
   '@marijn/find-cluster-break@1.0.3':
     resolution: {integrity: sha512-FY+MKLBoTsLNJF/eLWaOsXGdz6uh3Iu1axjPf6TUq92IYumcTcXWHoS747JARLkcdlJ/Waiaxc5wQfFO8jC6NA==}
@@ -2903,6 +2916,13 @@ snapshots:
   '@lezer/lr@1.4.10':
     dependencies:
       '@lezer/common': 1.5.2
+
+  '@lottiefiles/dotlottie-vue@0.11.26(vue@3.5.41(typescript@6.0.3))':
+    dependencies:
+      '@lottiefiles/dotlottie-web': 0.79.2
+      vue: 3.5.41(typescript@6.0.3)
+
+  '@lottiefiles/dotlottie-web@0.79.2': {}
 
   '@marijn/find-cluster-break@1.0.3': {}
 

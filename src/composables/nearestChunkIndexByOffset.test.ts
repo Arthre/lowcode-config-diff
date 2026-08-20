@@ -53,3 +53,21 @@ describe('nearestChunkIndexByOffset', () => {
     expect(nearestChunkIndexByOffset({ offset: 18, chunks, side: 'b' })).toBe(1)
   })
 })
+
+/** 模拟 onJumpGroup 缓存未命中：只把 live offset 交给 nearest，绝不塞当前锚点。 */
+function resolveUncachedJumpGroup(offset: number | null): number {
+  return nearestChunkIndexByOffset({ offset, chunks, side: 'b' })
+}
+
+describe('onJumpGroup 缓存未命中回退', () => {
+  it('只有 offset 为空时 nearest 返回 -1，不得假装返回当前锚点 2', () => {
+    const currentAnchor = 2
+    expect(resolveUncachedJumpGroup(null)).toBe(-1)
+    expect(resolveUncachedJumpGroup(null)).not.toBe(currentAnchor)
+  })
+
+  it('有组偏移时 nearest 返回最近块下标', () => {
+    expect(resolveUncachedJumpGroup(18)).toBe(1)
+    expect(resolveUncachedJumpGroup(70)).toBe(3)
+  })
+})

@@ -2,6 +2,7 @@
 import DownloadMenu from '@/components/DownloadMenu.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import TwoWayMergeEditor from '@/components/TwoWayMergeEditor.vue'
+import UiMessage from '@/components/UiMessage.vue'
 import UiTooltip from '@/components/UiTooltip.vue'
 import { chunkKindSummaryText, type ChunkKindCounts } from '@/composables/chunkKind'
 import {
@@ -13,7 +14,12 @@ import {
   describeRightDocExport,
   type RightDocExportHint,
 } from '@/composables/describeRightDocExport'
-import { packRightDocDownload } from '@/composables/packRightDocDownload'
+import { guardRightDocDownload } from '@/composables/packRightDocDownload'
+import {
+  statusDismissMs,
+  toneFromExportHint,
+  type StatusMessageTone,
+} from '@/composables/statusMessage'
 import { useAppStore } from '@/stores/app'
 import { useMergeWorkspace } from '@/stores/mergeWorkspace'
 import { copyText, downloadJsonFile } from '@/utils/exportConfig'
@@ -30,6 +36,8 @@ const chunkCount = ref(0)
 const chunkCurrent = ref(0)
 const chunkKinds = ref<ChunkKindCounts>({ added: 0, removed: 0, modified: 0 })
 const statusText = ref('')
+const statusTone = ref<StatusMessageTone>('success')
+const statusNonce = ref(0)
 const chunkAnchor = computed(() => chunkAnchorText(chunkCurrent.value, chunkCount.value))
 const kindRowAriaLabel = computed(() => chunkKindSummaryText(chunkKinds.value))
 
@@ -41,46 +49,55 @@ function onChunks(count: number, current: number, kinds: ChunkKindCounts) {
   chunkKinds.value = kinds
 }
 
-function exportHintText(hint: RightDocExportHint): string | null {
-  if (hint.kind === 'empty') return '目标配置为空，仍已导出'
+function copyHintText(hint: RightDocExportHint): string | null {
+  if (hint.kind === 'empty') return '目标配置为空，仍已复制'
   if (hint.kind === 'invalid') return hint.message
   return null
 }
 
-function clearStatusLater() {
+function dismissStatus() {
   if (statusClearTimer !== undefined) {
     clearTimeout(statusClearTimer)
+    statusClearTimer = undefined
   }
+  statusText.value = ''
+}
+
+function showStatus(text: string, tone: StatusMessageTone) {
+  if (statusClearTimer !== undefined) {
+    clearTimeout(statusClearTimer)
+    statusClearTimer = undefined
+  }
+  statusText.value = text
+  statusTone.value = tone
+  statusNonce.value += 1
   statusClearTimer = setTimeout(() => {
     statusText.value = ''
     statusClearTimer = undefined
-  }, 2000)
+  }, statusDismissMs(tone))
 }
 
 async function onCopy() {
   const hint = describeRightDocExport(workspace.rightDoc)
   try {
     await copyText(workspace.rightDoc)
-    statusText.value = exportHintText(hint) ?? '已复制'
+    showStatus(copyHintText(hint) ?? '已复制', toneFromExportHint(hint.kind))
   } catch {
-    statusText.value = '复制失败'
+    showStatus('复制失败', 'error')
   }
-  clearStatusLater()
 }
 
 function onDownload(compressed: boolean) {
-  const packed = packRightDocDownload(workspace.rightDoc, compressed)
-  downloadJsonFile(packed.content, packed.filename)
-  statusText.value = exportHintText(packed.hint) ?? (compressed ? '已压缩并导出' : '已导出')
-  clearStatusLater()
+  const guarded = guardRightDocDownload(workspace.rightDoc, compressed)
+  if (!guarded.allow) {
+    showStatus(guarded.message, guarded.tone)
+    return
+  }
+  downloadJsonFile(guarded.content, guarded.filename)
+  showStatus(guarded.message, guarded.tone)
 }
 
-onBeforeUnmount(() => {
-  if (statusClearTimer !== undefined) {
-    clearTimeout(statusClearTimer)
-    statusClearTimer = undefined
-  }
-})
+onBeforeUnmount(dismissStatus)
 </script>
 
 <template>
@@ -143,7 +160,7 @@ onBeforeUnmount(() => {
           role="toolbar"
           aria-label="本地处理与导出"
         >
-          <UiTooltip text="所有 JSON 均在浏览器本地处理，不会上传到服务器。">
+          <UiTooltip text="所有 JSON 均在浏览器本地处理，不会上传到服务器。" placement="bottom">
             <span
               class="ui-privacy"
               tabindex="0"
@@ -170,7 +187,6 @@ onBeforeUnmount(() => {
             </button>
           </UiTooltip>
           <DownloadMenu @pretty="onDownload(false)" @compressed="onDownload(true)" />
-          <span v-if="statusText" class="text-xs font-medium" role="status">{{ statusText }}</span>
         </div>
       </div>
     </header>
@@ -178,5 +194,12 @@ onBeforeUnmount(() => {
     <div class="ui-workspace">
       <TwoWayMergeEditor ref="mergeEditorRef" class="flex-1 min-h-0" @chunks="onChunks" />
     </div>
+
+    <UiMessage
+      :text="statusText"
+      :tone="statusTone"
+      :nonce="statusNonce"
+      @dismiss="dismissStatus"
+    />
   </div>
 </template>

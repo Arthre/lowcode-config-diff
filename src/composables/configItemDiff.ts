@@ -55,6 +55,17 @@ export function configItemInvolveText(items: number): string {
   return `涉及 ${items} 个配置项`
 }
 
+/** 目录顶栏。fields<=0 返回 '' */
+export function directoryFieldSummaryText(fields: number, items: number): string {
+  if (fields <= 0) return ''
+  return `${configItemFieldCountText(fields)} · ${configItemInvolveText(items)}`
+}
+
+export function formatJumpLineNumber(line: number): string {
+  if (line <= 0) return ''
+  return `L${line}`
+}
+
 function tryParseConfig(text: string) {
   try {
     return parseConfig(text)

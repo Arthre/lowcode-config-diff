@@ -1,6 +1,11 @@
 <script setup lang="ts" name="ChunkJumpList">
 import type { ChunkKind } from '@/composables/chunkKind'
-import type { ConfigFieldChange, ConfigItemGroup } from '@/composables/configItemDiff'
+import {
+  formatJumpLineNumber,
+  type ConfigFieldChange,
+  type ConfigItemGroup,
+} from '@/composables/configItemDiff'
+import { fieldLineNumberKey } from '@/composables/jumpLineNumbers'
 import type { JsonPathSeg } from '@/composables/jsonPathOffset'
 
 const chunkKindShortName: Record<ChunkKind, string> = {
@@ -17,11 +22,17 @@ const props = withDefaults(
     groups?: ConfigItemGroup[]
     activeGroupId?: string
     expandedIds?: readonly string[]
+    fieldSummaryText?: string
+    groupLineNumbers?: Record<string, number>
+    fieldLineNumbers?: Record<string, number>
   }>(),
   {
     groups: () => [],
     activeGroupId: '',
     expandedIds: () => [],
+    fieldSummaryText: '',
+    groupLineNumbers: () => ({}),
+    fieldLineNumbers: () => ({}),
   },
 )
 
@@ -43,11 +54,20 @@ function fieldValueText(field: ConfigFieldChange): string {
   if (field.kind === 'removed') return field.leftText
   return `${field.leftText} → ${field.rightText}`
 }
+
+function groupLineLabel(id: string): string {
+  return formatJumpLineNumber(props.groupLineNumbers[id] ?? 0)
+}
+
+function fieldLineLabel(groupId: string, fieldIndex: number): string {
+  return formatJumpLineNumber(props.fieldLineNumbers[fieldLineNumberKey(groupId, fieldIndex)] ?? 0)
+}
 </script>
 
 <template>
   <nav class="chunk-jump-list" aria-label="差异块目录">
     <template v-if="showGrouped">
+      <p v-if="fieldSummaryText" class="chunk-jump-list__summary">{{ fieldSummaryText }}</p>
       <div v-for="group in props.groups" :key="group.id" class="chunk-jump-list__group">
         <div
           class="chunk-jump-list__group-head"
@@ -77,6 +97,9 @@ function fieldValueText(field: ConfigFieldChange): string {
             }}</span>
             <span class="chunk-jump-list__dot" aria-hidden="true">·</span>
             <span class="chunk-jump-list__id">{{ group.id }}</span>
+            <span v-if="groupLineLabel(group.id)" class="chunk-jump-list__line">{{
+              groupLineLabel(group.id)
+            }}</span>
             <span class="chunk-jump-list__count">{{ group.changeCount }} 项变化</span>
           </button>
         </div>
@@ -88,7 +111,12 @@ function fieldValueText(field: ConfigFieldChange): string {
             class="chunk-jump-list__field"
             @click="emit('jumpField', field.path)"
           >
-            <span class="chunk-jump-list__field-label">{{ field.relativeLabel }}</span>
+            <span class="chunk-jump-list__field-head">
+              <span class="chunk-jump-list__field-label">{{ field.relativeLabel }}</span>
+              <span v-if="fieldLineLabel(group.id, fieldIndex)" class="chunk-jump-list__line">{{
+                fieldLineLabel(group.id, fieldIndex)
+              }}</span>
+            </span>
             <span class="chunk-jump-list__field-value" :data-kind="field.kind">{{
               fieldValueText(field)
             }}</span>
@@ -139,6 +167,24 @@ function fieldValueText(field: ConfigFieldChange): string {
   color: var(--muted);
   font-size: 0.75rem;
   line-height: 1.35;
+}
+
+.chunk-jump-list__summary {
+  margin: 0;
+  padding: 0.28rem 0.45rem 0.22rem;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.chunk-jump-list__line {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
 }
 
 .chunk-jump-list__row,
@@ -282,10 +328,21 @@ function fieldValueText(field: ConfigFieldChange): string {
   padding: 0.14rem 0.4rem 0.14rem 1.25rem;
 }
 
+.chunk-jump-list__field-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.28rem;
+  min-width: 0;
+}
+
 .chunk-jump-list__field-label {
+  min-width: 0;
+  overflow: hidden;
   color: var(--muted);
   font-size: 0.72rem;
   line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .chunk-jump-list__field-value {

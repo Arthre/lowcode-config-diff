@@ -12,6 +12,7 @@ import {
 import { EditorView } from '@codemirror/view'
 import ChunkJumpList from '@/components/ChunkJumpList.vue'
 import DiffMinimap from '@/components/DiffMinimap.vue'
+import MergePaneEmptyState from '@/components/MergePaneEmptyState.vue'
 import MergeSearchDock from '@/components/MergeSearchDock.vue'
 import UiTooltip from '@/components/UiTooltip.vue'
 import {
@@ -31,10 +32,18 @@ import {
 } from '@/composables/chunkMinimapLayout'
 import { activeChunkIndexInViewport, chunkNavTargetIndex } from '@/composables/chunkNavAnchor'
 import { activeGroupIdFromChunk } from '@/composables/activeGroupFromChunk'
-import { diffConfigItems, type ConfigItemGroup } from '@/composables/configItemDiff'
+import {
+  diffConfigItems,
+  directoryFieldSummaryText,
+  type ConfigItemGroup,
+} from '@/composables/configItemDiff'
 import { jsonPathOffset, type JsonPathSeg } from '@/composables/jsonPathOffset'
+import { buildJumpLineNumberMaps } from '@/composables/jumpLineNumbers'
+import { nearestChunkIndexByOffset } from '@/composables/nearestChunkIndexByOffset'
 import { createEditableJsonExtensions, mergeHighlightTheme } from '@/composables/codemirrorTheme'
 import { mergeViewDiffConfig } from '@/composables/diffByLine'
+import { directoryDrawerAriaLabel, directoryDrawerWidth } from '@/composables/directoryDrawer'
+import { pointerLeftMergeFrame } from '@/composables/pointerLeftMergeFrame'
 import { sideFromClientX } from '@/composables/sideFromClientX'
 import { useMergeSideImport } from '@/composables/useMergeSideImport'
 import { useMergeWorkspace, type MergeSide } from '@/stores/mergeWorkspace'
@@ -93,6 +102,10 @@ const activeGroupId = ref('')
 const userExpandedIds = ref<Set<string>>(new Set())
 /** 组路径文档偏移（含 kind 以便滚动时选 fromA/fromB）；只在 layout 时算 */
 let cachedGroupOffsets: { id: string; offset: number; kind: ConfigItemGroup['kind'] }[] = []
+/** 组/字段跳转侧行号；只在 layout 时算，滚动不重算 */
+const groupLineNumbers = ref<Record<string, number>>({})
+const fieldLineNumbers = ref<Record<string, number>>({})
+const fieldSummaryText = ref('')
 const expandedIds = computed(() => {
   const ids: string[] = []
   const seen = new Set<string>()
@@ -111,6 +124,8 @@ const expandedIds = computed(() => {
 const leftEmpty = computed(() => workspace.leftDoc.length === 0)
 const rightEmpty = computed(() => workspace.rightDoc.length === 0)
 const showMinimap = computed(() => !leftEmpty.value || !rightEmpty.value)
+/** 推开式目录；默认展开，不写 localStorage。 */
+const directoryOpen = ref(true)
 
 /** 只提供 a-to-b；← 暂时下线，控件必须是 button 以便库设置 top */
 function renderRevertControl() {
@@ -203,10 +218,18 @@ function onMergeScroll() {
   syncEditorChrome(false)
 }
 
-function onWindowResize() {
+const onWindowResize = useDebounceFn(() => {
   refreshChunkBands()
   refreshMinimapSnapshot()
   syncEditorChrome(false)
+}, 100)
+
+/** 左右 View 补测后再读 lineBlockAt / 设 scrollTop；拖动中不要走这条。 */
+function afterEditorMeasure(run: () => void) {
+  if (!mergeView) return
+  mergeView.a.requestMeasure()
+  mergeView.b.requestMeasure()
+  requestAnimationFrame(run)
 }
 
 function refreshChunkBands() {
@@ -297,6 +320,9 @@ function refreshConfigItemGroups() {
     configItemGroups.value = []
     cachedGroupOffsets = []
     lastFieldSummary = emptyFieldSummary
+    groupLineNumbers.value = {}
+    fieldLineNumbers.value = {}
+    fieldSummaryText.value = ''
     return
   }
   const leftDoc = mergeView.a.state.doc.toString()
@@ -313,6 +339,17 @@ function refreshConfigItemGroups() {
     offsets.push({ id: group.id, offset, kind: group.kind })
   }
   cachedGroupOffsets = offsets
+  const maps = buildJumpLineNumberMaps({
+    groups: configItemGroups.value,
+    leftDoc,
+    rightDoc,
+  })
+  groupLineNumbers.value = maps.groupLineNumbers
+  fieldLineNumbers.value = maps.fieldLineNumbers
+  fieldSummaryText.value =
+    lastFieldSummary.available && lastFieldSummary.fields > 0
+      ? directoryFieldSummaryText(lastFieldSummary.fields, lastFieldSummary.items)
+      : ''
 }
 
 /** 按当前块 kind 分轨：删除只扫 removed+fromA，其余只扫非 removed+fromB。 */
@@ -338,10 +375,31 @@ function onMinimapJump(ratio: number) {
   viewportBand.value = minimapDrag.viewportForRatio(ratio, live)
 }
 
+function resyncChromeAfterMeasure() {
+  afterEditorMeasure(() => {
+    refreshChunkBands()
+    refreshMinimapSnapshot()
+    syncEditorChrome(false)
+  })
+}
+
 function onMinimapDragEnd() {
   minimapDragging = false
   minimapDrag.end()
-  syncEditorChrome(false)
+  resyncChromeAfterMeasure()
+}
+
+function onDirectoryTransitionEnd(event: TransitionEvent) {
+  if (event.propertyName !== 'width') return
+  if (event.target !== event.currentTarget) return
+  resyncChromeAfterMeasure()
+}
+
+function toggleDirectory() {
+  directoryOpen.value = !directoryOpen.value
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    resyncChromeAfterMeasure()
+  }
 }
 
 /** 键入 / → / Undo：仅字符串确有变化时回写 store，避免与 watch 形成环 */
@@ -407,38 +465,54 @@ function goToPrevChunk() {
 
 /** 点击路径允许单次 lineBlockAt：滚到文档偏移并选中对应侧。 */
 function goToDocOffset(side: MergeSide, offset: number) {
-  if (!mergeView) return
-  const view = side === 'left' ? mergeView.a : mergeView.b
-  const scroller = mergeView.dom
-  const clamped = Math.max(0, Math.min(offset, view.state.doc.length))
-  const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight)
-  scroller.scrollTop = Math.min(view.lineBlockAt(clamped).top, maxTop)
-  view.dispatch({
-    selection: { anchor: clamped },
-    userEvent: 'select.byPath',
-    scrollIntoView: false,
+  afterEditorMeasure(() => {
+    if (!mergeView) return
+    const view = side === 'left' ? mergeView.a : mergeView.b
+    const scroller = mergeView.dom
+    const clamped = Math.max(0, Math.min(offset, view.state.doc.length))
+    const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight)
+    scroller.scrollTop = Math.min(view.lineBlockAt(clamped).top, maxTop)
+    view.dispatch({
+      selection: { anchor: clamped },
+      userEvent: 'select.byPath',
+      scrollIntoView: false,
+    })
   })
 }
 
+function jumpNearestChunk(offset: number | null, removed: boolean) {
+  if (!mergeView) return
+  const index = nearestChunkIndexByOffset({
+    offset,
+    chunks: mergeView.chunks,
+    side: removed ? 'a' : 'b',
+  })
+  if (index >= 0) goToChunkAt(index)
+}
+
 function onJumpGroup(id: string) {
+  if (!mergeView) return
   const cached = cachedGroupOffsets.find((entry) => entry.id === id)
-  if (cached === undefined) {
-    const index = jumpActiveIndex.value
-    if (index >= 0) goToChunkAt(index)
+  if (cached !== undefined) {
+    const side: MergeSide = cached.kind === 'removed' ? 'left' : 'right'
+    goToDocOffset(side, cached.offset)
     return
   }
-  const side: MergeSide = cached.kind === 'removed' ? 'left' : 'right'
-  goToDocOffset(side, cached.offset)
+  const group = configItemGroups.value.find((item) => item.id === id)
+  if (group === undefined) return
+  const leftDoc = mergeView.a.state.doc.toString()
+  const rightDoc = mergeView.b.state.doc.toString()
+  jumpNearestChunk(offsetOfGroup(group, leftDoc, rightDoc), group.kind === 'removed')
 }
 
 function onJumpField(path: JsonPathSeg[]) {
   if (!mergeView) return
-  let groupId = ''
+  let group: ConfigItemGroup | undefined
   let fieldKind: ConfigItemGroup['kind'] | null = null
-  for (const group of configItemGroups.value) {
-    const field = group.fields.find((item) => jsonPathEquals(item.path, path))
+  for (const item of configItemGroups.value) {
+    const field = item.fields.find((entry) => jsonPathEquals(entry.path, path))
     if (field === undefined) continue
-    groupId = group.id
+    group = item
     fieldKind = field.kind
     break
   }
@@ -450,7 +524,10 @@ function onJumpField(path: JsonPathSeg[]) {
     goToDocOffset(side, offset)
     return
   }
-  if (groupId !== '') onJumpGroup(groupId)
+  if (group === undefined) return
+  const leftDoc = mergeView.a.state.doc.toString()
+  const rightDoc = mergeView.b.state.doc.toString()
+  jumpNearestChunk(offsetOfGroup(group, leftDoc, rightDoc), group.kind === 'removed')
 }
 
 function onToggleGroup(id: string) {
@@ -463,22 +540,24 @@ function onToggleGroup(id: string) {
 
 /** 滚到缓存块顶并选中 B 的 fromB；与「下一个差异」共用 bands。 */
 function goToChunkAt(index: number) {
-  if (!mergeView) return
-  const { chunks } = mergeView
-  const count = chunks.length
-  if (count === 0 || index < 0 || index >= count) return
-  if (cachedChunkBands.length !== count) refreshChunkBands()
-  const chunk = chunks[index]
-  const band = cachedChunkBands[index]
-  if (!chunk || !band) return
-  const scroller = mergeView.dom
-  const from = Math.min(chunk.fromB, mergeView.b.state.doc.length)
-  const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight)
-  scroller.scrollTop = Math.min(band.start, maxTop)
-  mergeView.b.dispatch({
-    selection: { anchor: from },
-    userEvent: 'select.byChunk',
-    scrollIntoView: false,
+  afterEditorMeasure(() => {
+    if (!mergeView) return
+    const { chunks } = mergeView
+    const count = chunks.length
+    if (count === 0 || index < 0 || index >= count) return
+    refreshChunkBands()
+    const chunk = chunks[index]
+    const band = cachedChunkBands[index]
+    if (!chunk || !band) return
+    const scroller = mergeView.dom
+    const from = Math.min(chunk.fromB, mergeView.b.state.doc.length)
+    const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight)
+    scroller.scrollTop = Math.min(band.start, maxTop)
+    mergeView.b.dispatch({
+      selection: { anchor: from },
+      userEvent: 'select.byChunk',
+      scrollIntoView: false,
+    })
   })
 }
 
@@ -527,8 +606,7 @@ function onHostDragOver(event: DragEvent) {
 function onHostDragLeave(event: DragEvent) {
   event.preventDefault()
   const frame = hostRef.value?.parentElement
-  const next = event.relatedTarget
-  if (next instanceof Node && frame?.contains(next)) return
+  if (!frame || !pointerLeftMergeFrame(frame, event)) return
   highlightDropSide(null)
 }
 
@@ -597,6 +675,8 @@ watch(
 )
 
 onBeforeUnmount(() => {
+  minimapDragging = false
+  minimapDrag.end()
   mergeView?.dom.removeEventListener('scroll', onMergeScroll)
   window.removeEventListener('resize', onWindowResize)
   mergeView?.destroy()
@@ -759,22 +839,18 @@ onBeforeUnmount(() => {
         >
           <div ref="hostRef" class="two-way-merge-host flex-1 min-h-0" />
           <div v-if="leftEmpty" class="two-way-merge-empty two-way-merge-empty--left">
-            <div class="two-way-merge-empty__hint">
-              <p>拖入 JSON 文件或粘贴内容</p>
-              <p class="two-way-merge-empty__sub">支持 .json 文件</p>
-              <button type="button" class="ui-btn ui-btn-soft" @click="openFilePicker('left')">
-                选择文件
-              </button>
-            </div>
+            <MergePaneEmptyState
+              select-aria-label="选择参考配置文件"
+              :drag-over="leftDragDepth > 0"
+              @select="openFilePicker('left')"
+            />
           </div>
           <div v-if="rightEmpty" class="two-way-merge-empty two-way-merge-empty--right">
-            <div class="two-way-merge-empty__hint">
-              <p>拖入 JSON 文件或粘贴内容</p>
-              <p class="two-way-merge-empty__sub">支持 .json 文件</p>
-              <button type="button" class="ui-btn ui-btn-soft" @click="openFilePicker('right')">
-                选择文件
-              </button>
-            </div>
+            <MergePaneEmptyState
+              select-aria-label="选择目标配置文件"
+              :drag-over="rightDragDepth > 0"
+              @select="openFilePicker('right')"
+            />
           </div>
         </div>
       </div>
@@ -786,19 +862,51 @@ onBeforeUnmount(() => {
         @jump="onMinimapJump"
         @drag-end="onMinimapDragEnd"
       />
-      <ChunkJumpList
-        v-if="showMinimap"
-        class="two-way-merge-jump-list"
-        :items="jumpItems"
-        :active-index="jumpActiveIndex"
-        :groups="configItemGroups"
-        :active-group-id="activeGroupId"
-        :expanded-ids="expandedIds"
-        @jump="goToChunkAt"
-        @jump-group="onJumpGroup"
-        @jump-field="onJumpField"
-        @toggle-group="onToggleGroup"
-      />
+      <template v-if="showMinimap">
+        <button
+          type="button"
+          class="two-way-merge-directory-handle"
+          :aria-expanded="directoryOpen"
+          :aria-label="directoryDrawerAriaLabel(directoryOpen)"
+          :title="directoryDrawerAriaLabel(directoryOpen)"
+          @click="toggleDirectory"
+        >
+          <span
+            v-if="directoryOpen"
+            class="two-way-merge-directory-handle__icon i-lucide-chevron-left"
+            aria-hidden="true"
+          />
+          <span
+            v-else
+            class="two-way-merge-directory-handle__icon i-lucide-chevron-right"
+            aria-hidden="true"
+          />
+        </button>
+        <div
+          class="two-way-merge-directory"
+          :class="{ 'is-open': directoryOpen }"
+          :style="{ width: directoryDrawerWidth(directoryOpen) }"
+          :aria-hidden="!directoryOpen"
+          :inert="!directoryOpen"
+          @transitionend="onDirectoryTransitionEnd"
+        >
+          <ChunkJumpList
+            class="two-way-merge-jump-list"
+            :items="jumpItems"
+            :active-index="jumpActiveIndex"
+            :groups="configItemGroups"
+            :active-group-id="activeGroupId"
+            :expanded-ids="expandedIds"
+            :field-summary-text="fieldSummaryText"
+            :group-line-numbers="groupLineNumbers"
+            :field-line-numbers="fieldLineNumbers"
+            @jump="goToChunkAt"
+            @jump-group="onJumpGroup"
+            @jump-field="onJumpField"
+            @toggle-group="onToggleGroup"
+          />
+        </div>
+      </template>
     </div>
   </div>
 </template>
@@ -910,8 +1018,9 @@ onBeforeUnmount(() => {
   bottom: 0.55rem;
   z-index: 2;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
+  padding-top: min(4.25rem, 18%);
   pointer-events: none;
 }
 
@@ -925,37 +1034,10 @@ onBeforeUnmount(() => {
   width: calc((100% - 2.4em) / 2 - 0.75rem);
 }
 
-.two-way-merge-empty__hint {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.2rem;
-  width: 100%;
-  max-width: 16rem;
-  padding: 0.25rem 0.5rem;
-  color: var(--muted);
-  text-align: center;
-}
-
-.two-way-merge-empty__hint p {
-  margin: 0;
-  font-size: 0.8125rem;
-  line-height: 1.4;
-  color: var(--text);
-}
-
-.two-way-merge-empty__sub {
-  font-size: 0.75rem !important;
-  color: var(--muted) !important;
-}
-
-.two-way-merge-empty__hint .ui-btn {
-  pointer-events: auto;
-  margin-top: 0.45rem;
-}
-
-.two-way-merge-frame.is-dragging-left .two-way-merge-empty--left .two-way-merge-empty__hint,
-.two-way-merge-frame.is-dragging-right .two-way-merge-empty--right .two-way-merge-empty__hint {
+.two-way-merge-frame.is-dragging-left .two-way-merge-empty--left :deep(.merge-pane-empty__title),
+.two-way-merge-frame.is-dragging-left .two-way-merge-empty--left :deep(.merge-pane-empty__sub),
+.two-way-merge-frame.is-dragging-right .two-way-merge-empty--right :deep(.merge-pane-empty__title),
+.two-way-merge-frame.is-dragging-right .two-way-merge-empty--right :deep(.merge-pane-empty__sub) {
   color: var(--accent);
 }
 
@@ -976,8 +1058,52 @@ onBeforeUnmount(() => {
   min-height: 0;
 }
 
+.two-way-merge-directory-handle {
+  display: flex;
+  flex: 0 0 1.25rem;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  width: 1.25rem;
+  min-width: 1.25rem;
+  padding: 0;
+  appearance: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.two-way-merge-directory-handle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-muted);
+}
+
+.two-way-merge-directory-handle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.two-way-merge-directory-handle__icon {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.two-way-merge-directory {
+  flex: 0 0 auto;
+  align-self: stretch;
+  width: 16rem;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  transition: width 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .two-way-merge-jump-list {
-  flex: 0 0 16rem;
+  width: 16rem;
+  min-width: 16rem;
 }
 
 .two-way-merge-search {
@@ -1073,6 +1199,10 @@ onBeforeUnmount(() => {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .two-way-merge-directory {
+    transition: none;
+  }
+
   :deep(.cm-merge-revert button.is-current) {
     animation: none;
   }

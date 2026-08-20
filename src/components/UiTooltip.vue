@@ -17,12 +17,16 @@ const triggerRef = ref<HTMLElement | null>(null)
 const tipRef = ref<HTMLElement | null>(null)
 const tipStyle = ref<Record<string, string>>({})
 
+/** 未量到尺寸前停在视口外，避免 fixed 无坐标时按静态位置量到 0×0。 */
+const measureStyle = { top: '-9999px', left: '0px' }
+
 function place() {
   const trigger = triggerRef.value
   const tip = tipRef.value
   if (!trigger || !tip) return
   const box = trigger.getBoundingClientRect()
   const size = tip.getBoundingClientRect()
+  if (size.width < 1 || size.height < 1) return
   const next = resolveTooltipPlacement(
     box,
     { width: size.width, height: size.height },
@@ -42,12 +46,25 @@ async function show() {
   open.value = true
   await nextTick()
   place()
+  if (!placed.value) {
+    await nextTick()
+    requestAnimationFrame(() => {
+      place()
+    })
+  }
 }
 
 function hide() {
   open.value = false
   placed.value = false
 }
+
+function onReposition() {
+  if (open.value && !props.disabled) place()
+}
+
+useEventListener(window, 'resize', onReposition)
+useEventListener(window, 'scroll', onReposition, { capture: true })
 
 watch(
   () => props.disabled,
@@ -74,7 +91,10 @@ watch(
       ref="tipRef"
       class="ui-tooltip"
       role="tooltip"
-      :style="{ ...tipStyle, visibility: placed ? 'visible' : 'hidden' }"
+      :style="{
+        ...(placed ? tipStyle : measureStyle),
+        visibility: placed ? 'visible' : 'hidden',
+      }"
     >
       {{ text }}
     </div>
@@ -92,7 +112,9 @@ watch(
 .ui-tooltip {
   position: fixed;
   z-index: 80;
-  max-width: 16rem;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(16rem, calc(100vw - 16px));
   padding: 0.3rem 0.5rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -103,6 +125,7 @@ watch(
   line-height: 1.35;
   box-shadow: var(--shadow-md);
   pointer-events: none;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 </style>
