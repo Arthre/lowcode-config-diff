@@ -51,11 +51,11 @@ onBeforeUnmount(() => {
 
 <template>
   <div ref="wrapRef" class="download-menu">
-    <UiTooltip text="下载" placement="top" :disabled="open">
+    <UiTooltip text="导出" placement="top" :disabled="open">
       <button
         type="button"
         class="ui-btn ui-btn-primary ui-btn-icon"
-        aria-label="下载"
+        aria-label="导出"
         aria-haspopup="menu"
         :aria-expanded="open"
         @click="toggle"
@@ -69,11 +69,11 @@ onBeforeUnmount(() => {
         ref="panelRef"
         class="download-menu__panel"
         role="menu"
-        aria-label="下载结果"
+        aria-label="导出目标配置"
         :style="menuStyle"
       >
-        <button type="button" role="menuitem" @click="pick('pretty')">下载 config.json</button>
-        <button type="button" role="menuitem" @click="pick('compressed')">压缩并下载</button>
+        <button type="button" role="menuitem" @click="pick('pretty')">导出 config.json</button>
+        <button type="button" role="menuitem" @click="pick('compressed')">压缩并导出</button>
       </div>
     </Teleport>
   </div>

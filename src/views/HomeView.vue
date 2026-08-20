@@ -34,7 +34,7 @@ function onChunks(count: number, current: number) {
 }
 
 function exportHintText(hint: RightDocExportHint): string | null {
-  if (hint.kind === 'empty') return '结果为空，仍已导出'
+  if (hint.kind === 'empty') return '目标配置为空，仍已导出'
   if (hint.kind === 'invalid') return hint.message
   return null
 }
@@ -63,7 +63,7 @@ async function onCopy() {
 function onDownload(compressed: boolean) {
   const packed = packRightDocDownload(workspace.rightDoc, compressed)
   downloadJsonFile(packed.content, packed.filename)
-  statusText.value = exportHintText(packed.hint) ?? (compressed ? '已压缩并下载' : '已下载')
+  statusText.value = exportHintText(packed.hint) ?? (compressed ? '已压缩并导出' : '已导出')
   clearStatusLater()
 }
 
@@ -86,42 +86,70 @@ onBeforeUnmount(() => {
             </div>
             <h1>{{ appStore.title }}</h1>
           </div>
-          <ThemeToggle />
+          <div class="ui-page-header-end">
+            <UiTooltip text="所有 JSON 均在浏览器本地处理，不会上传到服务器。">
+              <span
+                class="ui-privacy"
+                tabindex="0"
+                aria-label="所有 JSON 均在浏览器本地处理，不会上传到服务器。"
+              >
+                <span class="i-lucide-shield-check text-[var(--accent)]" aria-hidden="true" />
+                本地处理
+              </span>
+            </UiTooltip>
+            <ThemeToggle />
+          </div>
         </div>
         <div class="ui-page-header-meta">
-          <span class="ui-privacy">
-            <span class="i-lucide-shield-check text-[var(--accent)]" aria-hidden="true" />
-            本地处理 · 不上传
-          </span>
           <div class="ui-result-toolbar" role="toolbar" aria-label="差异导航与导出">
-            <span class="text-sm text-[var(--text-h)] tabular-nums" aria-live="polite">{{
-              chunkAnchor
-            }}</span>
-            <button type="button" class="ui-btn" @click="mergeEditorRef?.goToPrevChunk()">
-              上一条
-            </button>
-            <button type="button" class="ui-btn" @click="mergeEditorRef?.goToNextChunk()">
-              下一条
-            </button>
-            <UiTooltip text="查找">
+            <div class="ui-toolbar-cluster">
+              <span
+                class="ui-diff-badge"
+                :class="chunkCount === 0 ? 'is-clean' : 'is-open'"
+                aria-live="polite"
+              >
+                <span v-if="chunkCount === 0" class="i-lucide-check" aria-hidden="true" />
+                <span v-else class="ui-diff-badge__dot" aria-hidden="true" />
+                {{ chunkAnchor }}
+              </span>
               <button
                 type="button"
-                class="ui-btn ui-btn-icon"
-                aria-label="查找"
-                @click="mergeEditorRef?.openSearch()"
+                class="ui-btn"
+                :disabled="chunkCount === 0"
+                @click="mergeEditorRef?.goToPrevChunk()"
               >
-                <span class="i-lucide-search" aria-hidden="true" />
+                上一个差异
               </button>
-            </UiTooltip>
-            <UiTooltip text="复制结果">
-              <button type="button" class="ui-btn ui-btn-icon" aria-label="复制" @click="onCopy">
-                <span class="i-lucide-copy" aria-hidden="true" />
+              <button
+                type="button"
+                class="ui-btn"
+                :disabled="chunkCount === 0"
+                @click="mergeEditorRef?.goToNextChunk()"
+              >
+                下一个差异
               </button>
-            </UiTooltip>
-            <DownloadMenu @pretty="onDownload(false)" @compressed="onDownload(true)" />
-            <span v-if="statusText" class="text-xs font-medium" role="status">{{
-              statusText
-            }}</span>
+            </div>
+            <div class="ui-toolbar-cluster">
+              <UiTooltip text="搜索 Ctrl+F">
+                <button
+                  type="button"
+                  class="ui-btn ui-btn-icon"
+                  aria-label="搜索"
+                  @click="mergeEditorRef?.openSearch()"
+                >
+                  <span class="i-lucide-search" aria-hidden="true" />
+                </button>
+              </UiTooltip>
+              <UiTooltip text="复制目标配置">
+                <button type="button" class="ui-btn ui-btn-icon" aria-label="复制" @click="onCopy">
+                  <span class="i-lucide-copy" aria-hidden="true" />
+                </button>
+              </UiTooltip>
+              <DownloadMenu @pretty="onDownload(false)" @compressed="onDownload(true)" />
+              <span v-if="statusText" class="text-xs font-medium" role="status">{{
+                statusText
+              }}</span>
+            </div>
           </div>
         </div>
       </div>

@@ -134,15 +134,15 @@ describe('chunkIndexAfterAnchor', () => {
 })
 
 describe('chunkAnchorText', () => {
-  it('无差异块时只报总数', () => {
-    expect(chunkAnchorText(0, 0)).toBe('0 个差异块')
+  it('无差异时显示无差异', () => {
+    expect(chunkAnchorText(0, 0)).toBe('无差异')
   })
 
   it('有块时带当前序号', () => {
-    expect(chunkAnchorText(3, 55)).toBe('3 / 55 个差异块')
+    expect(chunkAnchorText(3, 55)).toBe('3 / 55 个差异')
   })
 
   it('尚未锚到具体块时只报总数', () => {
-    expect(chunkAnchorText(0, 55)).toBe('55 个差异块')
+    expect(chunkAnchorText(0, 55)).toBe('55 个差异')
   })
 })

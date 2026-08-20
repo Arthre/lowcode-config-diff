@@ -129,7 +129,7 @@ components:
 
 ## Overview
 
-Operate 模式的可编辑双栏文本合并工作台：冷灰画布托起表面与导入坞，青绿用于导入、复制/下载与焦点。语义色区分「参考」与「结果」侧标签；扫读优先于装饰。访客成功标准是完成「导入 → 块级 `→` / 编辑 → 导出右栏」，不是停留欣赏。
+Operate 模式的可编辑双栏文本合并工作台：冷灰画布托起表面与栏头，青绿用于导入、复制/导出与焦点。语义色区分「参考配置」与「目标配置」侧标签；扫读优先于装饰。访客成功标准是完成「导入 → 块级 `→` / 编辑 → 导出右栏」，不是停留欣赏。
 
 ## Colors
 
@@ -137,8 +137,8 @@ Operate 模式的可编辑双栏文本合并工作台：冷灰画布托起表面
 | --------------------- | ------------------------------------------ |
 | canvas                | 页面底                                     |
 | surface / raised      | 导入坞、面板表面                           |
-| accent                | 下载等主操作、导入强调、焦点环、`→` 控件色 |
-| side-test / side-prod | 「参考」/「结果」侧标签色点                |
+| accent                | 导出等主操作、导入强调、焦点环、`→` 控件色 |
+| side-test / side-prod | 「参考配置」/「目标配置」侧标签色点        |
 | diff-*                | 设计系统保留语义色（Merge 高亮走 CM 主题） |
 | success / danger      | 导入/导出状态提示                          |
 | code-bg               | Merge 编辑器外框与代码底                   |
@@ -161,9 +161,9 @@ Operate 模式的可编辑双栏文本合并工作台：冷灰画布托起表面
 ## Layout
 
 - **满高单列工作台**：页眉 → 双栏 Merge（栏头导入）；`.ui-workspace` 纵向 flex，Merge `flex: 1; min-height: 0` 吃剩余高度；视口高 `.ui-page` `100svh` + `overflow: hidden`
-- **Merge 双栏**：左参考、右结果，始终左右并排；中间 revert 槽 `→` 采纳参考（`←` 写回参考暂时下线）；宿主可 `overflow-x: auto`；右侧冲突点缩略轨（双侧都空时隐藏）；空栏居中提醒 + 虚线落区；查找条在栏头与编辑器之间，不覆盖代码
+- **Merge 双栏**：左参考配置、右目标配置，始终左右并排；中间 revert 槽 `→` 采纳参考（`←` 写回参考暂时下线）；宿主可 `overflow-x: auto`；右侧冲突点缩略轨（双侧都空时隐藏）；空栏轻量提示 + 整栏落区；查找条在栏头与编辑器之间，不覆盖代码
 - **窄屏**：仍左右并排并可横滑；**禁止** `.cm-mergeViewEditors { flex-direction: column }`（纵向堆叠会对错 revert 行）
-- **页眉 = 全宽半透明层**（透 canvas，不用白色 surface；轻模糊分层），不吸顶、不高卡片；工具：差异块当前/总数、上一条/下一条、查找、复制、下载菜单（原文 / 压缩）、`ThemeToggle`、隐私提示
+- **页眉 = 全宽半透明层**（透 canvas，不用白色 surface；轻模糊分层），不吸顶、不高卡片；首行品牌 +「本地处理」悬停说明 + `ThemeToggle`；次行差异徽章（无差异 / 当前序号）、「上一个差异 / 下一个差异」、查找、复制、导出菜单（原文 / 压缩）
 - **无** Diff 树、选边分栏、拖拽分隔条、`lcd-workspace-main-pct` 占比持久化
 - 组内紧、区间松；导入坞圆角 `md`；不做 01/02/03 步骤编号、不做指标仪表盘
 
@@ -171,14 +171,14 @@ Operate 模式的可编辑双栏文本合并工作台：冷灰画布托起表面
 
 - 阴影梯级：`sm`（导入坞、品牌标、弱表面）、`md`（拖拽强调）、`lg`（raised 面板）
 - 面板：淡边框 + 软偏移阴影（非零模糊）；阴影加强时边框略淡，避免发脏
-- 背景：冷灰底 + 顶部极淡青绿径向光 + 细点阵纹理（固定附着，非装饰 glow）
+- 背景：冷灰底 + 顶部极淡青绿径向光 + 细点阵纹理（约 40% 强度，固定附着，非装饰 glow）
 - 禁止彩色光晕、厚色左边框装饰条
 
 ## Icons
 
 - 集合：Iconify **Lucide**（UnoCSS `presetIcons`，类名 `i-lucide-*`）
 - 尺寸约 16–18px；按钮内与文字 `gap` 对齐；装饰图标 `aria-hidden`
-- 品牌：`git-compare`；导入/会话：`upload` / `clipboard` / `trash-2`；导出：`copy` / `download`；查找：`search`；主题：`sun` / `moon`
+- 品牌：`git-compare`；导入/会话：`file-up` / `clipboard` / `trash-2`；导出：`copy` / `download`；查找：`search`；主题：`sun` / `moon`
 
 ## Shapes
 
@@ -187,13 +187,13 @@ Operate 模式的可编辑双栏文本合并工作台：冷灰画布托起表面
 
 ## Components
 
-- **Primary button：** 实心 accent（页眉下载等）；禁用时用 `accent-muted` 底而非死灰
+- **Primary button：** 实心 accent（页眉导出等）；禁用时用 `accent-muted` 底而非死灰
 - **Soft button：** 浅绿底 accent 字（选择文件、粘贴为该侧全文）
 - **Ghost / 默认按钮：** 透明或弱边框（块导航等）
 - **Danger：** 危险色字与淡边框（清空）
-- **Dropzone：** 空栏虚线落区与拖入 accent 描边；栏头导入；错误时 danger 描边 + 中文提示
-- **Side labels：** `.ui-label-test` / `.ui-label-prod` 色点标签（参考 / 结果），无选边 radio
-- **Merge revert：** 中间 `→`（写入结果）；`←` 写回参考暂时下线
+- **Dropzone：** 空栏轻量提示与拖入 accent 描边；栏头导入；错误时 danger 描边 + 中文提示
+- **Side labels：** `.ui-label-test` / `.ui-label-prod` 色点标签（参考配置 / 目标配置），无选边 radio
+- **Merge revert：** 中间 `→`（写入目标配置）；`←` 写回参考暂时下线
 
 ## Do's and Don'ts
 

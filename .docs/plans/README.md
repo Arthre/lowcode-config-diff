@@ -23,4 +23,4 @@ archive/YYYY-MM-DD-<主题>.md  ← 已完成归档
 
 ## 最近完成
 
-[中间槽延迟写回与块导航锚点](./2026-08-19-revert-unlock-chunk-anchor.md)；[空态、拖放命中与双向采纳](./2026-08-19-empty-drop-bidirectional-revert.md)；[2026-08-18 总计划索引](./archive/2026-08-18-editable-two-way-merge.md) 与 M1–M4 计划均已归档。
+[块导航与缩略轨滚动性能](./2026-08-19-chunk-nav-scroll-perf.md)；[2026-08-18 总计划索引](./archive/2026-08-18-editable-two-way-merge.md) 与 M1–M4 计划均已归档。

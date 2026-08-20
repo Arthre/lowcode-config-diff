@@ -277,6 +277,42 @@
   font-variant-numeric: tabular-nums;
 }
 
+.ui-diff-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.65rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  border: 1px solid transparent;
+}
+
+.ui-diff-badge .i-lucide-check {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.ui-diff-badge__dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: var(--radius-xs);
+  background: currentColor;
+}
+
+.ui-diff-badge.is-clean {
+  color: var(--success);
+  background: var(--diff-added-bg);
+}
+
+.ui-diff-badge.is-open {
+  color: var(--accent);
+  background: var(--accent-muted);
+  border-color: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
 .ui-fade-in {
   animation: ui-fade-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }

@@ -67,7 +67,7 @@ const leftEmpty = computed(() => workspace.leftDoc.length === 0)
 const rightEmpty = computed(() => workspace.rightDoc.length === 0)
 const showMinimap = computed(() => !leftEmpty.value || !rightEmpty.value)
 
-const revertToRightHint = '将此差异写入结果'
+const revertToRightHint = '将此差异写入目标配置'
 
 /** 只提供 a-to-b；← 暂时下线，控件必须是 button 以便库设置 top */
 function renderRevertControl() {
@@ -382,35 +382,35 @@ onBeforeUnmount(() => {
   <div class="two-way-merge-editor">
     <div class="two-way-merge-labels">
       <div class="two-way-merge-labels__side">
-        <span class="ui-label-test">参考</span>
+        <span class="ui-label-test">参考配置</span>
         <div class="two-way-merge-file-slot">
-          <UiTooltip :text="workspace.leftFileName || '拖入或点选 JSON 文件'">
+          <UiTooltip :text="workspace.leftFileName || '导入 JSON 文件'">
             <button
               type="button"
               class="two-way-merge-file"
-              aria-label="导入参考 JSON 文件"
+              aria-label="导入参考配置"
               @click="openFilePicker('left')"
             >
-              {{ workspace.leftFileName || '拖入或点选 JSON' }}
+              {{ workspace.leftFileName || '未导入' }}
             </button>
           </UiTooltip>
         </div>
         <div class="two-way-merge-labels__actions">
-          <UiTooltip text="选择文件">
+          <UiTooltip text="导入">
             <button
               type="button"
               class="ui-btn ui-btn-icon"
-              aria-label="选择参考文件"
+              aria-label="导入参考配置"
               @click="openFilePicker('left')"
             >
-              <span class="i-lucide-upload" aria-hidden="true" />
+              <span class="i-lucide-file-up" aria-hidden="true" />
             </button>
           </UiTooltip>
-          <UiTooltip text="粘贴为该侧全文">
+          <UiTooltip text="粘贴全文">
             <button
               type="button"
               class="ui-btn ui-btn-icon"
-              aria-label="粘贴为参考全文"
+              aria-label="粘贴为参考配置全文"
               @click="pasteAsFullSide('left')"
             >
               <span class="i-lucide-clipboard" aria-hidden="true" />
@@ -420,7 +420,7 @@ onBeforeUnmount(() => {
             <button
               type="button"
               class="ui-btn ui-btn-icon ui-btn-danger"
-              aria-label="清空参考"
+              aria-label="清空参考配置"
               :disabled="isClearDisabled('left')"
               @click="clearSide('left')"
             >
@@ -438,35 +438,35 @@ onBeforeUnmount(() => {
       </div>
       <span class="two-way-merge-labels__revert" aria-hidden="true" />
       <div class="two-way-merge-labels__side">
-        <span class="ui-label-prod">结果</span>
+        <span class="ui-label-prod">目标配置</span>
         <div class="two-way-merge-file-slot">
-          <UiTooltip :text="workspace.rightFileName || '拖入或点选 JSON 文件'">
+          <UiTooltip :text="workspace.rightFileName || '导入 JSON 文件'">
             <button
               type="button"
               class="two-way-merge-file"
-              aria-label="导入结果 JSON 文件"
+              aria-label="导入目标配置"
               @click="openFilePicker('right')"
             >
-              {{ workspace.rightFileName || '拖入或点选 JSON' }}
+              {{ workspace.rightFileName || '未导入' }}
             </button>
           </UiTooltip>
         </div>
         <div class="two-way-merge-labels__actions">
-          <UiTooltip text="选择文件">
+          <UiTooltip text="导入">
             <button
               type="button"
               class="ui-btn ui-btn-icon"
-              aria-label="选择结果文件"
+              aria-label="导入目标配置"
               @click="openFilePicker('right')"
             >
-              <span class="i-lucide-upload" aria-hidden="true" />
+              <span class="i-lucide-file-up" aria-hidden="true" />
             </button>
           </UiTooltip>
-          <UiTooltip text="粘贴为该侧全文">
+          <UiTooltip text="粘贴全文">
             <button
               type="button"
               class="ui-btn ui-btn-icon"
-              aria-label="粘贴为结果全文"
+              aria-label="粘贴为目标配置全文"
               @click="pasteAsFullSide('right')"
             >
               <span class="i-lucide-clipboard" aria-hidden="true" />
@@ -476,7 +476,7 @@ onBeforeUnmount(() => {
             <button
               type="button"
               class="ui-btn ui-btn-icon ui-btn-danger"
-              aria-label="清空结果"
+              aria-label="清空目标配置"
               :disabled="isClearDisabled('right')"
               @click="clearSide('right')"
             >
@@ -494,8 +494,8 @@ onBeforeUnmount(() => {
       </div>
     </div>
     <p v-if="leftError || rightError" class="two-way-merge-status ui-status-invalid" role="status">
-      <span v-if="leftError">参考：{{ leftError }}</span>
-      <span v-if="rightError">结果：{{ rightError }}</span>
+      <span v-if="leftError">参考配置：{{ leftError }}</span>
+      <span v-if="rightError">目标配置：{{ rightError }}</span>
     </p>
     <MergeSearchDock
       v-if="searchOpen"
@@ -528,20 +528,18 @@ onBeforeUnmount(() => {
       >
         <div ref="hostRef" class="two-way-merge-host flex-1 min-h-0" />
         <div v-if="leftEmpty" class="two-way-merge-empty two-way-merge-empty--left">
-          <div class="two-way-merge-empty__card">
-            <span class="i-lucide-upload two-way-merge-empty__icon" aria-hidden="true" />
-            <strong>还没有参考配置</strong>
-            <p>把 JSON 拖到此栏，或用栏头上传 / 粘贴</p>
+          <div class="two-way-merge-empty__hint">
+            <p>拖入 JSON 文件或粘贴内容</p>
+            <p class="two-way-merge-empty__sub">支持 .json 文件</p>
             <button type="button" class="ui-btn ui-btn-soft" @click="openFilePicker('left')">
               选择文件
             </button>
           </div>
         </div>
         <div v-if="rightEmpty" class="two-way-merge-empty two-way-merge-empty--right">
-          <div class="two-way-merge-empty__card">
-            <span class="i-lucide-upload two-way-merge-empty__icon" aria-hidden="true" />
-            <strong>还没有结果配置</strong>
-            <p>把 JSON 拖到此栏，或用栏头上传 / 粘贴</p>
+          <div class="two-way-merge-empty__hint">
+            <p>拖入 JSON 文件或粘贴内容</p>
+            <p class="two-way-merge-empty__sub">支持 .json 文件</p>
             <button type="button" class="ui-btn ui-btn-soft" @click="openFilePicker('right')">
               选择文件
             </button>
@@ -577,6 +575,10 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
   margin-bottom: 0.375rem;
   gap: 0;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
 }
 
 .two-way-merge-labels__side {
@@ -677,49 +679,38 @@ onBeforeUnmount(() => {
   width: calc((100% - 2.4em) / 2 - 0.75rem);
 }
 
-.two-way-merge-empty__card {
+.two-way-merge-empty__hint {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.2rem;
   width: 100%;
-  max-width: 18rem;
-  padding: 1.25rem 1rem;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--surface) 78%, transparent);
-  color: var(--text);
+  max-width: 16rem;
+  padding: 0.25rem 0.5rem;
+  color: var(--muted);
   text-align: center;
 }
 
-.two-way-merge-empty__icon {
-  width: 1.25rem;
-  height: 1.25rem;
-  color: var(--accent);
-}
-
-.two-way-merge-empty__card strong {
-  color: var(--text-h);
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-.two-way-merge-empty__card p {
+.two-way-merge-empty__hint p {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   line-height: 1.4;
-  color: var(--muted);
+  color: var(--text);
 }
 
-.two-way-merge-empty__card .ui-btn {
+.two-way-merge-empty__sub {
+  font-size: 0.75rem !important;
+  color: var(--muted) !important;
+}
+
+.two-way-merge-empty__hint .ui-btn {
   pointer-events: auto;
-  margin-top: 0.25rem;
+  margin-top: 0.45rem;
 }
 
-.two-way-merge-frame.is-dragging-left .two-way-merge-empty--left .two-way-merge-empty__card,
-.two-way-merge-frame.is-dragging-right .two-way-merge-empty--right .two-way-merge-empty__card {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent-muted) 72%, var(--surface));
+.two-way-merge-frame.is-dragging-left .two-way-merge-empty--left .two-way-merge-empty__hint,
+.two-way-merge-frame.is-dragging-right .two-way-merge-empty--right .two-way-merge-empty__hint {
+  color: var(--accent);
 }
 
 .two-way-merge-stage {

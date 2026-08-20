@@ -53,7 +53,7 @@ function onFindKeydown(event: KeyboardEvent) {
         :class="{ 'is-active': side === 'right' }"
         @click="side = 'right'"
       >
-        结果
+        目标
       </button>
     </div>
 
