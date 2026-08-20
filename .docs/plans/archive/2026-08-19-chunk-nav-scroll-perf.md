@@ -2,7 +2,7 @@
 
 > **给 Agent 执行者：** 按本清单 TDD 实施。用户未要求时不提交。
 
-**日期：** 2026-08-19 **状态：** 已完成 **关联设计：** `.docs/specs/2026-08-19-chunk-nav-scroll-perf.md`
+**日期：** 2026-08-19 **状态：** 已完成 **关联设计：** [`.docs/specs/2026-08-19-chunk-nav-scroll-perf.md`](../../specs/2026-08-19-chunk-nav-scroll-perf.md)
 
 ## Global Constraints
 

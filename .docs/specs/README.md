@@ -27,4 +27,4 @@ YYYY-MM-DD-<主题>.md
 
 ## 最近完成
 
-[块导航与缩略轨滚动性能](./2026-08-19-chunk-nav-scroll-perf.md)；可编辑双栏合并（2026-08-18）：[总览](./2026-08-18-editable-two-way-merge.md) 与 M1–M4。对应计划见 [`.docs/plans/archive/`](../plans/archive/)。
+[Operate 扫读优化](./2026-08-20-ui-operate-pass.md)；[差异块工作台后续](./2026-08-20-chunk-workbench-followup.md)。已完成：[块导航与缩略轨滚动性能](./2026-08-19-chunk-nav-scroll-perf.md)；可编辑双栏合并（2026-08-18）：[总览](./2026-08-18-editable-two-way-merge.md) 与 M1–M4。对应计划见 [`.docs/plans/`](../plans/README.md) 与 [archive](../plans/archive/)。

@@ -23,4 +23,8 @@ archive/YYYY-MM-DD-<主题>.md  ← 已完成归档
 
 ## 最近完成
 
-[块导航与缩略轨滚动性能](./2026-08-19-chunk-nav-scroll-perf.md)；[2026-08-18 总计划索引](./archive/2026-08-18-editable-two-way-merge.md) 与 M1–M4 计划均已归档。
+[差异块工作台后续](./archive/2026-08-20-chunk-workbench-followup.md)；[块导航与缩略轨滚动性能](./archive/2026-08-19-chunk-nav-scroll-perf.md)；[2026-08-18 总计划索引](./archive/2026-08-18-editable-two-way-merge.md) 与 M1–M4 计划均已归档。
+
+## 待执行
+
+无。

@@ -313,6 +313,37 @@
   border-color: color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
+.ui-diff-anchor {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.ui-diff-kind-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.ui-diff-kind.is-added {
+  color: var(--diff-added);
+}
+
+.ui-diff-kind.is-removed {
+  color: var(--diff-removed);
+}
+
+.ui-diff-kind.is-modified {
+  color: var(--diff-modified);
+}
+
 .ui-fade-in {
   animation: ui-fade-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }

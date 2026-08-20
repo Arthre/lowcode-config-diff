@@ -3,6 +3,7 @@ import DownloadMenu from '@/components/DownloadMenu.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import TwoWayMergeEditor from '@/components/TwoWayMergeEditor.vue'
 import UiTooltip from '@/components/UiTooltip.vue'
+import { chunkKindSummaryText, type ChunkKindCounts } from '@/composables/chunkKind'
 import { chunkAnchorText } from '@/composables/chunkNavAnchor'
 import {
   describeRightDocExport,
@@ -23,14 +24,16 @@ const mergeEditorRef = ref<{
 } | null>(null)
 const chunkCount = ref(0)
 const chunkCurrent = ref(0)
+const chunkKinds = ref<ChunkKindCounts>({ added: 0, removed: 0, modified: 0 })
 const statusText = ref('')
 const chunkAnchor = computed(() => chunkAnchorText(chunkCurrent.value, chunkCount.value))
 
 let statusClearTimer: ReturnType<typeof setTimeout> | undefined
 
-function onChunks(count: number, current: number) {
+function onChunks(count: number, current: number, kinds: ChunkKindCounts) {
   chunkCount.value = count
   chunkCurrent.value = current
+  chunkKinds.value = kinds
 }
 
 function exportHintText(hint: RightDocExportHint): string | null {
@@ -103,15 +106,29 @@ onBeforeUnmount(() => {
         <div class="ui-page-header-meta">
           <div class="ui-result-toolbar" role="toolbar" aria-label="差异导航与导出">
             <div class="ui-toolbar-cluster">
-              <span
-                class="ui-diff-badge"
-                :class="chunkCount === 0 ? 'is-clean' : 'is-open'"
-                aria-live="polite"
-              >
-                <span v-if="chunkCount === 0" class="i-lucide-check" aria-hidden="true" />
-                <span v-else class="ui-diff-badge__dot" aria-hidden="true" />
-                {{ chunkAnchor }}
-              </span>
+              <div class="ui-diff-anchor">
+                <span
+                  class="ui-diff-badge"
+                  :class="chunkCount === 0 ? 'is-clean' : 'is-open'"
+                  aria-live="polite"
+                >
+                  <span v-if="chunkCount === 0" class="i-lucide-check" aria-hidden="true" />
+                  <span v-else class="ui-diff-badge__dot" aria-hidden="true" />
+                  {{ chunkAnchor }}
+                </span>
+                <span
+                  v-if="chunkCount > 0"
+                  class="ui-diff-kind-row"
+                  role="status"
+                  :aria-label="chunkKindSummaryText(chunkKinds)"
+                >
+                  <span class="ui-diff-kind is-added">新增 {{ chunkKinds.added }}</span>
+                  <span class="ui-diff-kind-sep" aria-hidden="true"> · </span>
+                  <span class="ui-diff-kind is-removed">删除 {{ chunkKinds.removed }}</span>
+                  <span class="ui-diff-kind-sep" aria-hidden="true"> · </span>
+                  <span class="ui-diff-kind is-modified">修改 {{ chunkKinds.modified }}</span>
+                </span>
+              </div>
               <button
                 type="button"
                 class="ui-btn"

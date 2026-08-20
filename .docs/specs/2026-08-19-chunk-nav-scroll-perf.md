@@ -3,6 +3,7 @@
 **日期：** 2026-08-19  
 **状态：** 已完成  
 **依赖：** [M2 双栏编辑器](./2026-08-18-m2-two-way-editor.md)  
+**关联计划：** [`.docs/plans/archive/2026-08-19-chunk-nav-scroll-perf.md`](../plans/archive/2026-08-19-chunk-nav-scroll-perf.md)  
 **影响模块：** `TwoWayMergeEditor`、`DiffMinimap`、`minimapSnapshot`
 
 ---

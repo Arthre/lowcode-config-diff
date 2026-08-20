@@ -10,9 +10,19 @@ import {
   setSearchQuery,
 } from '@codemirror/search'
 import { EditorView } from '@codemirror/view'
+import ChunkJumpList from '@/components/ChunkJumpList.vue'
 import DiffMinimap from '@/components/DiffMinimap.vue'
 import MergeSearchDock from '@/components/MergeSearchDock.vue'
 import UiTooltip from '@/components/UiTooltip.vue'
+import {
+  countChunkKinds,
+  kindOfChunk,
+  revertControlDefaultHint,
+  revertControlHint,
+  type ChunkKind,
+  type ChunkKindCounts,
+} from '@/composables/chunkKind'
+import { chunkJumpPreview } from '@/composables/chunkJumpPreview'
 import {
   createMinimapDragSession,
   viewportBandOf,
@@ -27,7 +37,7 @@ import { useMergeSideImport } from '@/composables/useMergeSideImport'
 import { useMergeWorkspace, type MergeSide } from '@/stores/mergeWorkspace'
 
 const workspace = useMergeWorkspace()
-const emit = defineEmits<{ chunks: [count: number, current: number] }>()
+const emit = defineEmits<{ chunks: [count: number, current: number, kinds: ChunkKindCounts] }>()
 const {
   leftDragDepth,
   rightDragDepth,
@@ -62,21 +72,60 @@ let minimapDragging = false
 /** 上次已通知的差异块数量与当前下标；-1 保证挂载后必 emit 一次 */
 let lastChunkCount = -1
 let lastChunkCurrent = -1
+/** 块类型构成；只在 shouldLayout 时重算，滚动沿用缓存 */
+let lastChunkKinds: ChunkKindCounts = { added: 0, removed: 0, modified: 0 }
+/** 目录条目与 bands / kinds 同拍；滚动只改 current 高亮。 */
+const jumpItems = ref<{ kind: ChunkKind; preview: string; index: number }[]>([])
+const chunkCurrent = ref(0)
+const jumpActiveIndex = computed(() => (chunkCurrent.value > 0 ? chunkCurrent.value - 1 : -1))
 
 const leftEmpty = computed(() => workspace.leftDoc.length === 0)
 const rightEmpty = computed(() => workspace.rightDoc.length === 0)
 const showMinimap = computed(() => !leftEmpty.value || !rightEmpty.value)
-
-const revertToRightHint = '将此差异写入目标配置'
 
 /** 只提供 a-to-b；← 暂时下线，控件必须是 button 以便库设置 top */
 function renderRevertControl() {
   const toRight = document.createElement('button')
   toRight.type = 'button'
   toRight.textContent = '→'
-  toRight.setAttribute('aria-label', revertToRightHint)
-  toRight.title = revertToRightHint
+  toRight.setAttribute('aria-label', revertControlDefaultHint)
+  toRight.title = revertControlDefaultHint
   return toRight
+}
+
+/** 按 DOM 顺序把 revert 按钮与差异块对齐；数量不一致时只对齐较短一侧。 */
+function alignRevertControlMeta() {
+  if (!mergeView) return
+  const buttons = mergeView.dom.querySelectorAll<HTMLButtonElement>('.cm-merge-revert button')
+  const { chunks } = mergeView
+  const aligned = Math.min(buttons.length, chunks.length)
+  for (let index = 0; index < aligned; index += 1) {
+    const button = buttons[index]
+    const chunk = chunks[index]
+    if (!button || !chunk) continue
+    const kind = kindOfChunk(chunk)
+    const hint = revertControlHint(kind)
+    button.dataset.chunkKind = kind
+    button.dataset.chunkIndex = String(index)
+    button.setAttribute('aria-label', hint)
+    button.title = hint
+  }
+}
+
+/** 按页眉 current（1 起）切换 revert 当前态；只用已有 data-chunk-index。 */
+function syncRevertCurrentState(current: number) {
+  if (!mergeView) return
+  const currentKey = current > 0 ? String(current - 1) : null
+  const buttons = mergeView.dom.querySelectorAll<HTMLButtonElement>('.cm-merge-revert button')
+  for (const button of buttons) {
+    const isCurrent = currentKey !== null && button.dataset.chunkIndex === currentKey
+    button.classList.toggle('is-current', isCurrent)
+    if (isCurrent) {
+      button.setAttribute('aria-current', 'true')
+    } else {
+      button.removeAttribute('aria-current')
+    }
+  }
 }
 
 function lineAt0(
@@ -96,6 +145,9 @@ function syncEditorChrome(rebuildLayout: boolean) {
   if (shouldLayout) {
     refreshChunkBands()
     refreshMinimapSnapshot()
+    lastChunkKinds = countChunkKinds(mergeView.chunks)
+    alignRevertControlMeta()
+    refreshJumpItems()
   }
   const index = activeChunkIndexInViewport(
     cachedChunkBands,
@@ -103,11 +155,13 @@ function syncEditorChrome(rebuildLayout: boolean) {
     scroller.scrollTop + scroller.clientHeight,
   )
   const current = count === 0 || index < 0 ? 0 : index + 1
-  if (count !== lastChunkCount || current !== lastChunkCurrent) {
+  chunkCurrent.value = current
+  if (shouldLayout || current !== lastChunkCurrent) {
     lastChunkCount = count
     lastChunkCurrent = current
-    emit('chunks', count, current)
+    emit('chunks', count, current, lastChunkKinds)
   }
+  syncRevertCurrentState(current)
   const nextViewport = viewportBandOf(
     scroller.scrollTop,
     scroller.clientHeight,
@@ -144,6 +198,24 @@ function refreshChunkBands() {
     const startBlock = view.lineBlockAt(from)
     const endBlock = view.lineBlockAt(toPos)
     return { start: startBlock.top, end: Math.max(endBlock.bottom, startBlock.top) }
+  })
+}
+
+/** 目录预览只在 layout 时读左右 doc 各一次；滚动禁止重跑。 */
+function refreshJumpItems() {
+  if (!mergeView) {
+    jumpItems.value = []
+    return
+  }
+  const sourceA = mergeView.a.state.doc.toString()
+  const sourceB = mergeView.b.state.doc.toString()
+  jumpItems.value = mergeView.chunks.map((chunk, index) => {
+    const kind = kindOfChunk(chunk)
+    const preview =
+      kind === 'removed'
+        ? chunkJumpPreview(sourceA, chunk.fromA, chunk.toA)
+        : chunkJumpPreview(sourceB, chunk.fromB, chunk.toB)
+    return { kind, preview, index }
   })
 }
 
@@ -241,23 +313,17 @@ function goToPrevChunk() {
   goToChunkFromAnchor(-1)
 }
 
-/** 以上一条/下一条相对当前视口锚点跳转，滚到目标块顶并选中。 */
-function goToChunkFromAnchor(step: 1 | -1) {
+/** 滚到缓存块顶并选中 B 的 fromB；与「下一个差异」共用 bands。 */
+function goToChunkAt(index: number) {
   if (!mergeView) return
   const { chunks } = mergeView
   const count = chunks.length
-  if (count === 0) return
-  const scroller = mergeView.dom
+  if (count === 0 || index < 0 || index >= count) return
   if (cachedChunkBands.length !== count) refreshChunkBands()
-  const target = chunkNavTargetIndex(
-    cachedChunkBands,
-    scroller.scrollTop,
-    scroller.clientHeight,
-    step,
-  )
-  const chunk = chunks[target]
-  const band = cachedChunkBands[target]
+  const chunk = chunks[index]
+  const band = cachedChunkBands[index]
   if (!chunk || !band) return
+  const scroller = mergeView.dom
   const from = Math.min(chunk.fromB, mergeView.b.state.doc.length)
   const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight)
   scroller.scrollTop = Math.min(band.start, maxTop)
@@ -266,6 +332,18 @@ function goToChunkFromAnchor(step: 1 | -1) {
     userEvent: 'select.byChunk',
     scrollIntoView: false,
   })
+}
+
+/** 以上一条/下一条相对当前视口锚点跳转，滚到目标块顶并选中。 */
+function goToChunkFromAnchor(step: 1 | -1) {
+  if (!mergeView) return
+  const count = mergeView.chunks.length
+  if (count === 0) return
+  const scroller = mergeView.dom
+  if (cachedChunkBands.length !== count) refreshChunkBands()
+  goToChunkAt(
+    chunkNavTargetIndex(cachedChunkBands, scroller.scrollTop, scroller.clientHeight, step),
+  )
 }
 
 function openFilePicker(side: MergeSide) {
@@ -546,6 +624,13 @@ onBeforeUnmount(() => {
           </div>
         </div>
       </div>
+      <ChunkJumpList
+        v-if="showMinimap"
+        class="two-way-merge-jump-list"
+        :items="jumpItems"
+        :active-index="jumpActiveIndex"
+        @jump="goToChunkAt"
+      />
       <DiffMinimap
         v-if="showMinimap"
         :left-bands="leftBands"
@@ -722,6 +807,10 @@ onBeforeUnmount(() => {
   gap: 0.35rem;
 }
 
+.two-way-merge-jump-list {
+  flex: 0 0 13rem;
+}
+
 .two-way-merge-search {
   flex-shrink: 0;
   margin-bottom: 0.375rem;
@@ -783,5 +872,40 @@ onBeforeUnmount(() => {
 
 :deep(.cm-merge-revert button) {
   color: var(--accent);
+}
+
+:deep(.cm-merge-revert button[data-chunk-kind='added']) {
+  color: var(--diff-added);
+}
+
+:deep(.cm-merge-revert button[data-chunk-kind='added']:hover) {
+  color: color-mix(in srgb, var(--diff-added) 78%, white);
+}
+
+:deep(.cm-merge-revert button[data-chunk-kind='removed']) {
+  color: var(--diff-removed);
+}
+
+:deep(.cm-merge-revert button[data-chunk-kind='removed']:hover) {
+  color: color-mix(in srgb, var(--diff-removed) 78%, white);
+}
+
+:deep(.cm-merge-revert button[data-chunk-kind='modified']) {
+  color: var(--diff-modified);
+}
+
+:deep(.cm-merge-revert button[data-chunk-kind='modified']:hover) {
+  color: color-mix(in srgb, var(--diff-modified) 78%, white);
+}
+
+:deep(.cm-merge-revert button.is-current) {
+  background: var(--accent-muted);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :deep(.cm-merge-revert button.is-current) {
+    animation: none;
+  }
 }
 </style>
