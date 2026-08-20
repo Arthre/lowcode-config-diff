@@ -28,7 +28,7 @@ Vue 3 + TypeScript + Vite + Pinia + Vue Router + UnoCSS + VueUse + Vitest + Code
 
 ## Capabilities and Constraints
 
-- 已具备：Merge 栏头导入/粘贴全文/清空，整栏拖入文件（合法 object/array 根则格式化一次）、分栏轻量空态与整栏落区、可编辑 MergeView（左参考配置、右目标配置）、按行差异块、页眉差异构成（新增 / 删除 / 修改）、中间 `→` 按类型着色且当前块可辨、差异块目录点击跳转（与冲突点缩略轨并存，双侧都空时隐藏）、栏头外查找条、块级 `→`（采纳参考）、上一个差异/下一个差异（从视口锚点步进，无差异 / 当前 / 总数，绕回）、复制/导出/压缩导出右栏（非法 JSON 提示后仍导出）、亮/暗主题切换
+- 已具备：Merge 两枚胶囊栏头导入/粘贴全文/清空（对齐左右编辑器），整栏拖入文件（合法 object/array 根则格式化一次）、分栏轻量空态与整栏落区、可编辑 MergeView（左参考配置、右目标配置）、按行差异块、页眉差异构成（新增 / 删除 / 修改）及可解析时的字段/配置项计数、中间 `→` 按类型着色且当前块可辨、差异目录在缩略轨右侧（可解析时按配置项分层展示 from→to，否则扁平块预览；双侧都空时隐藏）、缩略色带与编辑器滚动同位、栏头外查找条、块级 `→`（采纳参考）、上一个差异/下一个差异（从视口锚点步进，无差异 / 当前 / 总数，绕回）、复制/导出/压缩导出右栏（非法 JSON 提示后仍导出）、亮/暗主题切换
 - Core 仍含 `parseConfig` / `formatConfig` / `compressConfig`、`diffConfig`、`mergeConfig`；**现行 UI 不调用** `diffConfig` / `mergeConfig`（仅导入校验/格式化与引擎单测仍用 Core）
 - 约束：无后端、无云端保存、无 Git/发布；文本 diff，不忽略键序/空白；本包无体积上限
 - （推断）首要语言为简体中文 UI；未单独确认无障碍标准
@@ -40,7 +40,7 @@ Vue 3 + TypeScript + Vite + Pinia + Vue Router + UnoCSS + VueUse + Vitest + Code
 
 ## Evidence on Hand
 
-- 现行规格与计划：`.docs/specs/2026-08-18-*`、`.docs/specs/2026-08-19-*`、`.docs/specs/2026-08-20-ui-operate-pass.md`、`.docs/plans/archive/2026-08-18-*`、`.docs/plans/2026-08-19-*`
+- 现行规格与计划：`.docs/specs/2026-08-18-*`、`.docs/specs/2026-08-19-*`、`.docs/specs/2026-08-20-ui-operate-pass.md`、`.docs/specs/2026-08-20-workbench-capsules-directory.md`、`.docs/plans/archive/2026-08-18-*`、`.docs/plans/2026-08-20-workbench-capsules-directory.md`
 - 历史：`.docs/specs/2026-08-15-v0.1-config-diff-merge.md`（主路径已被取代，正文保留）与 `.docs/plans/archive/`
 - 实现：`src/views/HomeView.vue`、`TwoWayMergeEditor` / `mergeWorkspace`、`src/core/*`（备用引擎）
 - 不得虚构客户评价、基准数据或部署案例

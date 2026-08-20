@@ -27,4 +27,4 @@ archive/YYYY-MM-DD-<主题>.md  ← 已完成归档
 
 ## 待执行
 
-无。
+[工作台胶囊栏头与分层目录](./2026-08-20-workbench-capsules-directory.md)（执行中）。
