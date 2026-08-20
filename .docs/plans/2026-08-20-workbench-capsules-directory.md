@@ -446,10 +446,10 @@ props 追加（示例）：
   fieldLineNumbers?: Record<string, number>  // 字段稳定 key → 行号
 ```
 
-- [ ] 可解析且有变化时顶栏显示 `{n} 个字段变化 · 涉及 {m} 个配置项`；非法 JSON / 无分组不显示。
-- [ ] 组头与字段显示 `L{n}`（有行号时）；删除侧与目标侧由宿主按 spec 计算后传入，本组件不显示左右两个行号。
-- [ ] 失败测试：纯函数或 props 渲染断言「有摘要才出顶栏」「行号格式 L218」。
-- [ ] PASS 后局部精简。
+- [x] 可解析且有变化时顶栏显示 `{n} 个字段变化 · 涉及 {m} 个配置项`；非法 JSON / 无分组不显示。
+- [x] 组头与字段显示 `L{n}`（有行号时）；删除侧与目标侧由宿主按 spec 计算后传入，本组件不显示左右两个行号。
+- [x] 失败测试：纯函数或 props 渲染断言「有摘要才出顶栏」「行号格式 L218」。
+- [x] PASS 后局部精简。
 
 ---
 
@@ -461,12 +461,12 @@ props 追加（示例）：
 
 - 修改：`src/components/TwoWayMergeEditor.vue` 及宿主/scoped 样式
 
-- [ ] 列宽 `16rem` ↔ `0` 推开（不 overlay）；默认展开；不写 localStorage。
-- [ ] 缩略轨与目录之间常驻手柄（约 1.25rem，可点可发现）；`aria-expanded`；标签「收起目录」/「展开目录」。不在页眉再放一份。
-- [ ] 约 240ms 宽度过渡；`prefers-reduced-motion: reduce` 时瞬时。不用 `display: none`。
-- [ ] 动画表达侧栏进出，不要 bounce。
-- [ ] 可抽 `directoryDrawerOpen` 状态与列宽 class；过渡结束事件留给任务 14 接线。
-- [ ] 相关单测或样式约定锁定（reduced-motion / aria）。
+- [x] 列宽 `16rem` ↔ `0` 推开（不 overlay）；默认展开；不写 localStorage。
+- [x] 缩略轨与目录之间常驻手柄（约 1.25rem，可点可发现）；`aria-expanded`；标签「收起目录」/「展开目录」。不在页眉再放一份。
+- [x] 约 240ms 宽度过渡；`prefers-reduced-motion: reduce` 时瞬时。不用 `display: none`。
+- [x] 动画表达侧栏进出，不要 bounce。
+- [x] 可抽 `directoryDrawerOpen` 状态与列宽 class；过渡结束事件留给任务 14 接线。
+- [x] 相关单测或样式约定锁定（reduced-motion / aria）。
 
 ---
 
@@ -478,14 +478,14 @@ props 追加（示例）：
 
 - 修改：`src/components/TwoWayMergeEditor.vue`、`src/components/DiffMinimap.vue`
 
-- [ ] layout（文档/块数/尺寸）时：`jsonPathOffset` + `lineNumberAtOffset` 缓存组/字段行号，传入 ChunkJumpList；滚动不重算。
-- [ ] `onJumpGroup` / `onJumpField`：缓存未命中时用 `nearestChunkIndexByOffset`；禁止 `goToChunkAt(jumpActiveIndex)`；仍失败则不滚动。
-- [ ] 拖结束与目录跳转前对左右 `EditorView.requestMeasure()`，再读 `lineBlockAt` / 设 `scrollTop`。
-- [ ] `minimapDragging` 在 `pointerup` / `pointercancel` / `lostpointercapture` / 卸载时清掉。
-- [ ] 拖动中仍不对全量块 `lineBlockAt`。
-- [ ] 抽屉宽度过渡结束一次 `refreshChunkBands` + 缩略快照；动画期间 resize 防抖。
-- [ ] 抽可测纯逻辑（补测后再滚的编排若难测，至少锁定 nearest + 清 flag 路径）。
-- [ ] 相关测试绿。
+- [x] layout（文档/块数/尺寸）时：`jsonPathOffset` + `lineNumberAtOffset` 缓存组/字段行号，传入 ChunkJumpList；滚动不重算。
+- [x] `onJumpGroup` / `onJumpField`：缓存未命中时用 `nearestChunkIndexByOffset`；禁止 `goToChunkAt(jumpActiveIndex)`；仍失败则不滚动。
+- [x] 拖结束与目录跳转前对左右 `EditorView.requestMeasure()`，再读 `lineBlockAt` / 设 `scrollTop`。
+- [x] `minimapDragging` 在 `pointerup` / `pointercancel` / `lostpointercapture` / 卸载时清掉。
+- [x] 拖动中仍不对全量块 `lineBlockAt`。
+- [x] 抽屉宽度过渡结束一次 `refreshChunkBands` + 缩略快照；动画期间 resize 防抖。
+- [x] 抽可测纯逻辑（补测后再滚的编排若难测，至少锁定 nearest + 清 flag 路径）。
+- [x] 相关测试绿。
 
 ---
 
@@ -493,11 +493,11 @@ props 追加（示例）：
 
 **对应需求：** 验收清单 8 与本迭代 9–15
 
-- [ ] `pnpm test:run`
-- [ ] `pnpm lint`
-- [ ] `pnpm build`
-- [ ] 同步 `.docs/ui/README.md`、`PRODUCT.md`（页眉单行、目录顶栏、推开抽屉、行号、补测跳转）
-- [ ] 原 spec 验收清单勾上本迭代追加项（9–15）能在代码中核对的项
-- [ ] 对改过的 Vue/SCSS 跑 `node .claude/skills/impeccable/scripts/detect.mjs --json <changed targets>`
-- [ ] 不 archive（留给用户确认完成后）
-- [ ] 不 git commit / push
+- [x] `pnpm test:run`
+- [x] `pnpm lint`
+- [x] `pnpm build`
+- [x] 同步 `.docs/ui/README.md`、`PRODUCT.md`（页眉单行、目录顶栏、推开抽屉、行号、补测跳转）
+- [x] 原 spec 验收清单勾上本迭代追加项（9–15）能在代码中核对的项
+- [x] 对改过的 Vue/SCSS 跑 `node .claude/skills/impeccable/scripts/detect.mjs --json <changed targets>`
+- [x] 不 archive（留给用户确认完成后）
+- [x] 不 git commit / push
