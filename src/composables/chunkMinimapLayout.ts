@@ -95,3 +95,52 @@ export function conflictBandsOf(changed: readonly boolean[]): ChunkBand[] {
   }
   return bands
 }
+
+function clampUnit(value: number): number {
+  return Math.min(1, Math.max(0, value))
+}
+
+/** 把对齐像素区间换成缩略轨 0–1 带，相邻或重叠的合并。 */
+export function bandsFromPixelSpans(
+  spans: readonly { start: number; end: number }[],
+  scrollHeight: number,
+): ChunkBand[] {
+  if (scrollHeight <= 0) return []
+  const units: ChunkBand[] = []
+  for (const span of spans) {
+    const start = clampUnit(span.start / scrollHeight)
+    const end = clampUnit(span.end / scrollHeight)
+    if (end < start) continue
+    units.push({ start, end })
+  }
+  units.sort((a, b) => a.start - b.start || a.end - b.end)
+  const merged: ChunkBand[] = []
+  for (const band of units) {
+    const last = merged[merged.length - 1]
+    if (last && band.start <= last.end) {
+      last.end = Math.max(last.end, band.end)
+    } else {
+      merged.push({ start: band.start, end: band.end })
+    }
+  }
+  return merged
+}
+
+/** 按块类型分到左右列：删除/修改画左，新增/修改画右。 */
+export function splitMinimapBandsByKind(
+  chunks: readonly { kind: 'added' | 'removed' | 'modified'; start: number; end: number }[],
+  scrollHeight: number,
+): { leftBands: ChunkBand[]; rightBands: ChunkBand[] } {
+  if (scrollHeight <= 0) return { leftBands: [], rightBands: [] }
+  const leftSpans: { start: number; end: number }[] = []
+  const rightSpans: { start: number; end: number }[] = []
+  for (const chunk of chunks) {
+    const span = { start: chunk.start, end: chunk.end }
+    if (chunk.kind === 'removed' || chunk.kind === 'modified') leftSpans.push(span)
+    if (chunk.kind === 'added' || chunk.kind === 'modified') rightSpans.push(span)
+  }
+  return {
+    leftBands: bandsFromPixelSpans(leftSpans, scrollHeight),
+    rightBands: bandsFromPixelSpans(rightSpans, scrollHeight),
+  }
+}

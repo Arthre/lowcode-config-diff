@@ -94,6 +94,11 @@
   color: var(--accent);
 }
 
+/* 成对差异步进：紧凑 padding，不新造颜色 */
+.ui-diff-nav {
+  padding: 0.4rem 0.7rem;
+}
+
 .ui-btn-danger {
   color: var(--danger);
   background: transparent;
@@ -314,16 +319,17 @@
 }
 
 .ui-diff-anchor {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.12rem;
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.65rem;
   min-width: 0;
 }
 
 .ui-diff-kind-row {
   display: inline-flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: baseline;
   color: var(--muted);
   font-size: 0.75rem;

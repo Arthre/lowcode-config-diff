@@ -4,7 +4,9 @@ import {
   activeChunkIndexOf,
   chunkAnchorText,
   chunkIndexAfterAnchor,
+  chunkNavAriaLabel,
   chunkNavTargetIndex,
+  chunkNavVisibleLabel,
 } from './chunkNavAnchor'
 
 const chunks = [
@@ -144,5 +146,25 @@ describe('chunkAnchorText', () => {
 
   it('尚未锚到具体块时只报总数', () => {
     expect(chunkAnchorText(0, 55)).toBe('55 个差异')
+  })
+})
+
+describe('chunkNavVisibleLabel', () => {
+  it('上一个按钮可见文案为上一个', () => {
+    expect(chunkNavVisibleLabel('prev')).toBe('上一个')
+  })
+
+  it('下一个按钮可见文案为下一个', () => {
+    expect(chunkNavVisibleLabel('next')).toBe('下一个')
+  })
+})
+
+describe('chunkNavAriaLabel', () => {
+  it('上一个按钮无障碍文案为上一个差异', () => {
+    expect(chunkNavAriaLabel('prev')).toBe('上一个差异')
+  })
+
+  it('下一个按钮无障碍文案为下一个差异', () => {
+    expect(chunkNavAriaLabel('next')).toBe('下一个差异')
   })
 })

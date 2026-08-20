@@ -25,11 +25,14 @@ import {
 import { chunkJumpPreview } from '@/composables/chunkJumpPreview'
 import {
   createMinimapDragSession,
+  splitMinimapBandsByKind,
   viewportBandOf,
   type ChunkBand,
 } from '@/composables/chunkMinimapLayout'
 import { activeChunkIndexInViewport, chunkNavTargetIndex } from '@/composables/chunkNavAnchor'
-import { conflictBandsFromOffsetRanges } from '@/composables/minimapSnapshot'
+import { activeGroupIdFromChunk } from '@/composables/activeGroupFromChunk'
+import { diffConfigItems, type ConfigItemGroup } from '@/composables/configItemDiff'
+import { jsonPathOffset, type JsonPathSeg } from '@/composables/jsonPathOffset'
 import { createEditableJsonExtensions, mergeHighlightTheme } from '@/composables/codemirrorTheme'
 import { mergeViewDiffConfig } from '@/composables/diffByLine'
 import { sideFromClientX } from '@/composables/sideFromClientX'
@@ -37,7 +40,11 @@ import { useMergeSideImport } from '@/composables/useMergeSideImport'
 import { useMergeWorkspace, type MergeSide } from '@/stores/mergeWorkspace'
 
 const workspace = useMergeWorkspace()
-const emit = defineEmits<{ chunks: [count: number, current: number, kinds: ChunkKindCounts] }>()
+type ChunkFieldSummary = { available: boolean; fields: number; items: number }
+const emptyFieldSummary: ChunkFieldSummary = { available: false, fields: 0, items: 0 }
+const emit = defineEmits<{
+  chunks: [count: number, current: number, kinds: ChunkKindCounts, fieldSummary: ChunkFieldSummary]
+}>()
 const {
   leftDragDepth,
   rightDragDepth,
@@ -74,10 +81,32 @@ let lastChunkCount = -1
 let lastChunkCurrent = -1
 /** 块类型构成；只在 shouldLayout 时重算，滚动沿用缓存 */
 let lastChunkKinds: ChunkKindCounts = { added: 0, removed: 0, modified: 0 }
+/** 字段/配置项摘要；只在 shouldLayout 时随分组更新，滚动沿用缓存 */
+let lastFieldSummary: ChunkFieldSummary = emptyFieldSummary
 /** 目录条目与 bands / kinds 同拍；滚动只改 current 高亮。 */
 const jumpItems = ref<{ kind: ChunkKind; preview: string; index: number }[]>([])
 const chunkCurrent = ref(0)
 const jumpActiveIndex = computed(() => (chunkCurrent.value > 0 ? chunkCurrent.value - 1 : -1))
+/** 配置项分组；非法 JSON 或无组时为空，目录走扁平回退 */
+const configItemGroups = ref<ConfigItemGroup[]>([])
+const activeGroupId = ref('')
+const userExpandedIds = ref<Set<string>>(new Set())
+/** 组路径文档偏移（含 kind 以便滚动时选 fromA/fromB）；只在 layout 时算 */
+let cachedGroupOffsets: { id: string; offset: number; kind: ConfigItemGroup['kind'] }[] = []
+const expandedIds = computed(() => {
+  const ids: string[] = []
+  const seen = new Set<string>()
+  if (activeGroupId.value !== '') {
+    ids.push(activeGroupId.value)
+    seen.add(activeGroupId.value)
+  }
+  for (const id of userExpandedIds.value) {
+    if (seen.has(id)) continue
+    ids.push(id)
+    seen.add(id)
+  }
+  return ids
+})
 
 const leftEmpty = computed(() => workspace.leftDoc.length === 0)
 const rightEmpty = computed(() => workspace.rightDoc.length === 0)
@@ -128,15 +157,7 @@ function syncRevertCurrentState(current: number) {
   }
 }
 
-function lineAt0(
-  doc: { length: number; lineAt: (pos: number) => { number: number } },
-  offset: number,
-): number {
-  if (doc.length === 0) return 0
-  return doc.lineAt(Math.max(0, Math.min(offset, doc.length))).number - 1
-}
-
-/** 页眉锚点与视口带随滚动更新；冲突快照与块像素带只在文档或块数量变化时重建。 */
+/** 页眉锚点与视口带随滚动更新；分组、色带与块像素带只在文档或块数量变化时重建。 */
 function syncEditorChrome(rebuildLayout: boolean) {
   if (!mergeView) return
   const scroller = mergeView.dom
@@ -148,6 +169,7 @@ function syncEditorChrome(rebuildLayout: boolean) {
     lastChunkKinds = countChunkKinds(mergeView.chunks)
     alignRevertControlMeta()
     refreshJumpItems()
+    refreshConfigItemGroups()
   }
   const index = activeChunkIndexInViewport(
     cachedChunkBands,
@@ -156,10 +178,11 @@ function syncEditorChrome(rebuildLayout: boolean) {
   )
   const current = count === 0 || index < 0 ? 0 : index + 1
   chunkCurrent.value = current
+  syncActiveGroupId(current)
   if (shouldLayout || current !== lastChunkCurrent) {
     lastChunkCount = count
     lastChunkCurrent = current
-    emit('chunks', count, current, lastChunkKinds)
+    emit('chunks', count, current, lastChunkKinds, lastFieldSummary)
   }
   syncRevertCurrentState(current)
   const nextViewport = viewportBandOf(
@@ -182,6 +205,7 @@ function onMergeScroll() {
 
 function onWindowResize() {
   refreshChunkBands()
+  refreshMinimapSnapshot()
   syncEditorChrome(false)
 }
 
@@ -219,22 +243,90 @@ function refreshJumpItems() {
   })
 }
 
+/** 用缓存块像素带与 Merge scrollHeight 分列；resize 可重测，滚动禁止重算。 */
 function refreshMinimapSnapshot() {
-  if (!mergeView) return
-  const leftDoc = mergeView.a.state.doc
-  const rightDoc = mergeView.b.state.doc
-  leftBands.value = conflictBandsFromOffsetRanges(
-    leftDoc.lines,
-    leftDoc.length,
-    mergeView.chunks.map((chunk) => ({ from: chunk.fromA, to: chunk.toA })),
-    (offset) => lineAt0(leftDoc, offset),
+  if (!mergeView) {
+    leftBands.value = []
+    rightBands.value = []
+    return
+  }
+  const { chunks } = mergeView
+  if (cachedChunkBands.length !== chunks.length) refreshChunkBands()
+  const split = splitMinimapBandsByKind(
+    chunks.map((chunk, index) => {
+      const band = cachedChunkBands[index]
+      return {
+        kind: kindOfChunk(chunk),
+        start: band === undefined ? 0 : band.start,
+        end: band === undefined ? 0 : band.end,
+      }
+    }),
+    mergeView.dom.scrollHeight,
   )
-  rightBands.value = conflictBandsFromOffsetRanges(
-    rightDoc.lines,
-    rightDoc.length,
-    mergeView.chunks.map((chunk) => ({ from: chunk.fromB, to: chunk.toB })),
-    (offset) => lineAt0(rightDoc, offset),
-  )
+  leftBands.value = split.leftBands
+  rightBands.value = split.rightBands
+}
+
+function jsonPathEquals(left: readonly JsonPathSeg[], right: readonly JsonPathSeg[]): boolean {
+  if (left.length !== right.length) return false
+  for (let index = 0; index < left.length; index += 1) {
+    const a = left[index]
+    const b = right[index]
+    if (a === undefined || b === undefined || a.type !== b.type) return false
+    if (a.type === 'key' && b.type === 'key' && a.key !== b.key) return false
+    if (a.type === 'index' && b.type === 'index' && a.index !== b.index) return false
+  }
+  return true
+}
+
+/** 组路径偏移：删除用 A，其余用 B；空 path 为 0；失败再试首字段。 */
+function offsetOfGroup(group: ConfigItemGroup, leftDoc: string, rightDoc: string): number | null {
+  const source = group.kind === 'removed' ? leftDoc : rightDoc
+  if (group.path.length === 0) return 0
+  const fromPath = jsonPathOffset(source, group.path)
+  if (fromPath !== null) return fromPath
+  const firstField = group.fields[0]
+  if (firstField === undefined) return null
+  return jsonPathOffset(source, firstField.path)
+}
+
+/** 配置项分组与组偏移只在 layout 时算；滚动禁止 jsonPathOffset。 */
+function refreshConfigItemGroups() {
+  userExpandedIds.value = new Set()
+  if (!mergeView) {
+    configItemGroups.value = []
+    cachedGroupOffsets = []
+    lastFieldSummary = emptyFieldSummary
+    return
+  }
+  const leftDoc = mergeView.a.state.doc.toString()
+  const rightDoc = mergeView.b.state.doc.toString()
+  const result = diffConfigItems(leftDoc, rightDoc)
+  lastFieldSummary = result.available
+    ? { available: true, fields: result.fields, items: result.items }
+    : emptyFieldSummary
+  configItemGroups.value = result.available && result.groups.length > 0 ? result.groups : []
+  const offsets: { id: string; offset: number; kind: ConfigItemGroup['kind'] }[] = []
+  for (const group of result.groups) {
+    const offset = offsetOfGroup(group, leftDoc, rightDoc)
+    if (offset === null) continue
+    offsets.push({ id: group.id, offset, kind: group.kind })
+  }
+  cachedGroupOffsets = offsets
+}
+
+/** 按当前块 kind 分轨：删除只扫 removed+fromA，其余只扫非 removed+fromB。 */
+function syncActiveGroupId(current: number) {
+  if (!mergeView || current <= 0) {
+    activeGroupId.value = ''
+    return
+  }
+  const chunk = mergeView.chunks[current - 1]
+  if (chunk === undefined) {
+    activeGroupId.value = ''
+    return
+  }
+  activeGroupId.value = activeGroupIdFromChunk(chunk, cachedGroupOffsets)
 }
 
 function onMinimapJump(ratio: number) {
@@ -311,6 +403,62 @@ function goToNextChunk() {
 
 function goToPrevChunk() {
   goToChunkFromAnchor(-1)
+}
+
+/** 点击路径允许单次 lineBlockAt：滚到文档偏移并选中对应侧。 */
+function goToDocOffset(side: MergeSide, offset: number) {
+  if (!mergeView) return
+  const view = side === 'left' ? mergeView.a : mergeView.b
+  const scroller = mergeView.dom
+  const clamped = Math.max(0, Math.min(offset, view.state.doc.length))
+  const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight)
+  scroller.scrollTop = Math.min(view.lineBlockAt(clamped).top, maxTop)
+  view.dispatch({
+    selection: { anchor: clamped },
+    userEvent: 'select.byPath',
+    scrollIntoView: false,
+  })
+}
+
+function onJumpGroup(id: string) {
+  const cached = cachedGroupOffsets.find((entry) => entry.id === id)
+  if (cached === undefined) {
+    const index = jumpActiveIndex.value
+    if (index >= 0) goToChunkAt(index)
+    return
+  }
+  const side: MergeSide = cached.kind === 'removed' ? 'left' : 'right'
+  goToDocOffset(side, cached.offset)
+}
+
+function onJumpField(path: JsonPathSeg[]) {
+  if (!mergeView) return
+  let groupId = ''
+  let fieldKind: ConfigItemGroup['kind'] | null = null
+  for (const group of configItemGroups.value) {
+    const field = group.fields.find((item) => jsonPathEquals(item.path, path))
+    if (field === undefined) continue
+    groupId = group.id
+    fieldKind = field.kind
+    break
+  }
+  const side: MergeSide = fieldKind === 'removed' ? 'left' : 'right'
+  const source =
+    side === 'left' ? mergeView.a.state.doc.toString() : mergeView.b.state.doc.toString()
+  const offset = jsonPathOffset(source, path)
+  if (offset !== null) {
+    goToDocOffset(side, offset)
+    return
+  }
+  if (groupId !== '') onJumpGroup(groupId)
+}
+
+function onToggleGroup(id: string) {
+  if (id === activeGroupId.value) return
+  const next = new Set(userExpandedIds.value)
+  if (next.has(id)) next.delete(id)
+  else next.add(id)
+  userExpandedIds.value = next
 }
 
 /** 滚到缓存块顶并选中 B 的 fromB；与「下一个差异」共用 bands。 */
@@ -458,179 +606,178 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="two-way-merge-editor">
-    <div class="two-way-merge-labels">
-      <div class="two-way-merge-labels__side">
-        <span class="ui-label-test">参考配置</span>
-        <div class="two-way-merge-file-slot">
-          <UiTooltip :text="workspace.leftFileName || '导入 JSON 文件'">
-            <button
-              type="button"
-              class="two-way-merge-file"
-              aria-label="导入参考配置"
-              @click="openFilePicker('left')"
-            >
-              {{ workspace.leftFileName || '未导入' }}
-            </button>
-          </UiTooltip>
-        </div>
-        <div class="two-way-merge-labels__actions">
-          <UiTooltip text="导入">
-            <button
-              type="button"
-              class="ui-btn ui-btn-icon"
-              aria-label="导入参考配置"
-              @click="openFilePicker('left')"
-            >
-              <span class="i-lucide-file-up" aria-hidden="true" />
-            </button>
-          </UiTooltip>
-          <UiTooltip text="粘贴全文">
-            <button
-              type="button"
-              class="ui-btn ui-btn-icon"
-              aria-label="粘贴为参考配置全文"
-              @click="pasteAsFullSide('left')"
-            >
-              <span class="i-lucide-clipboard" aria-hidden="true" />
-            </button>
-          </UiTooltip>
-          <UiTooltip text="清空">
-            <button
-              type="button"
-              class="ui-btn ui-btn-icon ui-btn-danger"
-              aria-label="清空参考配置"
-              :disabled="isClearDisabled('left')"
-              @click="clearSide('left')"
-            >
-              <span class="i-lucide-trash-2" aria-hidden="true" />
-            </button>
-          </UiTooltip>
-        </div>
-        <input
-          ref="leftFileInput"
-          type="file"
-          accept=".json,application/json,text/plain"
-          class="hidden"
-          @change="onFileSelected('left', $event)"
-        />
-      </div>
-      <span class="two-way-merge-labels__revert" aria-hidden="true" />
-      <div class="two-way-merge-labels__side">
-        <span class="ui-label-prod">目标配置</span>
-        <div class="two-way-merge-file-slot">
-          <UiTooltip :text="workspace.rightFileName || '导入 JSON 文件'">
-            <button
-              type="button"
-              class="two-way-merge-file"
-              aria-label="导入目标配置"
-              @click="openFilePicker('right')"
-            >
-              {{ workspace.rightFileName || '未导入' }}
-            </button>
-          </UiTooltip>
-        </div>
-        <div class="two-way-merge-labels__actions">
-          <UiTooltip text="导入">
-            <button
-              type="button"
-              class="ui-btn ui-btn-icon"
-              aria-label="导入目标配置"
-              @click="openFilePicker('right')"
-            >
-              <span class="i-lucide-file-up" aria-hidden="true" />
-            </button>
-          </UiTooltip>
-          <UiTooltip text="粘贴全文">
-            <button
-              type="button"
-              class="ui-btn ui-btn-icon"
-              aria-label="粘贴为目标配置全文"
-              @click="pasteAsFullSide('right')"
-            >
-              <span class="i-lucide-clipboard" aria-hidden="true" />
-            </button>
-          </UiTooltip>
-          <UiTooltip text="清空">
-            <button
-              type="button"
-              class="ui-btn ui-btn-icon ui-btn-danger"
-              aria-label="清空目标配置"
-              :disabled="isClearDisabled('right')"
-              @click="clearSide('right')"
-            >
-              <span class="i-lucide-trash-2" aria-hidden="true" />
-            </button>
-          </UiTooltip>
-        </div>
-        <input
-          ref="rightFileInput"
-          type="file"
-          accept=".json,application/json,text/plain"
-          class="hidden"
-          @change="onFileSelected('right', $event)"
-        />
-      </div>
-    </div>
-    <p v-if="leftError || rightError" class="two-way-merge-status ui-status-invalid" role="status">
-      <span v-if="leftError">参考配置：{{ leftError }}</span>
-      <span v-if="rightError">目标配置：{{ rightError }}</span>
-    </p>
-    <MergeSearchDock
-      v-if="searchOpen"
-      ref="searchDockRef"
-      v-model:find="searchFind"
-      v-model:replace="searchReplace"
-      v-model:case-sensitive="searchCase"
-      v-model:regexp="searchRegexp"
-      v-model:whole-word="searchWord"
-      v-model:side="searchSide"
-      class="two-way-merge-search"
-      @next="runSearch(findNext)"
-      @prev="runSearch(findPrevious)"
-      @all="runSearch(selectMatches)"
-      @replace-one="runSearch(replaceNext)"
-      @replace-all="runSearch(replaceAll)"
-      @close="closeSearch"
-    />
     <div class="two-way-merge-stage">
-      <div
-        class="two-way-merge-frame flex-1 min-h-0"
-        :class="{
-          'is-dragging-left': leftDragDepth > 0,
-          'is-dragging-right': rightDragDepth > 0,
-        }"
-        @dragenter="onHostDragEnter"
-        @dragover="onHostDragOver"
-        @dragleave="onHostDragLeave"
-        @drop="onHostDrop"
-      >
-        <div ref="hostRef" class="two-way-merge-host flex-1 min-h-0" />
-        <div v-if="leftEmpty" class="two-way-merge-empty two-way-merge-empty--left">
-          <div class="two-way-merge-empty__hint">
-            <p>拖入 JSON 文件或粘贴内容</p>
-            <p class="two-way-merge-empty__sub">支持 .json 文件</p>
-            <button type="button" class="ui-btn ui-btn-soft" @click="openFilePicker('left')">
-              选择文件
-            </button>
+      <div class="two-way-merge-main">
+        <div class="two-way-merge-labels">
+          <div class="two-way-merge-labels__side">
+            <span class="ui-label-test">参考配置</span>
+            <div class="two-way-merge-file-slot">
+              <UiTooltip :text="workspace.leftFileName || '导入 JSON 文件'">
+                <button
+                  type="button"
+                  class="two-way-merge-file"
+                  aria-label="导入参考配置"
+                  @click="openFilePicker('left')"
+                >
+                  {{ workspace.leftFileName || '未导入' }}
+                </button>
+              </UiTooltip>
+            </div>
+            <div class="two-way-merge-labels__actions">
+              <UiTooltip text="导入">
+                <button
+                  type="button"
+                  class="ui-btn ui-btn-icon"
+                  aria-label="导入参考配置"
+                  @click="openFilePicker('left')"
+                >
+                  <span class="i-lucide-file-up" aria-hidden="true" />
+                </button>
+              </UiTooltip>
+              <UiTooltip text="粘贴全文">
+                <button
+                  type="button"
+                  class="ui-btn ui-btn-icon"
+                  aria-label="粘贴为参考配置全文"
+                  @click="pasteAsFullSide('left')"
+                >
+                  <span class="i-lucide-clipboard" aria-hidden="true" />
+                </button>
+              </UiTooltip>
+              <UiTooltip text="清空">
+                <button
+                  type="button"
+                  class="ui-btn ui-btn-icon ui-btn-danger"
+                  aria-label="清空参考配置"
+                  :disabled="isClearDisabled('left')"
+                  @click="clearSide('left')"
+                >
+                  <span class="i-lucide-trash-2" aria-hidden="true" />
+                </button>
+              </UiTooltip>
+            </div>
+            <input
+              ref="leftFileInput"
+              type="file"
+              accept=".json,application/json,text/plain"
+              class="hidden"
+              @change="onFileSelected('left', $event)"
+            />
+          </div>
+          <span class="two-way-merge-labels__revert" aria-hidden="true" />
+          <div class="two-way-merge-labels__side">
+            <span class="ui-label-prod">目标配置</span>
+            <div class="two-way-merge-file-slot">
+              <UiTooltip :text="workspace.rightFileName || '导入 JSON 文件'">
+                <button
+                  type="button"
+                  class="two-way-merge-file"
+                  aria-label="导入目标配置"
+                  @click="openFilePicker('right')"
+                >
+                  {{ workspace.rightFileName || '未导入' }}
+                </button>
+              </UiTooltip>
+            </div>
+            <div class="two-way-merge-labels__actions">
+              <UiTooltip text="导入">
+                <button
+                  type="button"
+                  class="ui-btn ui-btn-icon"
+                  aria-label="导入目标配置"
+                  @click="openFilePicker('right')"
+                >
+                  <span class="i-lucide-file-up" aria-hidden="true" />
+                </button>
+              </UiTooltip>
+              <UiTooltip text="粘贴全文">
+                <button
+                  type="button"
+                  class="ui-btn ui-btn-icon"
+                  aria-label="粘贴为目标配置全文"
+                  @click="pasteAsFullSide('right')"
+                >
+                  <span class="i-lucide-clipboard" aria-hidden="true" />
+                </button>
+              </UiTooltip>
+              <UiTooltip text="清空">
+                <button
+                  type="button"
+                  class="ui-btn ui-btn-icon ui-btn-danger"
+                  aria-label="清空目标配置"
+                  :disabled="isClearDisabled('right')"
+                  @click="clearSide('right')"
+                >
+                  <span class="i-lucide-trash-2" aria-hidden="true" />
+                </button>
+              </UiTooltip>
+            </div>
+            <input
+              ref="rightFileInput"
+              type="file"
+              accept=".json,application/json,text/plain"
+              class="hidden"
+              @change="onFileSelected('right', $event)"
+            />
           </div>
         </div>
-        <div v-if="rightEmpty" class="two-way-merge-empty two-way-merge-empty--right">
-          <div class="two-way-merge-empty__hint">
-            <p>拖入 JSON 文件或粘贴内容</p>
-            <p class="two-way-merge-empty__sub">支持 .json 文件</p>
-            <button type="button" class="ui-btn ui-btn-soft" @click="openFilePicker('right')">
-              选择文件
-            </button>
+        <p
+          v-if="leftError || rightError"
+          class="two-way-merge-status ui-status-invalid"
+          role="status"
+        >
+          <span v-if="leftError">参考配置：{{ leftError }}</span>
+          <span v-if="rightError">目标配置：{{ rightError }}</span>
+        </p>
+        <MergeSearchDock
+          v-if="searchOpen"
+          ref="searchDockRef"
+          v-model:find="searchFind"
+          v-model:replace="searchReplace"
+          v-model:case-sensitive="searchCase"
+          v-model:regexp="searchRegexp"
+          v-model:whole-word="searchWord"
+          v-model:side="searchSide"
+          class="two-way-merge-search"
+          @next="runSearch(findNext)"
+          @prev="runSearch(findPrevious)"
+          @all="runSearch(selectMatches)"
+          @replace-one="runSearch(replaceNext)"
+          @replace-all="runSearch(replaceAll)"
+          @close="closeSearch"
+        />
+        <div
+          class="two-way-merge-frame flex-1 min-h-0"
+          :class="{
+            'is-dragging-left': leftDragDepth > 0,
+            'is-dragging-right': rightDragDepth > 0,
+          }"
+          @dragenter="onHostDragEnter"
+          @dragover="onHostDragOver"
+          @dragleave="onHostDragLeave"
+          @drop="onHostDrop"
+        >
+          <div ref="hostRef" class="two-way-merge-host flex-1 min-h-0" />
+          <div v-if="leftEmpty" class="two-way-merge-empty two-way-merge-empty--left">
+            <div class="two-way-merge-empty__hint">
+              <p>拖入 JSON 文件或粘贴内容</p>
+              <p class="two-way-merge-empty__sub">支持 .json 文件</p>
+              <button type="button" class="ui-btn ui-btn-soft" @click="openFilePicker('left')">
+                选择文件
+              </button>
+            </div>
+          </div>
+          <div v-if="rightEmpty" class="two-way-merge-empty two-way-merge-empty--right">
+            <div class="two-way-merge-empty__hint">
+              <p>拖入 JSON 文件或粘贴内容</p>
+              <p class="two-way-merge-empty__sub">支持 .json 文件</p>
+              <button type="button" class="ui-btn ui-btn-soft" @click="openFilePicker('right')">
+                选择文件
+              </button>
+            </div>
           </div>
         </div>
       </div>
-      <ChunkJumpList
-        v-if="showMinimap"
-        class="two-way-merge-jump-list"
-        :items="jumpItems"
-        :active-index="jumpActiveIndex"
-        @jump="goToChunkAt"
-      />
       <DiffMinimap
         v-if="showMinimap"
         :left-bands="leftBands"
@@ -638,6 +785,19 @@ onBeforeUnmount(() => {
         :viewport="viewportBand"
         @jump="onMinimapJump"
         @drag-end="onMinimapDragEnd"
+      />
+      <ChunkJumpList
+        v-if="showMinimap"
+        class="two-way-merge-jump-list"
+        :items="jumpItems"
+        :active-index="jumpActiveIndex"
+        :groups="configItemGroups"
+        :active-group-id="activeGroupId"
+        :expanded-ids="expandedIds"
+        @jump="goToChunkAt"
+        @jump-group="onJumpGroup"
+        @jump-field="onJumpField"
+        @toggle-group="onToggleGroup"
       />
     </div>
   </div>
@@ -660,10 +820,6 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
   margin-bottom: 0.375rem;
   gap: 0;
-  padding: 0.45rem 0.65rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--surface);
 }
 
 .two-way-merge-labels__side {
@@ -672,6 +828,10 @@ onBeforeUnmount(() => {
   gap: 0.4rem;
   flex: 1 1 0;
   min-width: 0;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
 }
 
 .two-way-merge-file-slot {
@@ -729,6 +889,7 @@ onBeforeUnmount(() => {
 .two-way-merge-frame {
   position: relative;
   display: flex;
+  flex: 1;
   min-width: 0;
   min-height: 0;
 }
@@ -807,8 +968,16 @@ onBeforeUnmount(() => {
   gap: 0.35rem;
 }
 
+.two-way-merge-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
 .two-way-merge-jump-list {
-  flex: 0 0 13rem;
+  flex: 0 0 16rem;
 }
 
 .two-way-merge-search {

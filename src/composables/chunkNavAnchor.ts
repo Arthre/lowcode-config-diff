@@ -76,3 +76,15 @@ export function chunkAnchorText(current: number, total: number): string {
   if (current <= 0) return `${total} 个差异`
   return `${current} / ${total} 个差异`
 }
+
+export type ChunkNavDirection = 'prev' | 'next'
+
+/** 上一个/下一个按钮的可见短文案。 */
+export function chunkNavVisibleLabel(direction: ChunkNavDirection): string {
+  return direction === 'prev' ? '上一个' : '下一个'
+}
+
+/** 上一个/下一个按钮的完整无障碍文案。 */
+export function chunkNavAriaLabel(direction: ChunkNavDirection): string {
+  return direction === 'prev' ? '上一个差异' : '下一个差异'
+}

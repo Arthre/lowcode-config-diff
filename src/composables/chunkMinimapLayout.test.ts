@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
+  bandsFromPixelSpans,
   chunkBandsOf,
   conflictBandsOf,
   createMinimapDragSession,
   scrollTopFromClick,
+  splitMinimapBandsByKind,
   viewportBandOf,
 } from './chunkMinimapLayout'
 
@@ -77,5 +79,60 @@ describe('conflictBandsOf', () => {
       { start: 0, end: 1 / 3 },
       { start: 2 / 3, end: 1 },
     ])
+  })
+})
+
+describe('bandsFromPixelSpans', () => {
+  it('scrollHeight<=0 为空', () => {
+    expect(bandsFromPixelSpans([{ start: 100, end: 300 }], 0)).toEqual([])
+    expect(bandsFromPixelSpans([{ start: 100, end: 300 }], -10)).toEqual([])
+  })
+
+  it('把像素区间换成 0–1 比例', () => {
+    expect(bandsFromPixelSpans([{ start: 100, end: 300 }], 1000)).toEqual([
+      { start: 0.1, end: 0.3 },
+    ])
+  })
+
+  it('重叠像素带合并', () => {
+    expect(
+      bandsFromPixelSpans(
+        [
+          { start: 100, end: 250 },
+          { start: 200, end: 400 },
+        ],
+        1000,
+      ),
+    ).toEqual([{ start: 0.1, end: 0.4 }])
+  })
+})
+
+describe('splitMinimapBandsByKind', () => {
+  it('scrollHeight<=0 为空', () => {
+    expect(splitMinimapBandsByKind([{ kind: 'modified', start: 100, end: 300 }], 0)).toEqual({
+      leftBands: [],
+      rightBands: [],
+    })
+  })
+
+  it('modified 左右同位', () => {
+    const { leftBands, rightBands } = splitMinimapBandsByKind(
+      [{ kind: 'modified', start: 100, end: 300 }],
+      1000,
+    )
+    expect(leftBands).toEqual([{ start: 0.1, end: 0.3 }])
+    expect(rightBands).toEqual(leftBands)
+  })
+
+  it('added 只在 right、removed 只在 left', () => {
+    const { leftBands, rightBands } = splitMinimapBandsByKind(
+      [
+        { kind: 'added', start: 0, end: 200 },
+        { kind: 'removed', start: 400, end: 600 },
+      ],
+      1000,
+    )
+    expect(leftBands).toEqual([{ start: 0.4, end: 0.6 }])
+    expect(rightBands).toEqual([{ start: 0, end: 0.2 }])
   })
 })
