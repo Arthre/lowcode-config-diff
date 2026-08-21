@@ -7,31 +7,18 @@ export type DirectoryTreeNode = {
   path: JsonPathSeg[]
   kind: ConfigItemGroup['kind']
   changeCount: number
-  /** 叶子配置项；数组父节点为 null */
+  /** 配置项叶子；中间路径节点为 null，也可在有子节点时同时挂 group */
   group: ConfigItemGroup | null
   children: DirectoryTreeNode[]
 }
 
-function lastPathSeg(path: readonly JsonPathSeg[]): JsonPathSeg | undefined {
-  return path[path.length - 1]
-}
-
-function parentIdOf(path: readonly JsonPathSeg[]): string {
-  const parentPath = path.slice(0, -1)
-  const formatted = formatJsonPath(parentPath)
+function pathNodeId(path: readonly JsonPathSeg[]): string {
+  const formatted = formatJsonPath(path)
   return formatted === '' ? '（根）' : formatted
 }
 
-function leafNode(group: ConfigItemGroup, label: string): DirectoryTreeNode {
-  return {
-    id: group.id,
-    label,
-    path: group.path,
-    kind: group.kind,
-    changeCount: group.changeCount,
-    group,
-    children: [],
-  }
+function pathSegmentLabel(seg: JsonPathSeg): string {
+  return seg.type === 'key' ? seg.key : `[${seg.index}]`
 }
 
 function mergeParentKind(
@@ -41,49 +28,80 @@ function mergeParentKind(
   return current === next ? current : 'modified'
 }
 
+function createNode(
+  id: string,
+  label: string,
+  path: JsonPathSeg[],
+  kind: ConfigItemGroup['kind'],
+): DirectoryTreeNode {
+  return {
+    id,
+    label,
+    path,
+    kind,
+    changeCount: 0,
+    group: null,
+    children: [],
+  }
+}
+
 /**
- * 把同父路径的数组下标兄弟折到一个一级节点下。
- * 对象根 key 仍各自为一级；字段仍挂在原配置项下，不摊平。
+ * 按完整 JSON path 逐段建树；兄弟共享前缀。
+ * 字段仍挂在对应配置项节点上，不摊平为树节点。
  */
 export function foldDirectoryGroups(groups: readonly ConfigItemGroup[]): DirectoryTreeNode[] {
   const roots: DirectoryTreeNode[] = []
-  const parents = new Map<string, DirectoryTreeNode>()
+  const byId = new Map<string, DirectoryTreeNode>()
 
-  for (const group of groups) {
-    const last = lastPathSeg(group.path)
-    if (last === undefined || last.type !== 'index') {
-      roots.push(leafNode(group, group.id))
-      continue
+  const ensureNode = (path: JsonPathSeg[], kind: ConfigItemGroup['kind']): DirectoryTreeNode => {
+    const id = pathNodeId(path)
+    const existing = byId.get(id)
+    if (existing !== undefined) return existing
+
+    const last = path[path.length - 1]
+    const label = last === undefined ? id : pathSegmentLabel(last)
+    const node = createNode(id, label, path.slice(), kind)
+    byId.set(id, node)
+
+    if (path.length <= 1) {
+      roots.push(node)
+      return node
     }
 
-    const parentId = parentIdOf(group.path)
-    let parent = parents.get(parentId)
-    if (parent === undefined) {
-      parent = {
-        id: parentId,
-        label: parentId,
-        path: group.path.slice(0, -1),
-        kind: group.kind,
-        changeCount: 0,
-        group: null,
-        children: [],
-      }
-      parents.set(parentId, parent)
-      roots.push(parent)
-    }
-    parent.children.push(leafNode(group, formatJsonPath([last])))
-    parent.changeCount += group.changeCount
-    parent.kind = mergeParentKind(parent.kind, group.kind)
+    const parent = ensureNode(path.slice(0, -1), kind)
+    parent.children.push(node)
+    return node
   }
 
+  for (const group of groups) {
+    const node = ensureNode(group.path, group.kind)
+    node.group = group
+  }
+
+  const finalize = (node: DirectoryTreeNode): void => {
+    for (const child of node.children) finalize(child)
+    let count = node.group?.changeCount ?? 0
+    let kind = node.group?.kind
+    for (const child of node.children) {
+      count += child.changeCount
+      kind = kind === undefined ? child.kind : mergeParentKind(kind, child.kind)
+    }
+    node.changeCount = count
+    if (kind !== undefined) node.kind = kind
+  }
+
+  for (const root of roots) finalize(root)
   return roots
 }
 
-/** 当前组及其数组父路径；非数组根只有自身。 */
+/** 当前组完整路径上的每一段节点 id（含自身）。 */
 export function directoryGroupAncestorIds(group: ConfigItemGroup): string[] {
-  const last = lastPathSeg(group.path)
-  if (last === undefined || last.type !== 'index') return [group.id]
-  return [parentIdOf(group.path), group.id]
+  if (group.path.length === 0) return [group.id]
+  const ids: string[] = []
+  for (let length = 1; length <= group.path.length; length += 1) {
+    ids.push(pathNodeId(group.path.slice(0, length)))
+  }
+  return ids
 }
 
 /** 父节点跳转目标：第一个带配置项的后代。 */

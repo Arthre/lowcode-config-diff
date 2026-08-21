@@ -111,6 +111,75 @@ describe('diffConfigItems', () => {
     expect(result.groups[0]?.fields[0]?.rightText).toBe('"custom"')
   })
 
+  it('对象数组按 fieldName 认身，重排后相同项不产出差异', () => {
+    const left = JSON.stringify({
+      editGrid: [
+        { fieldName: 'a', x: 1 },
+        { fieldName: 'b', x: 2 },
+      ],
+    })
+    const right = JSON.stringify({
+      editGrid: [
+        { fieldName: 'b', x: 2 },
+        { fieldName: 'a', x: 1 },
+      ],
+    })
+    expect(diffConfigItems(left, right)).toEqual({
+      available: true,
+      fields: 0,
+      items: 0,
+      groups: [],
+    })
+  })
+
+  it('fieldName 认身后只对比同名项的真实字段变化', () => {
+    const left = JSON.stringify({
+      editGrid: [
+        { fieldName: 'id', component: 'Input' },
+        { fieldName: 'customer_id', component: 'ReSelect', label: '旧' },
+      ],
+    })
+    const right = JSON.stringify({
+      editGrid: [
+        { fieldName: 'customer_id', component: 'ReSelect', label: '新' },
+        { fieldName: 'id', component: 'Input' },
+      ],
+    })
+    const result = diffConfigItems(left, right)
+    expect(result.groups).toHaveLength(1)
+    expect(result.groups[0]?.id).toBe('editGrid[0]')
+    expect(result.groups[0]?.fields.map((f) => f.relativeLabel)).toEqual(['label'])
+    expect(result.groups[0]?.fields[0]?.leftText).toBe('"旧"')
+    expect(result.groups[0]?.fields[0]?.rightText).toBe('"新"')
+  })
+
+  it('未匹配的 fieldName 项各自记删除与新增，不交叉改成修改', () => {
+    const left = JSON.stringify({
+      editGrid: [
+        { fieldName: 'code', v: 1 },
+        { fieldName: 'import_is', label: '系统' },
+        { fieldName: 'keep', v: 1 },
+      ],
+    })
+    const right = JSON.stringify({
+      editGrid: [
+        { fieldName: 'code', v: 1 },
+        { fieldName: 'keep', v: 1 },
+        { fieldName: 'business_manager_dept_id', label: '商务经理部门' },
+      ],
+    })
+    const result = diffConfigItems(left, right)
+    const removed = result.groups.find((g) => g.kind === 'removed')
+    const added = result.groups.find((g) => g.kind === 'added')
+    expect(removed).toBeDefined()
+    expect(added).toBeDefined()
+    expect(removed?.fields.every((f) => f.kind === 'removed')).toBe(true)
+    expect(added?.fields.every((f) => f.kind === 'added')).toBe(true)
+    expect(removed?.fields.some((f) => f.leftText.includes('import_is'))).toBe(true)
+    expect(added?.fields.some((f) => f.rightText.includes('business_manager_dept_id'))).toBe(true)
+    expect(result.groups.every((g) => g.kind !== 'modified')).toBe(true)
+  })
+
   it('仅目标有的数组项为新增组', () => {
     const left = JSON.stringify({ tableGrid: [{ a: 1 }] })
     const right = JSON.stringify({ tableGrid: [{ a: 1 }, { b: 2 }] })

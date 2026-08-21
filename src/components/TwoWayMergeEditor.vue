@@ -45,6 +45,7 @@ import { nearestChunkIndexByOffset } from '@/composables/nearestChunkIndexByOffs
 import { createEditableJsonExtensions, mergeHighlightTheme } from '@/composables/codemirrorTheme'
 import { mergeViewDiffConfig } from '@/composables/diffByLine'
 import {
+  DIRECTORY_TREE_ENABLED,
   directoryDrawerMeasureFallbackMs,
   directoryDrawerWidth,
   isDirectoryWidthTransitionEnd,
@@ -196,8 +197,10 @@ function syncEditorChrome(rebuildLayout: boolean, remasureBands = false) {
     refreshMinimapSnapshot()
     lastChunkKinds = countChunkKinds(mergeView.chunks)
     alignRevertControlMeta()
-    refreshJumpItems()
-    refreshConfigItemGroups()
+    if (DIRECTORY_TREE_ENABLED) {
+      refreshJumpItems()
+      refreshConfigItemGroups()
+    }
   } else if (remasureBands) {
     refreshChunkBands()
     refreshMinimapSnapshot()
@@ -920,7 +923,7 @@ onBeforeUnmount(() => {
           @replace-all="runSearch(replaceAll)"
           @close="closeSearch"
         />
-        <div class="two-way-merge-body">
+        <div class="two-way-merge-body" :class="{ 'is-empty': leftEmpty && rightEmpty }">
           <div
             class="two-way-merge-frame flex-1 min-h-0"
             :class="{
@@ -964,7 +967,7 @@ onBeforeUnmount(() => {
           />
         </div>
       </div>
-      <template v-if="showMinimap">
+      <template v-if="DIRECTORY_TREE_ENABLED && showMinimap">
         <div
           class="two-way-merge-directory"
           :class="{ 'is-open': directoryOpen }"
@@ -1104,24 +1107,27 @@ onBeforeUnmount(() => {
 
 .two-way-merge-empty {
   position: absolute;
-  top: 0.55rem;
-  bottom: 0.55rem;
+  top: 1rem;
+  bottom: 1rem;
   z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-top: 0;
+  box-sizing: border-box;
+  padding: 1.5rem 2.5rem;
+  border-radius: var(--radius-md);
+  background: var(--code-bg);
   pointer-events: none;
 }
 
 .two-way-merge-empty--left {
-  left: 0.5rem;
-  width: calc((100% - 2.4em) / 2 - 0.75rem);
+  left: 1.5rem;
+  width: calc((100% - 2.4em) / 2 - 1.5rem);
 }
 
 .two-way-merge-empty--right {
-  right: 0.5rem;
-  width: calc((100% - 2.4em) / 2 - 0.75rem);
+  right: 1.5rem;
+  width: calc((100% - 2.4em) / 2 - 1.5rem);
 }
 
 .two-way-merge-frame.is-dragging-left .two-way-merge-empty--left :deep(.merge-pane-empty__title),
@@ -1154,6 +1160,23 @@ onBeforeUnmount(() => {
   min-width: 0;
   min-height: 0;
   gap: 0.35rem;
+}
+
+.two-way-merge-body.is-empty {
+  flex: 0 0 auto;
+  align-self: stretch;
+  width: 100%;
+}
+
+.two-way-merge-body.is-empty .two-way-merge-frame,
+.two-way-merge-body.is-empty .two-way-merge-host {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 22rem;
+}
+
+.two-way-merge-body.is-empty .two-way-merge-host {
+  background: var(--surface);
 }
 
 .two-way-merge-directory {

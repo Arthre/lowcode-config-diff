@@ -11,7 +11,7 @@ import {
   chunkNavAriaLabel,
   chunkNavVisibleLabel,
 } from '@/composables/chunkNavAnchor'
-import { directoryDrawerAriaLabel } from '@/composables/directoryDrawer'
+import { DIRECTORY_TREE_ENABLED, directoryDrawerAriaLabel } from '@/composables/directoryDrawer'
 import {
   describeRightDocExport,
   type RightDocExportHint,
@@ -184,31 +184,34 @@ onBeforeUnmount(dismissStatus)
             </span>
           </UiTooltip>
           <ThemeToggle />
-          <UiTooltip :text="directoryToggleLabel">
+          <UiTooltip v-if="DIRECTORY_TREE_ENABLED" :text="directoryToggleLabel">
             <button
               type="button"
-              class="ui-btn ui-btn-icon"
+              class="ui-btn"
               :disabled="directoryToggleDisabled"
               :aria-expanded="directoryOpen"
               :aria-label="directoryToggleLabel"
               @click="directoryOpen = !directoryOpen"
             >
               <span class="i-lucide-list-tree" aria-hidden="true" />
+              目录
             </button>
           </UiTooltip>
           <UiTooltip text="搜索 Ctrl+F">
             <button
               type="button"
-              class="ui-btn ui-btn-icon"
+              class="ui-btn"
               aria-label="搜索"
               @click="mergeEditorRef?.openSearch()"
             >
               <span class="i-lucide-search" aria-hidden="true" />
+              搜索
             </button>
           </UiTooltip>
           <UiTooltip text="复制目标配置">
-            <button type="button" class="ui-btn ui-btn-icon" aria-label="复制" @click="onCopy">
+            <button type="button" class="ui-btn" aria-label="复制" @click="onCopy">
               <span class="i-lucide-copy" aria-hidden="true" />
+              复制
             </button>
           </UiTooltip>
           <DownloadMenu @pretty="onDownload(false)" @compressed="onDownload(true)" />

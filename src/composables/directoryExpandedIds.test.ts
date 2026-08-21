@@ -70,6 +70,22 @@ describe('resolveDirectoryExpandedIds', () => {
     ).toEqual([])
   })
 
+  it('当前深路径项会展开每一段祖先', () => {
+    const active = group('form.items[0]', [
+      { type: 'key', key: 'form' },
+      { type: 'key', key: 'items' },
+      { type: 'index', index: 0 },
+    ])
+    expect(
+      resolveDirectoryExpandedIds({
+        activeGroupId: active.id,
+        activeGroup: active,
+        userExpandedIds: new Set(),
+        userCollapsedIds: new Set(),
+      }),
+    ).toEqual(['form', 'form.items', 'form.items[0]'])
+  })
+
   it('当前为 title 时手动展开 tableGrid 后可被折起', () => {
     const title = group('title', [{ type: 'key', key: 'title' }])
     expect(

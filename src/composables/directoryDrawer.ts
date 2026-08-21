@@ -1,3 +1,6 @@
+/** 差异目录树是否对用户开放。下架期间为 false，实现与测试保留。 */
+export const DIRECTORY_TREE_ENABLED = false
+
 export const DIRECTORY_DRAWER_OPEN_WIDTH = '16rem'
 export const DIRECTORY_DRAWER_DURATION_MS = 240
 

@@ -1,17 +1,14 @@
 <script setup lang="ts" name="ChunkJumpList">
+import ChunkJumpTreeNode from '@/components/ChunkJumpTreeNode.vue'
 import { chunkKindMarker, chunkKindShortName, type ChunkKind } from '@/composables/chunkKind'
-import { type ConfigFieldChange, type ConfigItemGroup } from '@/composables/configItemDiff'
+import { type ConfigItemGroup } from '@/composables/configItemDiff'
 import {
   directoryKindFilterEmptyText,
   filterConfigItemGroups,
   filterJumpItems,
   type DirectoryKindFilter,
 } from '@/composables/directoryKindFilter'
-import {
-  firstDirectoryLeafId,
-  foldDirectoryGroups,
-  type DirectoryTreeNode,
-} from '@/composables/directoryPathTree'
+import { foldDirectoryGroups } from '@/composables/directoryPathTree'
 import type { JsonPathSeg } from '@/composables/jsonPathOffset'
 
 const props = withDefaults(
@@ -44,21 +41,6 @@ const visibleItems = computed(() => filterJumpItems(props.items, kindFilter.valu
 watch([() => props.groups, () => props.items], () => {
   kindFilter.value = 'all'
 })
-
-function isGroupExpanded(id: string): boolean {
-  return props.expandedIds.includes(id)
-}
-
-function onNodeTitleClick(node: DirectoryTreeNode) {
-  const leafId = firstDirectoryLeafId(node)
-  if (leafId !== '') emit('jumpGroup', leafId)
-}
-
-function fieldValueText(field: ConfigFieldChange): string {
-  if (field.kind === 'added') return field.rightText
-  if (field.kind === 'removed') return field.leftText
-  return `${field.leftText} → ${field.rightText}`
-}
 </script>
 
 <template>
@@ -97,128 +79,16 @@ function fieldValueText(field: ConfigFieldChange): string {
     </div>
     <template v-if="showGrouped">
       <p v-if="fieldSummaryText" class="chunk-jump-list__summary">{{ fieldSummaryText }}</p>
-      <div v-for="node in visibleTree" :key="node.id" class="chunk-jump-list__group">
-        <div class="chunk-jump-list__group-head">
-          <button
-            type="button"
-            class="chunk-jump-list__toggle"
-            :aria-expanded="isGroupExpanded(node.id)"
-            :aria-label="isGroupExpanded(node.id) ? `折叠 ${node.label}` : `展开 ${node.label}`"
-            @click.stop="emit('toggleGroup', node.id)"
-          >
-            <span
-              class="i-lucide-chevron-right chunk-jump-list__chevron"
-              :class="{ 'is-open': isGroupExpanded(node.id) }"
-              aria-hidden="true"
-            />
-          </button>
-          <button
-            type="button"
-            class="chunk-jump-list__group-title"
-            @click="onNodeTitleClick(node)"
-          >
-            <span
-              class="chunk-jump-list__kind"
-              :data-kind="node.kind"
-              :title="chunkKindShortName[node.kind]"
-              >{{ chunkKindMarker[node.kind] }}</span
-            >
-            <span class="chunk-jump-list__id" :title="node.label">{{ node.label }}</span>
-            <span class="chunk-jump-list__count">{{ node.changeCount }}</span>
-          </button>
-        </div>
-        <template v-if="isGroupExpanded(node.id)">
-          <div
-            v-for="child in node.children"
-            :key="child.id"
-            class="chunk-jump-list__group chunk-jump-list__group--nested"
-          >
-            <div class="chunk-jump-list__group-head">
-              <button
-                type="button"
-                class="chunk-jump-list__toggle"
-                :aria-expanded="isGroupExpanded(child.id)"
-                :aria-label="
-                  isGroupExpanded(child.id) ? `折叠 ${child.label}` : `展开 ${child.label}`
-                "
-                @click.stop="emit('toggleGroup', child.id)"
-              >
-                <span
-                  class="i-lucide-chevron-right chunk-jump-list__chevron"
-                  :class="{ 'is-open': isGroupExpanded(child.id) }"
-                  aria-hidden="true"
-                />
-              </button>
-              <button
-                type="button"
-                class="chunk-jump-list__group-title"
-                @click="onNodeTitleClick(child)"
-              >
-                <span
-                  class="chunk-jump-list__kind"
-                  :data-kind="child.kind"
-                  :title="chunkKindShortName[child.kind]"
-                  >{{ chunkKindMarker[child.kind] }}</span
-                >
-                <span class="chunk-jump-list__id" :title="child.label">{{ child.label }}</span>
-                <span class="chunk-jump-list__count">{{ child.changeCount }}</span>
-              </button>
-            </div>
-            <div v-if="isGroupExpanded(child.id) && child.group" class="chunk-jump-list__fields">
-              <button
-                v-for="(field, fieldIndex) in child.group.fields"
-                :key="`${child.id}:${fieldIndex}`"
-                type="button"
-                class="chunk-jump-list__field chunk-jump-list__field--nested"
-                :aria-label="`${chunkKindShortName[field.kind]} ${field.relativeLabel}`"
-                @click="emit('jumpField', field.path)"
-              >
-                <span
-                  class="chunk-jump-list__kind"
-                  :data-kind="field.kind"
-                  :title="chunkKindShortName[field.kind]"
-                  >{{ chunkKindMarker[field.kind] }}</span
-                >
-                <span class="chunk-jump-list__field-label" :title="field.relativeLabel">{{
-                  field.relativeLabel
-                }}</span>
-                <span
-                  class="chunk-jump-list__field-value"
-                  :data-kind="field.kind"
-                  :title="fieldValueText(field)"
-                  >{{ fieldValueText(field) }}</span
-                >
-              </button>
-            </div>
-          </div>
-          <div v-if="node.group" class="chunk-jump-list__fields">
-            <button
-              v-for="(field, fieldIndex) in node.group.fields"
-              :key="`${node.id}:${fieldIndex}`"
-              type="button"
-              class="chunk-jump-list__field"
-              :aria-label="`${chunkKindShortName[field.kind]} ${field.relativeLabel}`"
-              @click="emit('jumpField', field.path)"
-            >
-              <span
-                class="chunk-jump-list__kind"
-                :data-kind="field.kind"
-                :title="chunkKindShortName[field.kind]"
-                >{{ chunkKindMarker[field.kind] }}</span
-              >
-              <span class="chunk-jump-list__field-label" :title="field.relativeLabel">{{
-                field.relativeLabel
-              }}</span>
-              <span
-                class="chunk-jump-list__field-value"
-                :data-kind="field.kind"
-                :title="fieldValueText(field)"
-                >{{ fieldValueText(field) }}</span
-              >
-            </button>
-          </div>
-        </template>
-      </div>
+      <ChunkJumpTreeNode
+        v-for="node in visibleTree"
+        :key="node.id"
+        :node="node"
+        :depth="0"
+        :expanded-ids="expandedIds"
+        @jump-group="emit('jumpGroup', $event)"
+        @jump-field="emit('jumpField', $event)"
+        @toggle-group="emit('toggleGroup', $event)"
+      />
       <div v-if="visibleTree.length === 0" class="chunk-jump-list__empty">
         <p>{{ directoryKindFilterEmptyText(kindFilter) }}</p>
         <button
@@ -379,10 +249,7 @@ function fieldValueText(field: ConfigFieldChange): string {
   line-height: 1.35;
 }
 
-.chunk-jump-list__row,
-.chunk-jump-list__toggle,
-.chunk-jump-list__group-title,
-.chunk-jump-list__field {
+.chunk-jump-list__row {
   margin: 0;
   border: 0;
   background: transparent;
@@ -390,9 +257,6 @@ function fieldValueText(field: ConfigFieldChange): string {
   font: inherit;
   text-align: left;
   cursor: pointer;
-}
-
-.chunk-jump-list__row {
   display: flex;
   align-items: baseline;
   gap: 0.35rem;
@@ -400,17 +264,11 @@ function fieldValueText(field: ConfigFieldChange): string {
   padding: 0.18rem 0.4rem;
 }
 
-.chunk-jump-list__row:hover,
-.chunk-jump-list__group-head .chunk-jump-list__group-title:hover,
-.chunk-jump-list__field:hover,
-.chunk-jump-list__toggle:hover {
+.chunk-jump-list__row:hover {
   background: color-mix(in srgb, var(--border-subtle) 65%, transparent);
 }
 
-.chunk-jump-list__row:focus-visible,
-.chunk-jump-list__toggle:focus-visible,
-.chunk-jump-list__group-title:focus-visible,
-.chunk-jump-list__field:focus-visible {
+.chunk-jump-list__row:focus-visible {
   z-index: 1;
   outline: 2px solid var(--accent);
   outline-offset: -2px;
@@ -443,105 +301,5 @@ function fieldValueText(field: ConfigFieldChange): string {
   line-height: 1.3;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.chunk-jump-list__group-head {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.05rem;
-}
-
-.chunk-jump-list__toggle {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 1.2rem;
-  height: 1.35rem;
-  padding: 0;
-  color: var(--muted);
-}
-
-.chunk-jump-list__chevron {
-  width: 0.75rem;
-  height: 0.75rem;
-  transition: transform 150ms ease-out;
-}
-
-.chunk-jump-list__chevron.is-open {
-  transform: rotate(90deg);
-}
-
-.chunk-jump-list__group-title {
-  display: flex;
-  flex: 1;
-  align-items: baseline;
-  gap: 0 0.28rem;
-  min-width: 0;
-  padding: 0.16rem 0.4rem 0.16rem 0.05rem;
-}
-
-.chunk-jump-list__id {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 0.75rem;
-  line-height: 1.3;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.chunk-jump-list__count {
-  flex-shrink: 0;
-  color: var(--muted);
-  font-size: 0.72rem;
-  line-height: 1.3;
-}
-
-.chunk-jump-list__group--nested {
-  padding-left: 0.7rem;
-}
-
-.chunk-jump-list__field {
-  display: flex;
-  align-items: baseline;
-  gap: 0.28rem;
-  width: 100%;
-  padding: 0.14rem 0.4rem 0.14rem 1.25rem;
-}
-
-.chunk-jump-list__field--nested {
-  padding-left: 1.85rem;
-}
-
-.chunk-jump-list__field-label {
-  flex-shrink: 0;
-  max-width: 7rem;
-  overflow: hidden;
-  color: var(--muted);
-  font-size: 0.72rem;
-  line-height: 1.3;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.chunk-jump-list__field-value {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 0.75rem;
-  line-height: 1.3;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.chunk-jump-list__field-value[data-kind='added'] {
-  color: var(--diff-added);
-}
-
-.chunk-jump-list__field-value[data-kind='removed'] {
-  color: var(--diff-removed);
 }
 </style>

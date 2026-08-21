@@ -2,11 +2,18 @@ import { describe, expect, it } from 'vitest'
 import {
   DIRECTORY_DRAWER_DURATION_MS,
   DIRECTORY_DRAWER_OPEN_WIDTH,
+  DIRECTORY_TREE_ENABLED,
   directoryDrawerAriaLabel,
   directoryDrawerMeasureFallbackMs,
   directoryDrawerWidth,
   isDirectoryWidthTransitionEnd,
 } from './directoryDrawer'
+
+describe('DIRECTORY_TREE_ENABLED', () => {
+  it('差异目录树当前对用户下架', () => {
+    expect(DIRECTORY_TREE_ENABLED).toBe(false)
+  })
+})
 
 describe('DIRECTORY_DRAWER_OPEN_WIDTH', () => {
   it('展开列宽为 16rem', () => {
