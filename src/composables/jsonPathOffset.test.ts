@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { jsonPathOffset } from './jsonPathOffset'
+import { jsonPathOffset, jsonPathOffsets } from './jsonPathOffset'
 
 describe('jsonPathOffset', () => {
   it('空路径返回 0', () => {
@@ -56,5 +56,57 @@ describe('jsonPathOffset', () => {
   it('定位 Unicode 键', () => {
     const source = '{"标题":"A"}'
     expect(jsonPathOffset(source, [{ type: 'key', key: '标题' }])).toBe(source.indexOf('"标题"'))
+  })
+
+  it('转义键按解码后的键名定位', () => {
+    const source = '{"a\\\\b":1}'
+    expect(jsonPathOffset(source, [{ type: 'key', key: 'a\\b' }])).toBe(source.indexOf('"a\\\\b"'))
+  })
+})
+
+describe('jsonPathOffsets', () => {
+  it('空路径批量仍为 0，且不因非法源失败', () => {
+    expect(jsonPathOffsets('', [[]])).toEqual([0])
+    expect(jsonPathOffsets('{', [[]])).toEqual([0])
+  })
+
+  it('一次扫描收下共享前缀的多条路径', () => {
+    const source = `{
+  "tableGrid": [
+    { "columnType": "normal", "hidden": false },
+    { "columnType": "custom", "hidden": true }
+  ],
+  "title": "A"
+}`
+    const table0Type = [
+      { type: 'key' as const, key: 'tableGrid' },
+      { type: 'index' as const, index: 0 },
+      { type: 'key' as const, key: 'columnType' },
+    ]
+    const table1Hidden = [
+      { type: 'key' as const, key: 'tableGrid' },
+      { type: 'index' as const, index: 1 },
+      { type: 'key' as const, key: 'hidden' },
+    ]
+    const title = [{ type: 'key' as const, key: 'title' }]
+    const missing = [{ type: 'key' as const, key: 'nope' }]
+
+    expect(
+      jsonPathOffsets(source, [table0Type, [], table1Hidden, title, missing, table0Type]),
+    ).toEqual([
+      jsonPathOffset(source, table0Type),
+      0,
+      jsonPathOffset(source, table1Hidden),
+      jsonPathOffset(source, title),
+      null,
+      jsonPathOffset(source, table0Type),
+    ])
+  })
+
+  it('字符串内的转义引号不干扰后续键', () => {
+    const source = '{"note":"say \\"hi\\"","ok":true}'
+    expect(jsonPathOffsets(source, [[{ type: 'key', key: 'ok' }]])).toEqual([
+      source.indexOf('"ok"'),
+    ])
   })
 })

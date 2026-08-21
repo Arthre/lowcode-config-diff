@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { lineNumberAtOffset } from './lineNumberAtOffset'
+import { createLineNumberLocator, lineNumberAtOffset } from './lineNumberAtOffset'
 
 describe('lineNumberAtOffset', () => {
   it('空串任意 offset 返回 1', () => {
@@ -22,5 +22,15 @@ describe('lineNumberAtOffset', () => {
 
   it('超过 source.length 夹取到末行', () => {
     expect(lineNumberAtOffset('a\nb', 999)).toBe(2)
+  })
+})
+
+describe('createLineNumberLocator', () => {
+  it('同一文档多次查询与逐次扫描结果一致', () => {
+    const source = 'a\nb\nc'
+    const lineAt = createLineNumberLocator(source)
+    for (let offset = -1; offset <= source.length + 2; offset++) {
+      expect(lineAt(offset)).toBe(lineNumberAtOffset(source, offset))
+    }
   })
 })

@@ -164,5 +164,19 @@ describe('buildJumpLineNumberMaps', () => {
     })
     expect(maps.groupLineNumbers).toEqual({})
     expect(maps.fieldLineNumbers).toEqual({})
+    expect(maps.groupOffsets).toEqual([])
+  })
+
+  it('groupOffsets 与组行号同源，删除组用参考文档偏移', () => {
+    const maps = buildJumpLineNumberMaps({
+      groups: [titleGroup, goneGroup, freshGroup],
+      leftDoc,
+      rightDoc,
+    })
+    expect(maps.groupOffsets).toEqual([
+      { id: 'title', offset: rightDoc.indexOf('"title"'), kind: 'modified' },
+      { id: 'gone', offset: leftDoc.indexOf('"gone"'), kind: 'removed' },
+      { id: 'fresh', offset: rightDoc.indexOf('"fresh"'), kind: 'added' },
+    ])
   })
 })
