@@ -148,7 +148,7 @@ onBeforeUnmount(dismissStatus)
             :aria-label="chunkNavAriaLabel('prev')"
             @click="mergeEditorRef?.goToPrevChunk()"
           >
-            <span class="i-lucide-chevron-up" aria-hidden="true" />
+            <span class="i-lucide-chevron-left" aria-hidden="true" />
             {{ chunkNavVisibleLabel('prev') }}
           </button>
           <button
@@ -159,7 +159,7 @@ onBeforeUnmount(dismissStatus)
             @click="mergeEditorRef?.goToNextChunk()"
           >
             {{ chunkNavVisibleLabel('next') }}
-            <span class="i-lucide-chevron-down" aria-hidden="true" />
+            <span class="i-lucide-chevron-right" aria-hidden="true" />
           </button>
         </div>
         <div

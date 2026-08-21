@@ -148,7 +148,7 @@ function fieldLineLabel(groupId: string, fieldIndex: number): string {
 .chunk-jump-list {
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
+  flex: 1 1 auto;
   align-self: stretch;
   width: 16rem;
   min-width: 16rem;

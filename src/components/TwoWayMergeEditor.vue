@@ -10,6 +10,7 @@ import {
   setSearchQuery,
 } from '@codemirror/search'
 import { EditorView } from '@codemirror/view'
+import { Prec } from '@codemirror/state'
 import ChunkJumpList from '@/components/ChunkJumpList.vue'
 import DiffMinimap from '@/components/DiffMinimap.vue'
 import MergePaneEmptyState from '@/components/MergePaneEmptyState.vue'
@@ -42,7 +43,11 @@ import { buildJumpLineNumberMaps } from '@/composables/jumpLineNumbers'
 import { nearestChunkIndexByOffset } from '@/composables/nearestChunkIndexByOffset'
 import { createEditableJsonExtensions, mergeHighlightTheme } from '@/composables/codemirrorTheme'
 import { mergeViewDiffConfig } from '@/composables/diffByLine'
-import { directoryDrawerWidth } from '@/composables/directoryDrawer'
+import {
+  directoryDrawerMeasureFallbackMs,
+  directoryDrawerWidth,
+  isDirectoryWidthTransitionEnd,
+} from '@/composables/directoryDrawer'
 import { pointerLeftMergeFrame } from '@/composables/pointerLeftMergeFrame'
 import { sideFromClientX } from '@/composables/sideFromClientX'
 import { useMergeSideImport } from '@/composables/useMergeSideImport'
@@ -384,16 +389,44 @@ function onMinimapDragEnd() {
 }
 
 function onDirectoryTransitionEnd(event: TransitionEvent) {
-  if (event.propertyName !== 'width') return
-  if (event.target !== event.currentTarget) return
+  if (!isDirectoryWidthTransitionEnd(event)) return
+  directoryMeasureEpoch += 1
+  cancelDirectoryMeasureTimer()
   resyncChromeAfterMeasure()
 }
 
-watch(directoryOpen, () => {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    resyncChromeAfterMeasure()
+let directoryMeasureTimer: ReturnType<typeof setTimeout> | undefined
+let directoryMeasureEpoch = 0
+
+function cancelDirectoryMeasureTimer() {
+  if (directoryMeasureTimer === undefined) return
+  clearTimeout(directoryMeasureTimer)
+  directoryMeasureTimer = undefined
+}
+
+/** 列宽落地后补测编辑器宽度；transitionend 不可靠时按时长兜底。 */
+function scheduleDirectoryEditorMeasure() {
+  cancelDirectoryMeasureTimer()
+  const epoch = ++directoryMeasureEpoch
+  const delay = directoryDrawerMeasureFallbackMs(
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  )
+  if (delay === 0) {
+    void nextTick(() => {
+      requestAnimationFrame(() => {
+        if (epoch !== directoryMeasureEpoch) return
+        resyncChromeAfterMeasure()
+      })
+    })
+    return
   }
-})
+  directoryMeasureTimer = setTimeout(() => {
+    directoryMeasureTimer = undefined
+    resyncChromeAfterMeasure()
+  }, delay)
+}
+
+watch(directoryOpen, scheduleDirectoryEditorMeasure)
 
 /** 键入 / → / Undo：仅字符串确有变化时回写 store，避免与 watch 形成环 */
 function createSideListener(side: 'left' | 'right') {
@@ -603,6 +636,15 @@ function onHostDragLeave(event: DragEvent) {
   highlightDropSide(null)
 }
 
+/** 文件放下由宿主 importSide 整栏替换；拦截后 CM 不再按光标插入。 */
+const swallowEditorFileDrop = Prec.highest(
+  EditorView.domEventHandlers({
+    drop(event) {
+      return (event.dataTransfer?.files?.length ?? 0) > 0
+    },
+  }),
+)
+
 function onHostDrop(event: DragEvent) {
   event.preventDefault()
   const side = sideFromPointer(event.clientX)
@@ -624,6 +666,7 @@ onMounted(() => {
       extensions: [
         ...createEditableJsonExtensions([mergeHighlightTheme], openSearch),
         createSideListener('left'),
+        swallowEditorFileDrop,
       ],
     },
     b: {
@@ -631,6 +674,7 @@ onMounted(() => {
       extensions: [
         ...createEditableJsonExtensions([mergeHighlightTheme], openSearch),
         createSideListener('right'),
+        swallowEditorFileDrop,
       ],
     },
     revertControls: 'a-to-b',
@@ -668,6 +712,8 @@ watch(
 )
 
 onBeforeUnmount(() => {
+  directoryMeasureEpoch += 1
+  cancelDirectoryMeasureTimer()
   minimapDragging = false
   minimapDrag.end()
   mergeView?.dom.removeEventListener('scroll', onMergeScroll)
@@ -737,7 +783,9 @@ onBeforeUnmount(() => {
               @change="onFileSelected('left', $event)"
             />
           </div>
-          <span class="two-way-merge-labels__revert" aria-hidden="true" />
+          <div class="two-way-merge-labels__revert">
+            <span class="i-lucide-move-right" aria-hidden="true" />
+          </div>
           <div class="two-way-merge-labels__side">
             <span class="ui-label-prod">目标配置</span>
             <div class="two-way-merge-file-slot">
@@ -955,8 +1003,18 @@ onBeforeUnmount(() => {
 }
 
 .two-way-merge-labels__revert {
+  display: flex;
   flex: 0 0 2.4em;
+  align-items: center;
+  justify-content: center;
   width: 2.4em;
+  height: 2.4em;
+  color: var(--text-h);
+}
+
+.two-way-merge-labels__revert .i-lucide-move-right {
+  width: 1.15em;
+  height: 1.15em;
 }
 
 .two-way-merge-status {
@@ -978,6 +1036,7 @@ onBeforeUnmount(() => {
 
 .two-way-merge-host {
   position: relative;
+  width: 100%;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -1033,6 +1092,8 @@ onBeforeUnmount(() => {
 }
 
 .two-way-merge-directory {
+  display: flex;
+  flex-direction: column;
   flex: 0 0 auto;
   align-self: stretch;
   width: 16rem;
@@ -1043,8 +1104,10 @@ onBeforeUnmount(() => {
 }
 
 .two-way-merge-jump-list {
+  flex: 1 1 auto;
   width: 16rem;
   min-width: 16rem;
+  min-height: 0;
 }
 
 .two-way-merge-search {
@@ -1064,6 +1127,7 @@ onBeforeUnmount(() => {
 }
 
 :deep(.cm-mergeView) {
+  width: 100%;
   height: 100%;
   max-width: 100%;
   min-width: 0;

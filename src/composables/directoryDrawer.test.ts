@@ -3,7 +3,9 @@ import {
   DIRECTORY_DRAWER_DURATION_MS,
   DIRECTORY_DRAWER_OPEN_WIDTH,
   directoryDrawerAriaLabel,
+  directoryDrawerMeasureFallbackMs,
   directoryDrawerWidth,
+  isDirectoryWidthTransitionEnd,
 } from './directoryDrawer'
 
 describe('DIRECTORY_DRAWER_OPEN_WIDTH', () => {
@@ -35,5 +37,49 @@ describe('directoryDrawerAriaLabel', () => {
 
   it('收起时标签为展开目录', () => {
     expect(directoryDrawerAriaLabel(false)).toBe('展开目录')
+  })
+})
+
+describe('isDirectoryWidthTransitionEnd', () => {
+  it('本列 width 过渡结束时为真', () => {
+    const column = {}
+    expect(
+      isDirectoryWidthTransitionEnd({
+        propertyName: 'width',
+        target: column,
+        currentTarget: column,
+      }),
+    ).toBe(true)
+  })
+
+  it('忽略非 width 过渡', () => {
+    const column = {}
+    expect(
+      isDirectoryWidthTransitionEnd({
+        propertyName: 'opacity',
+        target: column,
+        currentTarget: column,
+      }),
+    ).toBe(false)
+  })
+
+  it('忽略子节点冒泡的 width 过渡', () => {
+    expect(
+      isDirectoryWidthTransitionEnd({
+        propertyName: 'width',
+        target: {},
+        currentTarget: {},
+      }),
+    ).toBe(false)
+  })
+})
+
+describe('directoryDrawerMeasureFallbackMs', () => {
+  it('减少动效时立即补测', () => {
+    expect(directoryDrawerMeasureFallbackMs(true)).toBe(0)
+  })
+
+  it('有宽度过渡时按时长兜底补测', () => {
+    expect(directoryDrawerMeasureFallbackMs(false)).toBe(DIRECTORY_DRAWER_DURATION_MS)
   })
 })

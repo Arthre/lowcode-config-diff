@@ -8,3 +8,17 @@ export function directoryDrawerWidth(open: boolean): string {
 export function directoryDrawerAriaLabel(open: boolean): string {
   return open ? '收起目录' : '展开目录'
 }
+
+/** 是否目录列自身的 width 过渡结束（忽略子节点冒泡）。 */
+export function isDirectoryWidthTransitionEnd(event: {
+  propertyName: string
+  target: unknown
+  currentTarget: unknown
+}): boolean {
+  return event.propertyName === 'width' && event.target === event.currentTarget
+}
+
+/** 开关后若 transitionend 未到，多少毫秒后兜底补测编辑器。减少动效为 0。 */
+export function directoryDrawerMeasureFallbackMs(reducedMotion: boolean): number {
+  return reducedMotion ? 0 : DIRECTORY_DRAWER_DURATION_MS
+}
