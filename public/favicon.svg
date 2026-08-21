@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="配置差异合并工具">
-  <title>配置差异合并工具</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Diff 合并工具">
+  <title>Diff 合并工具</title>
   <!--
     双栏 Merge 工作台的 favicon：圆角瓷片上两份配置 + 中间采纳箭头。
     配色对齐页眉品牌标（accent / accent-muted），随系统亮暗微调明度。

@@ -1,5 +1,5 @@
 ---
-name: 配置差异合并工具
+name: Diff 合并工具
 description: 冷灰画布 + 青绿强调的 Operate 工具界面
 colors:
   canvas: '#eef1f4'
