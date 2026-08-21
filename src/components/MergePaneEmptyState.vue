@@ -144,22 +144,32 @@ onBeforeUnmount(() => {
 
 <style scoped lang="scss">
 .merge-pane-empty {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.15rem;
-  width: max-content;
-  max-width: 12.5rem;
-  padding: 0;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  padding: 0 1.75rem;
   text-align: center;
 }
 
 .merge-pane-empty__player {
   display: block;
-  width: 3.5rem;
-  height: 3.5rem;
+  width: 10rem;
+  height: 10rem;
   margin-bottom: 0.1rem;
+  overflow: hidden;
   pointer-events: none;
+}
+
+.merge-pane-empty__player :deep(canvas),
+.merge-pane-empty__player :deep(svg) {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
 }
 
 .merge-pane-empty__icon {
@@ -171,6 +181,7 @@ onBeforeUnmount(() => {
 
 .merge-pane-empty__title {
   margin: 0;
+  padding: 0 1rem;
   font-size: 0.8125rem;
   line-height: 1.35;
   color: var(--text);
@@ -178,6 +189,7 @@ onBeforeUnmount(() => {
 
 .merge-pane-empty__sub {
   margin: 0;
+  padding: 0 1rem;
   font-size: 0.75rem;
   line-height: 1.3;
   color: var(--muted);

@@ -1,6 +1,4 @@
 <script setup lang="ts" name="DownloadMenu">
-import UiTooltip from '@/components/UiTooltip.vue'
-
 const emit = defineEmits<{
   pretty: []
   compressed: []
@@ -51,18 +49,17 @@ onBeforeUnmount(() => {
 
 <template>
   <div ref="wrapRef" class="download-menu">
-    <UiTooltip text="导出" placement="top" :disabled="open">
-      <button
-        type="button"
-        class="ui-btn ui-btn-primary ui-btn-icon"
-        aria-label="导出"
-        aria-haspopup="menu"
-        :aria-expanded="open"
-        @click="toggle"
-      >
-        <span class="i-lucide-download" aria-hidden="true" />
-      </button>
-    </UiTooltip>
+    <button
+      type="button"
+      class="ui-btn ui-btn-primary"
+      aria-label="导出"
+      aria-haspopup="menu"
+      :aria-expanded="open"
+      @click="toggle"
+    >
+      <span class="i-lucide-download" aria-hidden="true" />
+      导出
+    </button>
     <Teleport to="body">
       <div
         v-if="open"
