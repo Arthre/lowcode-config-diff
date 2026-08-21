@@ -42,7 +42,7 @@ import { buildJumpLineNumberMaps } from '@/composables/jumpLineNumbers'
 import { nearestChunkIndexByOffset } from '@/composables/nearestChunkIndexByOffset'
 import { createEditableJsonExtensions, mergeHighlightTheme } from '@/composables/codemirrorTheme'
 import { mergeViewDiffConfig } from '@/composables/diffByLine'
-import { directoryDrawerAriaLabel, directoryDrawerWidth } from '@/composables/directoryDrawer'
+import { directoryDrawerWidth } from '@/composables/directoryDrawer'
 import { pointerLeftMergeFrame } from '@/composables/pointerLeftMergeFrame'
 import { sideFromClientX } from '@/composables/sideFromClientX'
 import { useMergeSideImport } from '@/composables/useMergeSideImport'
@@ -54,6 +54,8 @@ const emptyFieldSummary: ChunkFieldSummary = { available: false, fields: 0, item
 const emit = defineEmits<{
   chunks: [count: number, current: number, kinds: ChunkKindCounts, fieldSummary: ChunkFieldSummary]
 }>()
+/** 推开式目录；默认展开，不写 localStorage；开关在页眉。 */
+const directoryOpen = defineModel<boolean>('directoryOpen', { default: true })
 const {
   leftDragDepth,
   rightDragDepth,
@@ -124,8 +126,6 @@ const expandedIds = computed(() => {
 const leftEmpty = computed(() => workspace.leftDoc.length === 0)
 const rightEmpty = computed(() => workspace.rightDoc.length === 0)
 const showMinimap = computed(() => !leftEmpty.value || !rightEmpty.value)
-/** 推开式目录；默认展开，不写 localStorage。 */
-const directoryOpen = ref(true)
 
 /** 只提供 a-to-b；← 暂时下线，控件必须是 button 以便库设置 top */
 function renderRevertControl() {
@@ -313,7 +313,7 @@ function offsetOfGroup(group: ConfigItemGroup, leftDoc: string, rightDoc: string
   return jsonPathOffset(source, firstField.path)
 }
 
-/** 配置项分组与组偏移只在 layout 时算；滚动禁止 jsonPathOffset。 */
+/** 配置项分组、组偏移与行号只在 layout 时算；偏移与行号共用一次路径扫描。滚动禁止 jsonPathOffset。 */
 function refreshConfigItemGroups() {
   userExpandedIds.value = new Set()
   if (!mergeView) {
@@ -332,18 +332,12 @@ function refreshConfigItemGroups() {
     ? { available: true, fields: result.fields, items: result.items }
     : emptyFieldSummary
   configItemGroups.value = result.available && result.groups.length > 0 ? result.groups : []
-  const offsets: { id: string; offset: number; kind: ConfigItemGroup['kind'] }[] = []
-  for (const group of result.groups) {
-    const offset = offsetOfGroup(group, leftDoc, rightDoc)
-    if (offset === null) continue
-    offsets.push({ id: group.id, offset, kind: group.kind })
-  }
-  cachedGroupOffsets = offsets
   const maps = buildJumpLineNumberMaps({
     groups: configItemGroups.value,
     leftDoc,
     rightDoc,
   })
+  cachedGroupOffsets = maps.groupOffsets
   groupLineNumbers.value = maps.groupLineNumbers
   fieldLineNumbers.value = maps.fieldLineNumbers
   fieldSummaryText.value =
@@ -395,12 +389,11 @@ function onDirectoryTransitionEnd(event: TransitionEvent) {
   resyncChromeAfterMeasure()
 }
 
-function toggleDirectory() {
-  directoryOpen.value = !directoryOpen.value
+watch(directoryOpen, () => {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     resyncChromeAfterMeasure()
   }
-}
+})
 
 /** 键入 / → / Undo：仅字符串确有变化时回写 store，避免与 watch 形成环 */
 function createSideListener(side: 'left' | 'right') {
@@ -863,25 +856,6 @@ onBeforeUnmount(() => {
         @drag-end="onMinimapDragEnd"
       />
       <template v-if="showMinimap">
-        <button
-          type="button"
-          class="two-way-merge-directory-handle"
-          :aria-expanded="directoryOpen"
-          :aria-label="directoryDrawerAriaLabel(directoryOpen)"
-          :title="directoryDrawerAriaLabel(directoryOpen)"
-          @click="toggleDirectory"
-        >
-          <span
-            v-if="directoryOpen"
-            class="two-way-merge-directory-handle__icon i-lucide-chevron-left"
-            aria-hidden="true"
-          />
-          <span
-            v-else
-            class="two-way-merge-directory-handle__icon i-lucide-chevron-right"
-            aria-hidden="true"
-          />
-        </button>
         <div
           class="two-way-merge-directory"
           :class="{ 'is-open': directoryOpen }"
@@ -1056,39 +1030,6 @@ onBeforeUnmount(() => {
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-}
-
-.two-way-merge-directory-handle {
-  display: flex;
-  flex: 0 0 1.25rem;
-  align-items: center;
-  justify-content: center;
-  align-self: stretch;
-  width: 1.25rem;
-  min-width: 1.25rem;
-  padding: 0;
-  appearance: none;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--muted);
-  cursor: pointer;
-}
-
-.two-way-merge-directory-handle:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-muted);
-}
-
-.two-way-merge-directory-handle:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
-.two-way-merge-directory-handle__icon {
-  width: 0.85rem;
-  height: 0.85rem;
 }
 
 .two-way-merge-directory {

@@ -10,6 +10,7 @@ import {
   chunkNavAriaLabel,
   chunkNavVisibleLabel,
 } from '@/composables/chunkNavAnchor'
+import { directoryDrawerAriaLabel } from '@/composables/directoryDrawer'
 import {
   describeRightDocExport,
   type RightDocExportHint,
@@ -32,6 +33,12 @@ const mergeEditorRef = ref<{
   goToNextChunk: () => void
   openSearch: () => boolean
 } | null>(null)
+/** 推开式目录；默认展开，不写 localStorage。 */
+const directoryOpen = ref(true)
+const directoryToggleDisabled = computed(
+  () => workspace.leftDoc.length === 0 && workspace.rightDoc.length === 0,
+)
+const directoryToggleLabel = computed(() => directoryDrawerAriaLabel(directoryOpen.value))
 const chunkCount = ref(0)
 const chunkCurrent = ref(0)
 const chunkKinds = ref<ChunkKindCounts>({ added: 0, removed: 0, modified: 0 })
@@ -171,6 +178,18 @@ onBeforeUnmount(dismissStatus)
             </span>
           </UiTooltip>
           <ThemeToggle />
+          <UiTooltip :text="directoryToggleLabel">
+            <button
+              type="button"
+              class="ui-btn ui-btn-icon"
+              :disabled="directoryToggleDisabled"
+              :aria-expanded="directoryOpen"
+              :aria-label="directoryToggleLabel"
+              @click="directoryOpen = !directoryOpen"
+            >
+              <span class="i-lucide-list-tree" aria-hidden="true" />
+            </button>
+          </UiTooltip>
           <UiTooltip text="搜索 Ctrl+F">
             <button
               type="button"
@@ -192,7 +211,12 @@ onBeforeUnmount(dismissStatus)
     </header>
 
     <div class="ui-workspace">
-      <TwoWayMergeEditor ref="mergeEditorRef" class="flex-1 min-h-0" @chunks="onChunks" />
+      <TwoWayMergeEditor
+        ref="mergeEditorRef"
+        v-model:directory-open="directoryOpen"
+        class="flex-1 min-h-0"
+        @chunks="onChunks"
+      />
     </div>
 
     <UiMessage

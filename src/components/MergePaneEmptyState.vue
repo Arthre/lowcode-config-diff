@@ -21,15 +21,56 @@ const animationSrc = `${import.meta.env.BASE_URL}lottie/empty-import.json`
 const playerRef = ref<DotLottieVueInstance | null>(null)
 
 function playerInstance() {
-  return playerRef.value?.getDotLottieInstance() ?? null
+  return playerRef.value?.getDotLottieInstance?.() ?? null
 }
 
-/** 播完停在片尾时只改 mode 不会动；必须 setMode 后再 play。无 loop。 */
+/** empty-import.json 位移/透明度关键帧只到约第 30 帧，之后静止。 */
+const motionEndFrame = 30
+let holdFrameListener: ((event: { currentFrame: number }) => void) | undefined
+
+function detachHoldFrame() {
+  if (!holdFrameListener) return
+  playerInstance()?.removeEventListener('frame', holdFrameListener)
+  holdFrameListener = undefined
+}
+
 function playInDirection(over: boolean) {
   const instance = playerInstance()
-  if (!instance?.isLoaded) return
-  instance.setMode(over ? 'reverse' : 'forward')
-  instance.play()
+  if (!instance?.isLoaded) {
+    requestAnimationFrame(() => {
+      const again = playerInstance()
+      if (again?.isLoaded) applyPlayback(again, over)
+    })
+    return
+  }
+  applyPlayback(instance, over)
+}
+
+function applyPlayback(instance: NonNullable<ReturnType<typeof playerInstance>>, over: boolean) {
+  detachHoldFrame()
+  const lastFrame = instance.totalFrames - 1
+  if (lastFrame < 0) return
+  if (over) {
+    const fromFrame = Math.min(motionEndFrame, lastFrame)
+    let passedPeak = instance.currentFrame > 1
+    holdFrameListener = (event) => {
+      if (event.currentFrame > 1) {
+        passedPeak = true
+        return
+      }
+      if (!passedPeak) return
+      instance.pause()
+      instance.setFrame(0)
+      detachHoldFrame()
+    }
+    instance.addEventListener('frame', holdFrameListener)
+    instance.setMode('reverse')
+    instance.setFrame(fromFrame)
+    instance.play()
+  } else {
+    instance.setMode('forward')
+    instance.play()
+  }
 }
 
 function onPlayerLoad() {
@@ -54,6 +95,7 @@ watch(
 )
 
 onBeforeUnmount(() => {
+  detachHoldFrame()
   playerInstance()?.removeEventListener('load', onPlayerLoad)
 })
 </script>
@@ -66,6 +108,7 @@ onBeforeUnmount(() => {
       class="merge-pane-empty__player"
       aria-hidden="true"
       autoplay
+      :mode="dragOver ? 'reverse' : 'forward'"
       :src="animationSrc"
     />
     <span v-else class="merge-pane-empty__icon i-lucide-package" aria-hidden="true" />
