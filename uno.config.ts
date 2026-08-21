@@ -17,6 +17,7 @@ export default defineConfig({
     'i-lucide-git-compare',
     'i-lucide-file-json',
     'i-lucide-list-tree',
+    'i-lucide-list-filter',
     'i-lucide-file-output',
     'i-lucide-shield-check',
     'i-lucide-upload',

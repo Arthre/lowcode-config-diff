@@ -27,17 +27,18 @@ import {
 import { chunkJumpPreview } from '@/composables/chunkJumpPreview'
 import {
   createMinimapDragSession,
+  mergeScrollHeight,
   splitMinimapBandsByKind,
   viewportBandOf,
   type ChunkBand,
 } from '@/composables/chunkMinimapLayout'
 import { activeChunkIndexInViewport, chunkNavTargetIndex } from '@/composables/chunkNavAnchor'
-import { activeGroupIdFromChunk } from '@/composables/activeGroupFromChunk'
 import {
   diffConfigItems,
   directoryFieldSummaryText,
   type ConfigItemGroup,
 } from '@/composables/configItemDiff'
+import { foldDirectoryGroups, type DirectoryTreeNode } from '@/composables/directoryPathTree'
 import { jsonPathOffset, type JsonPathSeg } from '@/composables/jsonPathOffset'
 import { buildJumpLineNumberMaps } from '@/composables/jumpLineNumbers'
 import { nearestChunkIndexByOffset } from '@/composables/nearestChunkIndexByOffset'
@@ -49,7 +50,16 @@ import {
   isDirectoryWidthTransitionEnd,
 } from '@/composables/directoryDrawer'
 import { pointerLeftMergeFrame } from '@/composables/pointerLeftMergeFrame'
+import {
+  SAMPLE_REFERENCE_FILE_NAME,
+  SAMPLE_REFERENCE_JSON,
+  SAMPLE_TARGET_FILE_NAME,
+  SAMPLE_TARGET_JSON,
+  isSampleFillAvailable,
+} from '@/composables/sampleMergeDocs'
 import { sideFromClientX } from '@/composables/sideFromClientX'
+import { MERGE_COLLAPSE_UNCHANGED } from '@/composables/mergeCollapseUnchanged'
+import { createHorizontalScrollSync } from '@/composables/syncEditorScrollLeft'
 import { useMergeSideImport } from '@/composables/useMergeSideImport'
 import { useMergeWorkspace, type MergeSide } from '@/stores/mergeWorkspace'
 
@@ -61,6 +71,8 @@ const emit = defineEmits<{
 }>()
 /** 推开式目录；默认展开，不写 localStorage；开关在页眉。 */
 const directoryOpen = defineModel<boolean>('directoryOpen', { default: true })
+/** 折叠未改行；默认关，不写 localStorage；开关在页眉。 */
+const collapseUnchanged = defineModel<boolean>('collapseUnchanged', { default: false })
 const {
   leftDragDepth,
   rightDragDepth,
@@ -99,34 +111,16 @@ let lastChunkCurrent = -1
 let lastChunkKinds: ChunkKindCounts = { added: 0, removed: 0, modified: 0 }
 /** 字段/配置项摘要；只在 shouldLayout 时随分组更新，滚动沿用缓存 */
 let lastFieldSummary: ChunkFieldSummary = emptyFieldSummary
-/** 目录条目与 bands / kinds 同拍；滚动只改 current 高亮。 */
+/** 目录条目与 bands / kinds 同拍；滚动不带动目录列表。 */
 const jumpItems = ref<{ kind: ChunkKind; preview: string; index: number }[]>([])
 const chunkCurrent = ref(0)
-const jumpActiveIndex = computed(() => (chunkCurrent.value > 0 ? chunkCurrent.value - 1 : -1))
 /** 配置项分组；非法 JSON 或无组时为空，目录走扁平回退 */
 const configItemGroups = ref<ConfigItemGroup[]>([])
-const activeGroupId = ref('')
 const userExpandedIds = ref<Set<string>>(new Set())
 /** 组路径文档偏移（含 kind 以便滚动时选 fromA/fromB）；只在 layout 时算 */
 let cachedGroupOffsets: { id: string; offset: number; kind: ConfigItemGroup['kind'] }[] = []
-/** 组/字段跳转侧行号；只在 layout 时算，滚动不重算 */
-const groupLineNumbers = ref<Record<string, number>>({})
-const fieldLineNumbers = ref<Record<string, number>>({})
 const fieldSummaryText = ref('')
-const expandedIds = computed(() => {
-  const ids: string[] = []
-  const seen = new Set<string>()
-  if (activeGroupId.value !== '') {
-    ids.push(activeGroupId.value)
-    seen.add(activeGroupId.value)
-  }
-  for (const id of userExpandedIds.value) {
-    if (seen.has(id)) continue
-    ids.push(id)
-    seen.add(id)
-  }
-  return ids
-})
+const expandedIds = computed(() => [...userExpandedIds.value])
 
 const leftEmpty = computed(() => workspace.leftDoc.length === 0)
 const rightEmpty = computed(() => workspace.rightDoc.length === 0)
@@ -177,10 +171,24 @@ function syncRevertCurrentState(current: number) {
   }
 }
 
+/** 滚动根与左右编辑器内容高取较大值，色带与滑块共用。 */
+function mergeScrollerMetrics(): { clientHeight: number; scrollHeight: number } | null {
+  if (!mergeView) return null
+  const scroller = mergeView.dom
+  return {
+    clientHeight: scroller.clientHeight,
+    scrollHeight: mergeScrollHeight(
+      scroller.scrollHeight,
+      Math.max(mergeView.a.contentHeight, mergeView.b.contentHeight),
+    ),
+  }
+}
+
 /** 页眉锚点与视口带随滚动更新；分组、色带与块像素带只在文档或块数量变化时重建。 */
-function syncEditorChrome(rebuildLayout: boolean) {
+function syncEditorChrome(rebuildLayout: boolean, remasureBands = false) {
   if (!mergeView) return
   const scroller = mergeView.dom
+  const metrics = mergeScrollerMetrics()
   const count = mergeView.chunks.length
   const shouldLayout = rebuildLayout || count !== lastChunkCount
   if (shouldLayout) {
@@ -190,6 +198,9 @@ function syncEditorChrome(rebuildLayout: boolean) {
     alignRevertControlMeta()
     refreshJumpItems()
     refreshConfigItemGroups()
+  } else if (remasureBands) {
+    refreshChunkBands()
+    refreshMinimapSnapshot()
   }
   const index = activeChunkIndexInViewport(
     cachedChunkBands,
@@ -198,17 +209,17 @@ function syncEditorChrome(rebuildLayout: boolean) {
   )
   const current = count === 0 || index < 0 ? 0 : index + 1
   chunkCurrent.value = current
-  syncActiveGroupId(current)
   if (shouldLayout || current !== lastChunkCurrent) {
     lastChunkCount = count
     lastChunkCurrent = current
     emit('chunks', count, current, lastChunkKinds, lastFieldSummary)
   }
   syncRevertCurrentState(current)
+  if (metrics === null) return
   const nextViewport = viewportBandOf(
     scroller.scrollTop,
-    scroller.clientHeight,
-    scroller.scrollHeight,
+    metrics.clientHeight,
+    metrics.scrollHeight,
   )
   if (
     nextViewport.start !== viewportBand.value.start ||
@@ -289,7 +300,7 @@ function refreshMinimapSnapshot() {
         end: band === undefined ? 0 : band.end,
       }
     }),
-    mergeView.dom.scrollHeight,
+    mergeScrollerMetrics()?.scrollHeight ?? mergeView.dom.scrollHeight,
   )
   leftBands.value = split.leftBands
   rightBands.value = split.rightBands
@@ -318,15 +329,26 @@ function offsetOfGroup(group: ConfigItemGroup, leftDoc: string, rightDoc: string
   return jsonPathOffset(source, firstField.path)
 }
 
+/** 目录树默认可展开的节点（父级 + 叶子），不跟编辑器滚动。 */
+function expandableDirectoryIds(groups: readonly ConfigItemGroup[]): string[] {
+  const ids: string[] = []
+  const walk = (nodes: DirectoryTreeNode[]) => {
+    for (const node of nodes) {
+      ids.push(node.id)
+      walk(node.children)
+    }
+  }
+  walk(foldDirectoryGroups(groups))
+  return ids
+}
+
 /** 配置项分组、组偏移与行号只在 layout 时算；偏移与行号共用一次路径扫描。滚动禁止 jsonPathOffset。 */
 function refreshConfigItemGroups() {
-  userExpandedIds.value = new Set()
   if (!mergeView) {
+    userExpandedIds.value = new Set()
     configItemGroups.value = []
     cachedGroupOffsets = []
     lastFieldSummary = emptyFieldSummary
-    groupLineNumbers.value = {}
-    fieldLineNumbers.value = {}
     fieldSummaryText.value = ''
     return
   }
@@ -337,41 +359,42 @@ function refreshConfigItemGroups() {
     ? { available: true, fields: result.fields, items: result.items }
     : emptyFieldSummary
   configItemGroups.value = result.available && result.groups.length > 0 ? result.groups : []
+  userExpandedIds.value = new Set(expandableDirectoryIds(configItemGroups.value))
   const maps = buildJumpLineNumberMaps({
     groups: configItemGroups.value,
     leftDoc,
     rightDoc,
   })
   cachedGroupOffsets = maps.groupOffsets
-  groupLineNumbers.value = maps.groupLineNumbers
-  fieldLineNumbers.value = maps.fieldLineNumbers
   fieldSummaryText.value =
     lastFieldSummary.available && lastFieldSummary.fields > 0
       ? directoryFieldSummaryText(lastFieldSummary.fields, lastFieldSummary.items)
       : ''
 }
 
-/** 按当前块 kind 分轨：删除只扫 removed+fromA，其余只扫非 removed+fromB。 */
-function syncActiveGroupId(current: number) {
-  if (!mergeView || current <= 0) {
-    activeGroupId.value = ''
-    return
-  }
-  const chunk = mergeView.chunks[current - 1]
-  if (chunk === undefined) {
-    activeGroupId.value = ''
-    return
-  }
-  activeGroupId.value = activeGroupIdFromChunk(chunk, cachedGroupOffsets)
-}
-
 function onMinimapJump(ratio: number) {
   if (!mergeView) return
+  const live = mergeScrollerMetrics()
+  if (live === null) return
   minimapDragging = true
   const scroller = mergeView.dom
-  const live = { clientHeight: scroller.clientHeight, scrollHeight: scroller.scrollHeight }
-  scroller.scrollTop = minimapDrag.scrollTopForRatio(ratio, live)
+  const maxTop = Math.max(0, live.scrollHeight - live.clientHeight)
+  scroller.scrollTop = Math.min(minimapDrag.scrollTopForRatio(ratio, live), maxTop)
   viewportBand.value = minimapDrag.viewportForRatio(ratio, live)
+  const count = mergeView.chunks.length
+  const index = activeChunkIndexInViewport(
+    cachedChunkBands,
+    scroller.scrollTop,
+    scroller.scrollTop + scroller.clientHeight,
+  )
+  const current = count === 0 || index < 0 ? 0 : index + 1
+  chunkCurrent.value = current
+  if (current !== lastChunkCurrent) {
+    lastChunkCount = count
+    lastChunkCurrent = current
+    emit('chunks', count, current, lastChunkKinds, lastFieldSummary)
+  }
+  syncRevertCurrentState(current)
 }
 
 function resyncChromeAfterMeasure() {
@@ -440,7 +463,8 @@ function createSideListener(side: 'left' | 'right') {
         workspace.setRightDoc(next)
       }
     }
-    syncEditorChrome(update.docChanged)
+    if (minimapDragging) return
+    syncEditorChrome(update.docChanged, update.heightChanged)
   })
 }
 
@@ -557,7 +581,6 @@ function onJumpField(path: JsonPathSeg[]) {
 }
 
 function onToggleGroup(id: string) {
-  if (id === activeGroupId.value) return
   const next = new Set(userExpandedIds.value)
   if (next.has(id)) next.delete(id)
   else next.add(id)
@@ -602,6 +625,12 @@ function goToChunkFromAnchor(step: 1 | -1) {
 function openFilePicker(side: MergeSide) {
   const input = side === 'left' ? leftFileInput.value : rightFileInput.value
   input?.click()
+}
+
+function fillSampleDocs() {
+  if (!isSampleFillAvailable(workspace.leftDoc, workspace.rightDoc)) return
+  workspace.importSide('left', SAMPLE_REFERENCE_JSON, SAMPLE_REFERENCE_FILE_NAME)
+  workspace.importSide('right', SAMPLE_TARGET_JSON, SAMPLE_TARGET_FILE_NAME)
 }
 
 function sideFromPointer(clientX: number): MergeSide | null {
@@ -654,6 +683,18 @@ function onHostDrop(event: DragEvent) {
 
 defineExpose({ goToPrevChunk, goToNextChunk, openSearch })
 
+const hScrollSync = createHorizontalScrollSync()
+
+function onLeftHScroll() {
+  if (!mergeView) return
+  hScrollSync.onScroll(mergeView.a.scrollDOM, mergeView.b.scrollDOM)
+}
+
+function onRightHScroll() {
+  if (!mergeView) return
+  hScrollSync.onScroll(mergeView.b.scrollDOM, mergeView.a.scrollDOM)
+}
+
 onMounted(() => {
   const hostEl = hostRef.value
   if (!hostEl) return
@@ -685,7 +726,17 @@ onMounted(() => {
   })
   syncEditorChrome(true)
   mergeView.dom.addEventListener('scroll', onMergeScroll, { passive: true })
+  mergeView.a.scrollDOM.addEventListener('scroll', onLeftHScroll, { passive: true })
+  mergeView.b.scrollDOM.addEventListener('scroll', onRightHScroll, { passive: true })
   window.addEventListener('resize', onWindowResize)
+})
+
+watch(collapseUnchanged, (enabled) => {
+  if (!mergeView) return
+  mergeView.reconfigure({
+    collapseUnchanged: enabled ? MERGE_COLLAPSE_UNCHANGED : undefined,
+  })
+  afterEditorMeasure(() => syncEditorChrome(false, true))
 })
 
 /** store 因导入/清空变化时，只替换该侧文档，保留另一侧 Undo 历史 */
@@ -717,6 +768,8 @@ onBeforeUnmount(() => {
   minimapDragging = false
   minimapDrag.end()
   mergeView?.dom.removeEventListener('scroll', onMergeScroll)
+  mergeView?.a.scrollDOM.removeEventListener('scroll', onLeftHScroll)
+  mergeView?.b.scrollDOM.removeEventListener('scroll', onRightHScroll)
   window.removeEventListener('resize', onWindowResize)
   mergeView?.destroy()
   mergeView = null
@@ -867,42 +920,50 @@ onBeforeUnmount(() => {
           @replace-all="runSearch(replaceAll)"
           @close="closeSearch"
         />
-        <div
-          class="two-way-merge-frame flex-1 min-h-0"
-          :class="{
-            'is-dragging-left': leftDragDepth > 0,
-            'is-dragging-right': rightDragDepth > 0,
-          }"
-          @dragenter="onHostDragEnter"
-          @dragover="onHostDragOver"
-          @dragleave="onHostDragLeave"
-          @drop="onHostDrop"
-        >
-          <div ref="hostRef" class="two-way-merge-host flex-1 min-h-0" />
-          <div v-if="leftEmpty" class="two-way-merge-empty two-way-merge-empty--left">
-            <MergePaneEmptyState
-              select-aria-label="选择参考配置文件"
-              :drag-over="leftDragDepth > 0"
-              @select="openFilePicker('left')"
-            />
+        <div class="two-way-merge-body">
+          <div
+            class="two-way-merge-frame flex-1 min-h-0"
+            :class="{
+              'is-dragging-left': leftDragDepth > 0,
+              'is-dragging-right': rightDragDepth > 0,
+            }"
+            @dragenter="onHostDragEnter"
+            @dragover="onHostDragOver"
+            @dragleave="onHostDragLeave"
+            @drop="onHostDrop"
+          >
+            <div ref="hostRef" class="two-way-merge-host flex-1 min-h-0" />
+            <div v-if="leftEmpty" class="two-way-merge-empty two-way-merge-empty--left">
+              <MergePaneEmptyState
+                select-aria-label="选择参考配置文件"
+                :drag-over="leftDragDepth > 0"
+                :show-sample="leftEmpty && rightEmpty"
+                @paste="pasteAsFullSide('left')"
+                @sample="fillSampleDocs"
+                @select="openFilePicker('left')"
+              />
+            </div>
+            <div v-if="rightEmpty" class="two-way-merge-empty two-way-merge-empty--right">
+              <MergePaneEmptyState
+                select-aria-label="选择目标配置文件"
+                :drag-over="rightDragDepth > 0"
+                :show-sample="leftEmpty && rightEmpty"
+                @paste="pasteAsFullSide('right')"
+                @sample="fillSampleDocs"
+                @select="openFilePicker('right')"
+              />
+            </div>
           </div>
-          <div v-if="rightEmpty" class="two-way-merge-empty two-way-merge-empty--right">
-            <MergePaneEmptyState
-              select-aria-label="选择目标配置文件"
-              :drag-over="rightDragDepth > 0"
-              @select="openFilePicker('right')"
-            />
-          </div>
+          <DiffMinimap
+            v-if="showMinimap"
+            :left-bands="leftBands"
+            :right-bands="rightBands"
+            :viewport="viewportBand"
+            @jump="onMinimapJump"
+            @drag-end="onMinimapDragEnd"
+          />
         </div>
       </div>
-      <DiffMinimap
-        v-if="showMinimap"
-        :left-bands="leftBands"
-        :right-bands="rightBands"
-        :viewport="viewportBand"
-        @jump="onMinimapJump"
-        @drag-end="onMinimapDragEnd"
-      />
       <template v-if="showMinimap">
         <div
           class="two-way-merge-directory"
@@ -915,13 +976,9 @@ onBeforeUnmount(() => {
           <ChunkJumpList
             class="two-way-merge-jump-list"
             :items="jumpItems"
-            :active-index="jumpActiveIndex"
             :groups="configItemGroups"
-            :active-group-id="activeGroupId"
             :expanded-ids="expandedIds"
             :field-summary-text="fieldSummaryText"
-            :group-line-numbers="groupLineNumbers"
-            :field-line-numbers="fieldLineNumbers"
             @jump="goToChunkAt"
             @jump-group="onJumpGroup"
             @jump-field="onJumpField"
@@ -1051,9 +1108,9 @@ onBeforeUnmount(() => {
   bottom: 0.55rem;
   z-index: 2;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  padding-top: min(4.25rem, 18%);
+  padding-top: 0;
   pointer-events: none;
 }
 
@@ -1089,6 +1146,14 @@ onBeforeUnmount(() => {
   flex-direction: column;
   min-width: 0;
   min-height: 0;
+}
+
+.two-way-merge-body {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  gap: 0.35rem;
 }
 
 .two-way-merge-directory {

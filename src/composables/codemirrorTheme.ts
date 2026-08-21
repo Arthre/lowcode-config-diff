@@ -79,6 +79,7 @@ export const editorPhrases = EditorState.phrases.of({
   'on line': '位于行',
   'replaced match on line $': '已替换第 $ 行的匹配',
   'replaced $ matches': '已替换 $ 处匹配',
+  '$ unchanged lines': '$ 行相同',
 })
 
 /** Merge 冲突高亮对齐设计 token（覆盖 merge 包默认绿/红）。 */

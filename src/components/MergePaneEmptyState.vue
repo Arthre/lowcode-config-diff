@@ -7,12 +7,16 @@ const props = withDefaults(
     selectAriaLabel?: string
     /** 该窗格正处于文件拖入高亮（宿主 dragenter/dragover，不是 drop） */
     dragOver?: boolean
+    /** 双侧文档都为空时显示示例入口 */
+    showSample?: boolean
   }>(),
-  { selectAriaLabel: '选择文件', dragOver: false },
+  { selectAriaLabel: '选择文件', dragOver: false, showSample: false },
 )
 
 const emit = defineEmits<{
   select: []
+  paste: []
+  sample: []
 }>()
 
 const reduceMotion = usePreferredReducedMotion()
@@ -114,14 +118,27 @@ onBeforeUnmount(() => {
     <span v-else class="merge-pane-empty__icon i-lucide-package" aria-hidden="true" />
     <p class="merge-pane-empty__title">拖入 JSON 文件或粘贴内容</p>
     <p class="merge-pane-empty__sub">支持 .json 文件</p>
-    <button
-      type="button"
-      class="ui-btn ui-btn-soft merge-pane-empty__cta"
-      :aria-label="props.selectAriaLabel"
-      @click="emit('select')"
-    >
-      选择文件
-    </button>
+    <div class="merge-pane-empty__actions">
+      <button
+        type="button"
+        class="ui-btn ui-btn-soft merge-pane-empty__cta"
+        :aria-label="props.selectAriaLabel"
+        @click="emit('select')"
+      >
+        选择文件
+      </button>
+      <button type="button" class="ui-btn merge-pane-empty__cta" @click="emit('paste')">
+        粘贴全文
+      </button>
+      <button
+        v-if="showSample"
+        type="button"
+        class="merge-pane-empty__sample"
+        @click="emit('sample')"
+      >
+        填入示例配置
+      </button>
+    </div>
   </div>
 </template>
 
@@ -139,8 +156,8 @@ onBeforeUnmount(() => {
 
 .merge-pane-empty__player {
   display: block;
-  width: 6.75rem;
-  height: 7.5rem;
+  width: 3.5rem;
+  height: 3.5rem;
   margin-bottom: 0.1rem;
   pointer-events: none;
 }
@@ -166,10 +183,31 @@ onBeforeUnmount(() => {
   color: var(--muted);
 }
 
-.merge-pane-empty__cta {
-  pointer-events: auto;
+.merge-pane-empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem;
   margin-top: 0.4rem;
+}
+
+.merge-pane-empty__cta {
   padding: 0.35rem 0.7rem;
   font-size: 0.8125rem;
+}
+
+.merge-pane-empty__sample {
+  padding: 0.35rem 0.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.merge-pane-empty__cta,
+.merge-pane-empty__sample {
+  pointer-events: auto;
 }
 </style>

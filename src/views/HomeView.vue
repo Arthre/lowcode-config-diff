@@ -3,6 +3,7 @@ import DownloadMenu from '@/components/DownloadMenu.vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import TwoWayMergeEditor from '@/components/TwoWayMergeEditor.vue'
 import UiMessage from '@/components/UiMessage.vue'
+import UiSwitch from '@/components/UiSwitch.vue'
 import UiTooltip from '@/components/UiTooltip.vue'
 import { chunkKindSummaryText, type ChunkKindCounts } from '@/composables/chunkKind'
 import {
@@ -35,6 +36,8 @@ const mergeEditorRef = ref<{
 } | null>(null)
 /** 推开式目录；默认展开，不写 localStorage。 */
 const directoryOpen = ref(true)
+/** 折叠编辑器未改行；默认关，不写 localStorage。 */
+const collapseUnchanged = ref(false)
 const directoryToggleDisabled = computed(
   () => workspace.leftDoc.length === 0 && workspace.rightDoc.length === 0,
 )
@@ -118,6 +121,9 @@ onBeforeUnmount(dismissStatus)
           <h1>{{ appStore.title }}</h1>
         </div>
         <div class="ui-toolbar-cluster" role="toolbar" aria-label="差异导航">
+          <UiTooltip text="折叠编辑器中未改动的行">
+            <UiSwitch v-model="collapseUnchanged" label="仅显示差异" :disabled="chunkCount === 0" />
+          </UiTooltip>
           <div class="ui-diff-anchor">
             <span
               class="ui-diff-badge"
@@ -214,6 +220,7 @@ onBeforeUnmount(dismissStatus)
       <TwoWayMergeEditor
         ref="mergeEditorRef"
         v-model:directory-open="directoryOpen"
+        v-model:collapse-unchanged="collapseUnchanged"
         class="flex-1 min-h-0"
         @chunks="onChunks"
       />

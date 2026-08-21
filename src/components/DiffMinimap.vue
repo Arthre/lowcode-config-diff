@@ -108,7 +108,7 @@ onBeforeUnmount(() => {
       class="diff-minimap__viewport"
       :style="{
         top: `${props.viewport.start * 100}%`,
-        height: `${Math.max((props.viewport.end - props.viewport.start) * 100, 4)}%`,
+        height: `${(props.viewport.end - props.viewport.start) * 100}%`,
       }"
     />
     <span class="diff-minimap__col diff-minimap__col--left">
