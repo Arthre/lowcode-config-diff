@@ -28,7 +28,7 @@ Vue 3 + TypeScript + Vite + Pinia + Vue Router + UnoCSS + VueUse + Vitest + Code
 
 ## Capabilities and Constraints
 
-- 已具备：Merge 两枚胶囊栏头导入/粘贴全文/清空（对齐左右编辑器），整栏拖入文件（合法 object/array 根则格式化一次）、分栏居中空态（选择文件 / 粘贴全文 / 双侧皆空时可填入示例对）与整栏落区、可编辑 MergeView（左参考配置、右目标配置）、按行差异块、页眉单行（品牌、差异徽章 `差异 n / m` 或 `无差异`、新增/删除/修改 chips 只读、上一个/下一个 仍遍历全部文本块、「仅显示差异」开关折叠编辑器未改行、本地处理/主题/目录开关/查找/复制/导出）、中间 `→` 按类型着色且当前块可辨、差异目录在缩略轨右侧为推开式抽屉（默认可收起，开关在页眉；列表可独立滚动，不跟编辑器滚动对齐；可解析时按配置项分层，一级为结构根、数组下标兄弟折在其下，组头/字段单行、符号 ●/＋/− 带语义色、默认不展示 `L{n}`；顶栏可见「筛选」标签 + 类型 chips 全部/＋新增/−删除/●修改；筛选空态提示；否则扁平块预览；双侧都空时隐藏）、`.two-way-merge-body` 为编辑器画框与缩略轨并排（目录列仍可与 stage 同高）、缩略轨与编辑器画框同高、左右 `scrollDOM.scrollLeft` 同步、折叠未改行默认关（`MergeView.reconfigure` + `collapseUnchanged`，不写 localStorage；`heightChanged` 时重测色带）、缩略滑块与编辑器原生滚动条同一套行程（快拖/折叠/目录开关后补测再同步）、栏头外查找条、块级 `→`（采纳参考）、上一个/下一个（从视口锚点步进，绕回）、复制/导出/压缩导出右栏（非法 JSON 提示后仍导出）、亮/暗主题切换
+- 已具备：Merge 两枚胶囊栏头导入/粘贴全文/清空（对齐左右编辑器），整栏拖入文件（合法 object/array 根则格式化一次）、分栏居中空态（选择文件 / 粘贴全文 / 双侧皆空时可填入示例对）与整栏落区、可编辑 MergeView（左参考配置、右目标配置）、按行差异块、页眉单行（品牌、差异徽章 `差异 n / m` 或 `无差异`、新增/删除/修改 chips 只读、上一个/下一个 仍遍历全部文本块、「仅显示差异」开关折叠编辑器未改行、本地处理/主题/查找/复制/导出）、中间 `→` 按类型着色且当前块可辨、差异目录树已下架（`DIRECTORY_TREE_ENABLED = false`；实现与测试保留，现行 UI 不挂载页眉开关与抽屉）、`.two-way-merge-body` 为编辑器画框与缩略轨并排、缩略轨与编辑器画框同高、左右 `scrollDOM.scrollLeft` 同步、折叠未改行默认关（`MergeView.reconfigure` + `collapseUnchanged`，不写 localStorage；`heightChanged` 时重测色带）、缩略滑块与编辑器原生滚动条同一套行程（快拖/折叠后补测再同步）、栏头外查找条、块级 `→`（采纳参考）、上一个/下一个（从视口锚点步进，绕回）、复制/导出/压缩导出右栏（非法 JSON 提示后仍导出）、亮/暗主题切换
 - Core 仍含 `parseConfig` / `formatConfig` / `compressConfig`、`diffConfig`、`mergeConfig`；**现行 UI 不调用** `diffConfig` / `mergeConfig`（仅导入校验/格式化与引擎单测仍用 Core）
 - 约束：无后端、无云端保存、无 Git/发布；文本 diff，不忽略键序/空白；本包无体积上限
 - （推断）首要语言为简体中文 UI；未单独确认无障碍标准
