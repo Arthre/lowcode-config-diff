@@ -141,11 +141,11 @@ describe('chunkAnchorText', () => {
   })
 
   it('有块时带当前序号', () => {
-    expect(chunkAnchorText(3, 55)).toBe('3 / 55 个差异')
+    expect(chunkAnchorText(3, 55)).toBe('差异 3 / 55')
   })
 
   it('尚未锚到具体块时只报总数', () => {
-    expect(chunkAnchorText(0, 55)).toBe('55 个差异')
+    expect(chunkAnchorText(0, 55)).toBe('差异 55')
   })
 })
 

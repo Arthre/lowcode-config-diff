@@ -2,18 +2,20 @@ export type ChunkBand = { start: number; end: number }
 
 const MIN_VIEWPORT_SPAN = 0.04
 
-/** 把滑块夹在 0–1 轨道内，并保证有可见高度。 */
+/** 把滑块夹在 0–1 轨道内。 */
 export function clampViewportBand(band: ChunkBand): ChunkBand {
   let start = Number.isFinite(band.start) ? band.start : 0
   let end = Number.isFinite(band.end) ? band.end : 1
   start = Math.min(1, Math.max(0, start))
   end = Math.min(1, Math.max(0, end))
   if (end < start) end = start
-  if (end - start < MIN_VIEWPORT_SPAN) {
-    end = Math.min(1, start + MIN_VIEWPORT_SPAN)
-    start = Math.max(0, end - MIN_VIEWPORT_SPAN)
-  }
   return { start, end }
+}
+
+/** 滑块高度：真实视口占比，过小时抬到可见下限。 */
+function viewportSpan(clientHeight: number, scrollHeight: number): number {
+  if (scrollHeight <= 0) return 1
+  return Math.min(1, Math.max(clientHeight / scrollHeight, MIN_VIEWPORT_SPAN))
 }
 
 /** 把差异块在文档中的位置换成缩略轨上的 0–1 区间。 */
@@ -28,26 +30,41 @@ export function chunkBandsOf(
   }))
 }
 
-/** 当前视口在缩略轨上的 0–1 区间。 */
+/**
+ * 当前视口在缩略轨上的 0–1 区间。
+ * 与原生滚动条同一套行程：progress = scrollTop / maxTop，
+ * 滑块 top = progress * (1 - span)，避免 4% 下限把后段钉死在 96%。
+ */
 export function viewportBandOf(
   scrollTop: number,
   clientHeight: number,
   scrollHeight: number,
 ): ChunkBand {
   if (scrollHeight <= 0) return { start: 0, end: 1 }
-  return clampViewportBand({
-    start: scrollTop / scrollHeight,
-    end: (scrollTop + clientHeight) / scrollHeight,
-  })
+  const span = viewportSpan(clientHeight, scrollHeight)
+  const maxTop = Math.max(0, scrollHeight - clientHeight)
+  const progress = maxTop > 0 ? Math.min(1, Math.max(0, scrollTop / maxTop)) : 0
+  const start = progress * (1 - span)
+  return clampViewportBand({ start, end: start + span })
 }
 
-/** 点击缩略轨比例对应的 scrollTop。 */
+/**
+ * 点击/拖动缩略轨比例对应的 scrollTop。
+ * 与编辑器原生滚动条一致：轨道 0–1 = 可滚动余量行程。
+ */
 export function scrollTopFromClick(
   clickRatio: number,
   clientHeight: number,
   scrollHeight: number,
 ): number {
-  return clickRatio * Math.max(0, scrollHeight - clientHeight)
+  const maxTop = Math.max(0, scrollHeight - clientHeight)
+  const ratio = Number.isFinite(clickRatio) ? Math.min(1, Math.max(0, clickRatio)) : 0
+  return maxTop * ratio
+}
+
+/** 合并编辑器内容高与滚动根 scrollHeight，避免折叠条导致色带/滑块用两套高度。 */
+export function mergeScrollHeight(scrollHeight: number, contentHeight: number): number {
+  return Math.max(0, scrollHeight, contentHeight)
 }
 
 type ScrollMetrics = { clientHeight: number; scrollHeight: number }

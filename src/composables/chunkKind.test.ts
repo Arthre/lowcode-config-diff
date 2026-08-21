@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import { chunkKindSummaryText, countChunkKinds, kindOfChunk, revertControlHint } from './chunkKind'
+import {
+  chunkKindMarker,
+  chunkKindSummaryText,
+  countChunkKinds,
+  kindOfChunk,
+  revertControlHint,
+} from './chunkKind'
+
+it('类型符号为实心点、全角加号、减号', () => {
+  expect(chunkKindMarker.modified).toBe('●')
+  expect(chunkKindMarker.added).toBe('＋')
+  expect(chunkKindMarker.removed).toBe('−')
+})
 
 describe('kindOfChunk', () => {
   it('仅目标侧有区间为新增', () => {

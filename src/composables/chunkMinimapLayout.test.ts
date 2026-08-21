@@ -4,6 +4,7 @@ import {
   chunkBandsOf,
   conflictBandsOf,
   createMinimapDragSession,
+  mergeScrollHeight,
   scrollTopFromClick,
   splitMinimapBandsByKind,
   viewportBandOf,
@@ -35,11 +36,56 @@ describe('viewportBandOf', () => {
     expect(band.start).toBeLessThan(band.end)
     expect(band.end - band.start).toBeGreaterThanOrEqual(0.04)
   })
+
+  it('文档远高于视口时滑块跟滚动条走完全程，不在 96% 钉死', () => {
+    const clientHeight = 783
+    const scrollHeight = 360557
+    const maxTop = scrollHeight - clientHeight
+    const at96 = viewportBandOf(0.96 * maxTop, clientHeight, scrollHeight)
+    const at99 = viewportBandOf(0.99 * maxTop, clientHeight, scrollHeight)
+    const atEnd = viewportBandOf(maxTop, clientHeight, scrollHeight)
+    expect(atEnd.end).toBeCloseTo(1)
+    expect(atEnd.start).toBeCloseTo(0.96)
+    expect(at99.start).toBeGreaterThan(at96.start)
+    expect(atEnd.start).toBeGreaterThan(at99.start)
+  })
 })
 
 describe('scrollTopFromClick', () => {
-  it('点击比例映射到可滚动范围', () => {
+  it('中点仍映射到可滚动范围中点', () => {
     expect(scrollTopFromClick(0.5, 100, 300)).toBe(100)
+  })
+
+  it('点击比例对准原生滚动条行程', () => {
+    const scrollTop = scrollTopFromClick(0.4, 100, 500)
+    expect(scrollTop).toBe(160)
+    const band = viewportBandOf(scrollTop, 100, 500)
+    const span = band.end - band.start
+    expect(band.start).toBeCloseTo(0.4 * (1 - span))
+    expect(band.end).toBeCloseTo(band.start + span)
+  })
+
+  it('两端夹在可滚动范围内', () => {
+    expect(scrollTopFromClick(0, 100, 300)).toBe(0)
+    expect(scrollTopFromClick(1, 100, 300)).toBe(200)
+  })
+
+  it('映射与 clamp 共用 mergeScrollHeight 后的 scrollHeight', () => {
+    const clientHeight = 100
+    const rawScrollHeight = 800
+    const contentHeight = 1000
+    const scrollHeight = mergeScrollHeight(rawScrollHeight, contentHeight)
+    const scrollTop = scrollTopFromClick(1, clientHeight, scrollHeight)
+    const maxTop = Math.max(0, scrollHeight - clientHeight)
+    expect(scrollTop).toBe(maxTop)
+  })
+})
+
+describe('mergeScrollHeight', () => {
+  it('取滚动根与编辑器内容高的较大值', () => {
+    expect(mergeScrollHeight(800, 1000)).toBe(1000)
+    expect(mergeScrollHeight(1200, 1000)).toBe(1200)
+    expect(mergeScrollHeight(0, 0)).toBe(0)
   })
 })
 

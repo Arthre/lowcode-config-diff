@@ -73,8 +73,8 @@ export function chunkNavTargetIndex(
 /** 页眉差异锚点文案。current 为 1 起序号。 */
 export function chunkAnchorText(current: number, total: number): string {
   if (total <= 0) return '无差异'
-  if (current <= 0) return `${total} 个差异`
-  return `${current} / ${total} 个差异`
+  if (current <= 0) return `差异 ${total}`
+  return `差异 ${current} / ${total}`
 }
 
 export type ChunkNavDirection = 'prev' | 'next'

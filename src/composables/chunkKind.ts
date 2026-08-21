@@ -4,6 +4,18 @@ export type ChunkKind = 'added' | 'removed' | 'modified'
 
 export type ChunkKindCounts = { added: number; removed: number; modified: number }
 
+export const chunkKindMarker: Record<ChunkKind, string> = {
+  added: '＋',
+  removed: '−',
+  modified: '●',
+}
+
+export const chunkKindShortName: Record<ChunkKind, string> = {
+  added: '新增',
+  removed: '删除',
+  modified: '修改',
+}
+
 /** 相对目标配置 B：仅目标有为新增，仅参考有为删除，其余为修改。 */
 export function kindOfChunk(chunk: MergeChunkRange): ChunkKind {
   if (chunk.fromA === chunk.toA && chunk.fromB !== chunk.toB) return 'added'
