@@ -1,8 +1,8 @@
 # 工作台胶囊栏头与分层目录
 
 **日期：** 2026-08-20  
-**状态：** 实施中  
-**关联计划：** [`.docs/plans/2026-08-20-workbench-capsules-directory.md`](../plans/2026-08-20-workbench-capsules-directory.md)  
+**状态：** 已完成  
+**关联计划：** [`.docs/plans/archive/2026-08-20-workbench-capsules-directory.md`](../plans/archive/2026-08-20-workbench-capsules-directory.md)  
 **前置：** [差异块工作台后续](./2026-08-20-chunk-workbench-followup.md)（已落地）  
 **继承：** [可编辑双栏文本合并工作台](./2026-08-18-editable-two-way-merge.md)（口径与锁定决策，除本文件 delta 外不得改写）  
 **影响模块：** `TwoWayMergeEditor`、`ChunkJumpList`、`DiffMinimap`、`HomeView`、`minimapSnapshot` / `chunkMinimapLayout`、新增 `configItemDiff` / `jsonPathOffset`；迭代追加 `lineNumberAtOffset`、目录抽屉列宽、缩略轨补测跳转  
@@ -202,7 +202,8 @@ TwoWayMergeEditor
 
 - 行号纯函数放 `src/composables/`：`lineNumberAtOffset(source, offset)`，不依赖 Vue/DOM；用换行计数，与 CM `line.number` 在合法偏移上一致。
 - 组/字段行号只在 layout 路径计算（与 `jsonPathOffset` 同频）；滚动不重算。
-- 抽屉用列宽过渡（`16rem` ↔ `0`），不用 `display: none` 切掉（否则无法动画）；动画期间 resize 防抖，**过渡结束一次** `refreshChunkBands` + 缩略快照，避免每帧全量 `lineBlockAt`。
+- 抽屉用列宽过渡（`16rem` ↔ `0`），不用 `display: none` 切掉（否则无法动画）；动画期间 resize 防抖，**过渡结束一次** `refreshChunkBands` + 缩略快照，避免每帧全量 `lineBlockAt`。`transitionend` 未到时按 `DIRECTORY_DRAWER_DURATION_MS` 兜底补测；减少动效则 `nextTick` + rAF 立即补测。`.cm-mergeView` 必须 `width: 100%`，列宽变化后左右 View `requestMeasure`，编辑器列随剩余宽度重排。
+- 目录列自身纵向 flex + `min-height: 0`；列表 `overflow-y: auto`，组/字段溢出时只滚目录，不滚整页、不抢 Merge 滚动。
 - `minimapDragging` 必须在 `pointerup` / `pointercancel` / `lostpointercapture` / 组件卸载时清掉；结束路径与跳转路径共用「补测再滚」。
 - 跳转未命中禁止回退当前块：抽纯函数（如 `nearestChunkIndexByOffset`）按组/字段偏移找最近文本块；无偏移或仍失败返回 `-1`，调用方不滚动。
 - 测试：`describe` / `it` 中文；`*.test.ts`。界面文案简体中文。
@@ -211,14 +212,14 @@ TwoWayMergeEditor
 
 - 页眉变矮，Merge 可视高度增加。
 - 字段/配置项计数改在目录头；目录收起时这两句不可见（手柄不重复长文案，靠 `aria-label`）。
-- 收起目录会触发 Merge 宽度变化，与窗口 resize 同一套补测。
+- 收起/展开目录会触发 Merge 宽度变化：过渡结束（或兜底时长 / 减少动效立刻）对左右 View `requestMeasure` 并重测块带与缩略快照。
 - 快拖后高亮与跳转应变稳；若某条路径 `jsonPathOffset` 失败，该项无行号、点击不滚动（不再误跳当前块）。
 
 ### 验收清单（本迭代追加）
 
 9. [x] 页眉视觉上一行：能看到品牌、`n / m 个差异`、新增/删除/修改、上一个/下一个、导出簇；**没有**字段/配置项两行；页眉不再渲染 `.ui-diff-field-row`。
 10. [x] 目录展开时顶栏有「n 个字段变化 · 涉及 m 个配置项」（可解析且有变化时）；组头与字段带 `L{n}`。
-11. [x] 默认目录展开；点手柄收起/展开有宽度动画（减少动效时瞬时）；收起后对照变宽，再点能打开。手柄常驻于缩略轨与目录之间，不在页眉再放一份。
+11. [x] 默认目录展开；页眉图标收起/展开有宽度动画（减少动效时瞬时）；收起后对照变宽并补测 Merge 列宽，再点能打开。目录组/字段溢出时可独立滚动。
 12. [x] 点组头/字段滚到对应行并选中；行号与 gutter 一致（删除→参考，其余→目标；不显示左右两个行号）。
 13. [ ] 缩略轨快速上下拖再松开：当前视口差异高亮仍在；随后点目录仍跳转。（接线已落地，需真机快拖确认）
 14. [x] 上一个/下一个仍按文本块步进并绕回；可见文案为「上一个 / 下一个」，`aria-label` 仍为「上一个差异 / 下一个差异」。

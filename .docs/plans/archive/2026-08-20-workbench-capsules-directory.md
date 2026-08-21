@@ -1,9 +1,10 @@
 # 工作台胶囊栏头与分层目录 实施计划
 
-> **给 Agent 执行者：** 必须使用 [子代理驱动开发](../workflows/subagent-driven-development.md)（推荐）或 [执行计划](../workflows/executing-plans.md) 逐步实施。步骤使用 checkbox（`- [ ]`）语法跟踪。未经用户明确要求不要 `git commit`。
+> 已完成并归档。曾按胶囊/分层目录 → 页眉精简 / 目录抽屉 / 行号 / 补测跳转迭代执行。  
+> 未经用户明确要求不要 `git commit`。
 
-**日期：** 2026-08-20 **状态：** 执行中  
-**关联设计：** [`.docs/specs/2026-08-20-workbench-capsules-directory.md`](../specs/2026-08-20-workbench-capsules-directory.md)  
+**日期：** 2026-08-20 **状态：** 已完成  
+**关联设计：** [`.docs/specs/2026-08-20-workbench-capsules-directory.md`](../../specs/2026-08-20-workbench-capsules-directory.md)  
 **目标：** 胶囊栏头对齐编辑器；分层配置项目录在缩略轨右侧；页眉单行（字段/配置项进目录顶栏）；推开式目录抽屉；组/字段行号；缩略轨快拖与目录跳转补测后再滚。  
 **架构：** 纯函数先落地（路径偏移、配置项分组、像素色带、行号、最近块）；再改布局与目录 UI；最后把分组/跳转/缩略轨/抽屉接到 `TwoWayMergeEditor`。  
 **技术栈：** Vue 3、CodeMirror MergeView、Vitest、现有 token 与 `.ui-btn` / `.ui-btn-soft`
@@ -313,10 +314,10 @@ emits: {
 
 - 修改：`src/views/HomeView.vue`、`src/styles/primitives.scss`
 
-- [ ] `onChunks` 增加第四参 `fieldSummary`；无第四参时视为 `{ available: false, fields: 0, items: 0 }`。
-- [ ] 有差异时保留 `ui-diff-kind-row`；`fieldSummary.available && fields>0` 时在其下显示两行文案（`configItemFieldCountText` / `configItemInvolveText`）。
-- [ ] 上一个：`ui-btn` + `i-lucide-chevron-up` + 文案「上一个差异」。下一个：`ui-btn ui-btn-soft` + 文案 + `i-lucide-chevron-down`。可用 `.ui-diff-nav` 成对紧凑 padding（约 `0.4rem 0.7rem`），不新造颜色。
-- [ ] `aria-label` 在有字段摘要时包含块构成 + 字段文案。
+- [x] `onChunks` 增加第四参 `fieldSummary`；无第四参时视为 `{ available: false, fields: 0, items: 0 }`。（页眉两行后由任务 11 撤下，摘要改到目录顶栏）
+- [x] 有差异时保留 `ui-diff-kind-row`；字段/配置项文案不在页眉，见任务 11–12。
+- [x] 上一个：`ui-btn` + `i-lucide-chevron-up` + 可见文案「上一个」。下一个：`ui-btn ui-btn-soft` + 「下一个」+ `i-lucide-chevron-down`。`.ui-diff-nav` 成对紧凑 padding，不新造颜色。
+- [x] 页眉 `aria-label` 仍为块构成；字段摘要在目录顶栏。
 
 ---
 
@@ -328,12 +329,12 @@ emits: {
 
 - 修改：`src/components/TwoWayMergeEditor.vue`
 
-- [ ] layout 时：`diffConfigItems(leftDoc, rightDoc)`；`splitMinimapBandsByKind` 使用 `cachedChunkBands` + `kindOfChunk` + `mergeView.dom.scrollHeight`（高度为 0 则跳过）。
-- [ ] resize：`refreshChunkBands` + 重算色带；**不要**因此重跑 `diffConfigItems`（文档没变）；若 scrollHeight 变了只更新带。
-- [ ] 滚动：只更新 current、viewport、当前 `activeGroupId`（用当前块 fromB 与各组字段 offset 重叠；算不出则不清 groups）。
-- [ ] `goToField(path)`：`jsonPathOffset` 于 B（removed 用 A）；有偏移则按 `lineBlockAt` **单次**滚到该行（这是点击路径，不是 scroll handler）；无偏移则 `goToChunkAt` 该组第一条重叠块。
-- [ ] emit 第四参；`ChunkJumpList` 传入 groups / chunkItems / expanded：当前组必展开，用户 `toggleGroup` 可另开。
-- [ ] 滚动 handler 内禁止 `diffConfigItems` / `jsonPathOffset` 全表 / 每块 `lineBlockAt`。
+- [x] layout 时：`diffConfigItems(leftDoc, rightDoc)`；`splitMinimapBandsByKind` 使用 `cachedChunkBands` + `kindOfChunk` + `mergeView.dom.scrollHeight`（高度为 0 则跳过）。
+- [x] resize：`refreshChunkBands` + 重算色带；**不要**因此重跑 `diffConfigItems`（文档没变）；若 scrollHeight 变了只更新带。
+- [x] 滚动：只更新 current、viewport、当前 `activeGroupId`（用当前块 fromB 与各组字段 offset 重叠；算不出则不清 groups）。
+- [x] `goToField(path)`：缓存偏移于 B（removed 用 A）；有偏移则补测后滚到该行；未命中走 `nearestChunkIndexByOffset`，禁止回退当前块。
+- [x] emit 第四参；`ChunkJumpList` 传入 groups / chunkItems / expanded：当前组必展开，用户 `toggleGroup` 可另开。
+- [x] 滚动 handler 内禁止 `diffConfigItems` / `jsonPathOffset` 全表 / 每块 `lineBlockAt`。
 
 ---
 
@@ -341,11 +342,11 @@ emits: {
 
 **对应需求：** 验收清单 8；sync
 
-- [ ] `pnpm test:run`
-- [ ] `pnpm lint`
-- [ ] `pnpm build`
+- [x] `pnpm test:run`（任务 15 复验）
+- [x] `pnpm lint`（任务 15 复验）
+- [x] `pnpm build`（任务 15 复验）
 - [x] 更新 `.docs/ui/README.md`、`PRODUCT.md` 能力句；`.docs/specs/README.md` / `.docs/plans/README.md` 索引（胶囊/分层目录阶段）
-- [ ] 不 archive（留给用户确认完成后）
+- [x] 归档（用户确认完成后）
 
 ---
 
@@ -483,7 +484,7 @@ props 追加（示例）：
 - [x] 拖结束与目录跳转前对左右 `EditorView.requestMeasure()`，再读 `lineBlockAt` / 设 `scrollTop`。
 - [x] `minimapDragging` 在 `pointerup` / `pointercancel` / `lostpointercapture` / 卸载时清掉。
 - [x] 拖动中仍不对全量块 `lineBlockAt`。
-- [x] 抽屉宽度过渡结束一次 `refreshChunkBands` + 缩略快照；动画期间 resize 防抖。
+- [x] 抽屉宽度过渡结束一次 `refreshChunkBands` + 缩略快照；动画期间 resize 防抖。`transitionend` 未到时按时长兜底；减少动效立刻补测。目录列 flex + `min-height: 0`，列表独立 `overflow-y: auto`；`.cm-mergeView { width: 100% }`。
 - [x] 抽可测纯逻辑（补测后再滚的编排若难测，至少锁定 nearest + 清 flag 路径）。
 - [x] 相关测试绿。
 
@@ -499,5 +500,11 @@ props 追加（示例）：
 - [x] 同步 `.docs/ui/README.md`、`PRODUCT.md`（页眉单行、目录顶栏、推开抽屉、行号、补测跳转）
 - [x] 原 spec 验收清单勾上本迭代追加项（9–15）能在代码中核对的项
 - [x] 对改过的 Vue/SCSS 跑 `node .claude/skills/impeccable/scripts/detect.mjs --json <changed targets>`
-- [x] 不 archive（留给用户确认完成后）
+- [x] 归档（用户确认完成后）
 - [x] 不 git commit / push
+
+---
+
+**归档日期：** 2026-08-21  
+**关联提交/PR：** 未提交。仅当用户明确要求时再 `git commit`。  
+**验证摘要：** 任务 15 已记 `pnpm lint` / `pnpm test:run` / `pnpm build` 通过；目录开关已改到页眉。规格验收 13（缩略轨快拖后高亮与跳转）接线已落地，仍标为需真机确认。
