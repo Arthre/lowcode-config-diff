@@ -23,8 +23,12 @@ archive/YYYY-MM-DD-<主题>.md  ← 已完成归档
 
 ## 最近完成
 
-[工作台胶囊栏头与分层目录](./archive/2026-08-20-workbench-capsules-directory.md)；[导入后目录定位性能](./archive/2026-08-20-diff-import-layout-perf.md)；[差异块工作台后续](./archive/2026-08-20-chunk-workbench-followup.md)；[块导航与缩略轨滚动性能](./archive/2026-08-19-chunk-nav-scroll-perf.md)；[2026-08-18 总计划索引](./archive/2026-08-18-editable-two-way-merge.md) 与 M1–M4 计划均已归档。
+[工作台扫读、空态与折叠差异](./2026-08-21-workbench-scan-empty-collapse.md)（切片 A–E 已落地，待 finishing-branch 归档）；[工作台胶囊栏头与分层目录](./archive/2026-08-20-workbench-capsules-directory.md)；[导入后目录定位性能](./archive/2026-08-20-diff-import-layout-perf.md)；[差异块工作台后续](./archive/2026-08-20-chunk-workbench-followup.md)；[块导航与缩略轨滚动性能](./archive/2026-08-19-chunk-nav-scroll-perf.md)；[2026-08-18 总计划索引](./archive/2026-08-18-editable-two-way-merge.md) 与 M1–M4 计划均已归档。
 
 ## 待执行
 
-[工作台扫读、空态与折叠差异](./2026-08-21-workbench-scan-empty-collapse.md)（切片 A 页眉文案 → B 空态 → C 目录筛选 → D 缩略轨/横滚 → E 折叠未改行 → 验证）
+无。
+
+## 执行中
+
+无。

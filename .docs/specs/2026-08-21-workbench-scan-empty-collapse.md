@@ -1,7 +1,7 @@
 # 工作台扫读、空态与折叠差异
 
 **日期：** 2026-08-21  
-**状态：** 已确认  
+**状态：** 已完成  
 **关联计划：** [`.docs/plans/2026-08-21-workbench-scan-empty-collapse.md`](../plans/2026-08-21-workbench-scan-empty-collapse.md)  
 **前置：** [工作台胶囊栏头与分层目录](./2026-08-20-workbench-capsules-directory.md)（已落地）  
 **继承：** [可编辑双栏文本合并工作台](./2026-08-18-editable-two-way-merge.md)（口径与锁定决策，除本文件 delta 外不得改写）  

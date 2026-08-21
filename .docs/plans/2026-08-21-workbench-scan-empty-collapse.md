@@ -2,7 +2,7 @@
 
 > **给 Agent 执行者：** 必须使用 [子代理驱动开发](../workflows/subagent-driven-development.md)（推荐）或 [执行计划](../workflows/executing-plans.md) 逐步实施。步骤使用 checkbox（`- [ ]`）语法跟踪。
 
-**日期：** 2026-08-21 **状态：** 待执行  
+**日期：** 2026-08-21 **状态：** 已完成  
 **关联设计：** [`.docs/specs/2026-08-21-workbench-scan-empty-collapse.md`](../specs/2026-08-21-workbench-scan-empty-collapse.md)  
 **目标：** 页眉「差异 n / m」；目录符号二级树与类型筛选；空态居中+粘贴+示例；缩略轨与编辑器同高；左右横滚同步；「仅显示差异」折叠未改行。  
 **架构：** 纯函数先锁文案/筛选/示例/横滚；再改空态与目录 UI；再改 stage 槽位；最后接 `collapseUnchanged` 与 `heightChanged` 补测。  
@@ -637,7 +637,7 @@ collapseUnchanged: collapseUnchangedOn.value ? MERGE_COLLAPSE_UNCHANGED : undefi
 - 修改：`.docs/specs/2026-08-21-workbench-scan-empty-collapse.md` 状态（实施中 → 完成后「已完成」）
 - 本计划状态：执行中 → 已完成（归档另等 finishing-branch）
 
-- [ ] **步骤 1：跑验证**
+- [x] **步骤 1：跑验证**
 
 ```bash
 pnpm lint
@@ -647,7 +647,7 @@ pnpm build
 
 预期：全部通过。失败则修在对应切片，不在本任务堆新功能。
 
-- [ ] **步骤 2：sync 活文档**
+- [x] **步骤 2：sync 活文档**
 
 `PRODUCT.md` Capabilities：徽章改为 `差异 n / m`；目录符号与筛选；空态粘贴/示例；缩略轨与编辑器同高；横向滚动同步；「仅显示差异」折叠未改行（默认关）。
 
