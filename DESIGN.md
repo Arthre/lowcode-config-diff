@@ -189,7 +189,8 @@ Operate 模式的可编辑双栏文本合并工作台：冷灰画布托起表面
 
 - **Primary button：** 实心 accent（页眉导出等）；禁用时用 `accent-muted` 底而非死灰
 - **Soft button：** 浅绿底 accent 字（选择文件、粘贴为该侧全文）
-- **Ghost / 默认按钮：** 透明或弱边框（块导航等）
+- **Ghost / 默认按钮：** 透明或弱边框（查找、复制等）
+- **Diff nav：** 页眉「上一个 / 下一个」成对：上一个描边 `ui-btn`，下一个 `ui-btn-soft`；紧凑 padding；按下轻位移；`prefers-reduced-motion` 时关闭位移
 - **Danger：** 危险色字与淡边框（清空）
 - **Dropzone：** 空栏轻量提示与拖入 accent 描边；栏头导入；错误时 danger 描边 + 中文提示
 - **Side labels：** `.ui-label-test` / `.ui-label-prod` 色点标签（参考配置 / 目标配置），无选边 radio

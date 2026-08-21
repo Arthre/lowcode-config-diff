@@ -462,7 +462,7 @@ props 追加（示例）：
 - 修改：`src/components/TwoWayMergeEditor.vue` 及宿主/scoped 样式
 
 - [x] 列宽 `16rem` ↔ `0` 推开（不 overlay）；默认展开；不写 localStorage。
-- [x] 缩略轨与目录之间常驻手柄（约 1.25rem，可点可发现）；`aria-expanded`；标签「收起目录」/「展开目录」。不在页眉再放一份。
+- [x] 目录开关在页眉图标钮（`aria-expanded`；标签「收起目录」/「展开目录」）；侧栏不再常驻手柄。
 - [x] 约 240ms 宽度过渡；`prefers-reduced-motion: reduce` 时瞬时。不用 `display: none`。
 - [x] 动画表达侧栏进出，不要 bounce。
 - [x] 可抽 `directoryDrawerOpen` 状态与列宽 class；过渡结束事件留给任务 14 接线。
