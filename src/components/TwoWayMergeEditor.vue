@@ -82,8 +82,10 @@ const {
   onFileSelected,
   dropFiles,
   pasteAsFullSide,
+  formatSide,
   clearSide,
   isClearDisabled,
+  isFormatDisabled,
 } = useMergeSideImport()
 
 const hostRef = ref<HTMLElement | null>(null)
@@ -819,6 +821,17 @@ onBeforeUnmount(() => {
                   <span class="i-lucide-clipboard" aria-hidden="true" />
                 </button>
               </UiTooltip>
+              <UiTooltip text="格式化">
+                <button
+                  type="button"
+                  class="ui-btn ui-btn-icon"
+                  aria-label="格式化参考配置"
+                  :disabled="isFormatDisabled('left')"
+                  @click="formatSide('left')"
+                >
+                  <span class="i-lucide-align-left" aria-hidden="true" />
+                </button>
+              </UiTooltip>
               <UiTooltip text="清空">
                 <button
                   type="button"
@@ -875,6 +888,17 @@ onBeforeUnmount(() => {
                   @click="pasteAsFullSide('right')"
                 >
                   <span class="i-lucide-clipboard" aria-hidden="true" />
+                </button>
+              </UiTooltip>
+              <UiTooltip text="格式化">
+                <button
+                  type="button"
+                  class="ui-btn ui-btn-icon"
+                  aria-label="格式化目标配置"
+                  :disabled="isFormatDisabled('right')"
+                  @click="formatSide('right')"
+                >
+                  <span class="i-lucide-align-left" aria-hidden="true" />
                 </button>
               </UiTooltip>
               <UiTooltip text="清空">
@@ -1107,8 +1131,8 @@ onBeforeUnmount(() => {
 
 .two-way-merge-empty {
   position: absolute;
-  top: 1rem;
-  bottom: 1rem;
+  top: 0.1rem;
+  bottom: 0.1rem;
   z-index: 2;
   display: flex;
   align-items: center;
@@ -1121,13 +1145,13 @@ onBeforeUnmount(() => {
 }
 
 .two-way-merge-empty--left {
-  left: 1.5rem;
-  width: calc((100% - 2.4em) / 2 - 1.5rem);
+  left: 0.1rem;
+  width: calc((100% - 2.4em) / 2 - 0.1rem);
 }
 
 .two-way-merge-empty--right {
-  right: 1.5rem;
-  width: calc((100% - 2.4em) / 2 - 1.5rem);
+  right: 0.1rem;
+  width: calc((100% - 2.4em) / 2 - 0.1rem);
 }
 
 .two-way-merge-frame.is-dragging-left .two-way-merge-empty--left :deep(.merge-pane-empty__title),

@@ -1,7 +1,8 @@
 import { pickJsonFile } from '@/composables/pickJsonFile'
+import { formatJsonDocument } from '@/composables/useJsonDocument'
 import { useMergeWorkspace, type MergeSide } from '@/stores/mergeWorkspace'
 
-/** 双侧文件导入 / 粘贴全文 / 清空；错误与拖拽态留给宿主画。 */
+/** 双侧文件导入 / 粘贴全文 / 格式化 / 清空；错误与拖拽态留给宿主画。 */
 export function useMergeSideImport() {
   const workspace = useMergeWorkspace()
 
@@ -28,6 +29,24 @@ export function useMergeSideImport() {
 
   function isClearDisabled(side: MergeSide) {
     return !sideDoc(side) && !sideFileName(side)
+  }
+
+  function isFormatDisabled(side: MergeSide) {
+    return sideDoc(side).trim().length === 0
+  }
+
+  function formatSide(side: MergeSide) {
+    if (isFormatDisabled(side)) return
+
+    const formatted = formatJsonDocument(sideDoc(side))
+    if (!formatted.ok) {
+      sideError(side).value = formatted.message
+      return
+    }
+
+    sideError(side).value = ''
+    if (side === 'left') workspace.setLeftDoc(formatted.text)
+    else workspace.setRightDoc(formatted.text)
   }
 
   function readFile(side: MergeSide, file: File) {
@@ -93,8 +112,10 @@ export function useMergeSideImport() {
     leaveDrag,
     dropFiles,
     pasteAsFullSide,
+    formatSide,
     clearSide,
     isClearDisabled,
+    isFormatDisabled,
     sideFileName,
   }
 }
