@@ -10,7 +10,7 @@ import {
   setSearchQuery,
 } from '@codemirror/search'
 import { EditorView } from '@codemirror/view'
-import { Prec } from '@codemirror/state'
+import { Compartment, Prec } from '@codemirror/state'
 import ChunkJumpList from '@/components/ChunkJumpList.vue'
 import DiffMinimap from '@/components/DiffMinimap.vue'
 import MergePaneEmptyState from '@/components/MergePaneEmptyState.vue'
@@ -42,8 +42,12 @@ import { foldDirectoryGroups, type DirectoryTreeNode } from '@/composables/direc
 import { jsonPathOffset, type JsonPathSeg } from '@/composables/jsonPathOffset'
 import { buildJumpLineNumberMaps } from '@/composables/jumpLineNumbers'
 import { nearestChunkIndexByOffset } from '@/composables/nearestChunkIndexByOffset'
-import { createEditableJsonExtensions, mergeHighlightTheme } from '@/composables/codemirrorTheme'
-import { mergeViewDiffConfig } from '@/composables/diffByLine'
+import {
+  createEditableJsonExtensions,
+  createLiteVariableExtensions,
+  mergeHighlightTheme,
+} from '@/composables/codemirrorTheme'
+import { mergeViewDiffConfig, takeLastDiffCoarse } from '@/composables/diffByLine'
 import {
   DIRECTORY_TREE_ENABLED,
   directoryDrawerMeasureFallbackMs,
@@ -61,6 +65,19 @@ import {
 import { sideFromClientX } from '@/composables/sideFromClientX'
 import { MERGE_COLLAPSE_UNCHANGED } from '@/composables/mergeCollapseUnchanged'
 import { createHorizontalScrollSync } from '@/composables/syncEditorScrollLeft'
+import {
+  createEditorDocSync,
+  DOC_SYNC_IDLE_MS,
+  editorDocNeedsReplace,
+} from '@/composables/editorDocSync'
+import {
+  CHROME_LAYOUT_DEBOUNCE_MS,
+  COARSE_DIFF_NOTICE,
+  isLargeDoc,
+  shouldEmitCoarseNotice,
+  SKIP_IMPORT_FORMAT_NOTICE,
+} from '@/composables/largeDocPolicy'
+import type { StatusMessageTone } from '@/composables/statusMessage'
 import { useMergeSideImport } from '@/composables/useMergeSideImport'
 import { useMergeWorkspace, type MergeSide } from '@/stores/mergeWorkspace'
 
@@ -69,6 +86,7 @@ type ChunkFieldSummary = { available: boolean; fields: number; items: number }
 const emptyFieldSummary: ChunkFieldSummary = { available: false, fields: 0, items: 0 }
 const emit = defineEmits<{
   chunks: [count: number, current: number, kinds: ChunkKindCounts, fieldSummary: ChunkFieldSummary]
+  notice: [payload: { text: string; tone: StatusMessageTone }]
 }>()
 /** 推开式目录；默认展开，不写 localStorage；开关在页眉。 */
 const directoryOpen = defineModel<boolean>('directoryOpen', { default: true })
@@ -82,11 +100,43 @@ const {
   onFileSelected,
   dropFiles,
   pasteAsFullSide,
-  formatSide,
+  formatSide: formatStoreSide,
   clearSide,
   isClearDisabled,
   isFormatDisabled,
-} = useMergeSideImport()
+} = useMergeSideImport({
+  onNotice: (notice) => {
+    if (notice.text === SKIP_IMPORT_FORMAT_NOTICE) {
+      skipFormatNoticeThisImport = true
+    }
+    emit('notice', notice)
+  },
+})
+
+const docSync = createEditorDocSync({
+  idleMs: DOC_SYNC_IDLE_MS,
+  readStore: (side) => (side === 'left' ? workspace.leftDoc : workspace.rightDoc),
+  writeStore: (side, text) => {
+    if (side === 'left') workspace.setLeftDoc(text)
+    else workspace.setRightDoc(text)
+  },
+})
+
+function flushDocs() {
+  docSync.flush()
+}
+
+/** 先 flush 再读右栏，供复制 / 导出取最新文本。 */
+function getRightDoc() {
+  flushDocs()
+  return workspace.rightDoc
+}
+
+/** 栏头格式化读 store，须先把编辑器 pending 回写。 */
+function formatSide(side: MergeSide) {
+  flushDocs()
+  formatStoreSide(side)
+}
 
 const hostRef = ref<HTMLElement | null>(null)
 const leftFileInput = ref<HTMLInputElement | null>(null)
@@ -103,6 +153,14 @@ const leftBands = ref<ChunkBand[]>([])
 const rightBands = ref<ChunkBand[]>([])
 const viewportBand = ref<ChunkBand>({ start: 0, end: 1 })
 let mergeView: MergeView | null = null
+const leftLiteCompartment = new Compartment()
+const rightLiteCompartment = new Compartment()
+let leftLite = false
+let rightLite = false
+/** 同一过粗状态只提示一次 */
+let coarseNoticeShown = false
+/** 本轮导入刚提示过跳过格式化，随后 layout 的过粗提示让路 */
+let skipFormatNoticeThisImport = false
 /** 差异块像素带；只在文档/块数/尺寸变化时重测，滚动只做重叠判断。 */
 let cachedChunkBands: { start: number; end: number }[] = []
 const minimapDrag = createMinimapDragSession()
@@ -219,6 +277,9 @@ function syncEditorChrome(rebuildLayout: boolean, remasureBands = false) {
     lastChunkCurrent = current
     emit('chunks', count, current, lastChunkKinds, lastFieldSummary)
   }
+  if (shouldLayout) {
+    emitCoarseNoticeIfNeeded()
+  }
   syncRevertCurrentState(current)
   if (metrics === null) return
   const nextViewport = viewportBandOf(
@@ -232,6 +293,70 @@ function syncEditorChrome(rebuildLayout: boolean, remasureBands = false) {
   ) {
     viewportBand.value = nextViewport
   }
+}
+
+function emitCoarseNoticeIfNeeded() {
+  const coarse = takeLastDiffCoarse()
+  const skipFormatJustShown = skipFormatNoticeThisImport
+  if (skipFormatJustShown) skipFormatNoticeThisImport = false
+  if (
+    shouldEmitCoarseNotice({
+      coarse,
+      alreadyShown: coarseNoticeShown,
+      skipFormatJustShown,
+    })
+  ) {
+    coarseNoticeShown = true
+    emit('notice', { text: COARSE_DIFF_NOTICE, tone: 'warning' })
+  } else if (!coarse) {
+    coarseNoticeShown = false
+  } else {
+    coarseNoticeShown = true
+  }
+}
+
+function syncSideLite(side: MergeSide, text: string) {
+  if (!mergeView) return
+  const nextLite = isLargeDoc(text)
+  if (side === 'left') {
+    if (nextLite === leftLite) return
+    leftLite = nextLite
+    mergeView.a.dispatch({
+      effects: leftLiteCompartment.reconfigure(createLiteVariableExtensions(nextLite)),
+    })
+    return
+  }
+  if (nextLite === rightLite) return
+  rightLite = nextLite
+  mergeView.b.dispatch({
+    effects: rightLiteCompartment.reconfigure(createLiteVariableExtensions(nextLite)),
+  })
+}
+
+/** store 回写到编辑器：替换与 lite 热切尽量同一 dispatch，避免大文档先吃 json/foldGutter。 */
+function applyStoreDoc(side: MergeSide, next: string) {
+  if (!mergeView) return
+  const view = side === 'left' ? mergeView.a : mergeView.b
+  const doc = view.state.doc
+  if (!editorDocNeedsReplace(doc, next)) {
+    syncSideLite(side, next)
+    return
+  }
+  const nextLite = isLargeDoc(next)
+  const currentLite = side === 'left' ? leftLite : rightLite
+  const compartment = side === 'left' ? leftLiteCompartment : rightLiteCompartment
+  if (nextLite !== currentLite) {
+    if (side === 'left') leftLite = nextLite
+    else rightLite = nextLite
+    view.dispatch({
+      changes: { from: 0, to: doc.length, insert: next },
+      effects: compartment.reconfigure(createLiteVariableExtensions(nextLite)),
+    })
+    return
+  }
+  view.dispatch({
+    changes: { from: 0, to: doc.length, insert: next },
+  })
 }
 
 function onMergeScroll() {
@@ -456,20 +581,24 @@ function scheduleDirectoryEditorMeasure() {
 
 watch(directoryOpen, scheduleDirectoryEditorMeasure)
 
-/** 键入 / → / Undo：仅字符串确有变化时回写 store，避免与 watch 形成环 */
+/** 文档变化后的 layout 防抖；折叠 / 补测 / resize 仍立即重测。 */
+const scheduleChromeLayout = useDebounceFn(() => {
+  syncEditorChrome(true)
+}, CHROME_LAYOUT_DEBOUNCE_MS)
+
+/** 键入 / → / Undo：只记下文档引用，idle 到期才 toString 回写 store */
 function createSideListener(side: 'left' | 'right') {
   return EditorView.updateListener.of((update) => {
     if (update.view.hasFocus) searchSide.value = side
     if (update.docChanged) {
-      const next = update.state.doc.toString()
-      if (side === 'left') {
-        if (next !== workspace.leftDoc) workspace.setLeftDoc(next)
-      } else if (next !== workspace.rightDoc) {
-        workspace.setRightDoc(next)
-      }
+      docSync.onEditorDoc(side, update.state.doc)
     }
     if (minimapDragging) return
-    syncEditorChrome(update.docChanged, update.heightChanged)
+    if (update.docChanged) {
+      scheduleChromeLayout()
+      return
+    }
+    syncEditorChrome(false, update.heightChanged)
   })
 }
 
@@ -686,7 +815,7 @@ function onHostDrop(event: DragEvent) {
   if (side) dropFiles(side, event.dataTransfer?.files)
 }
 
-defineExpose({ goToPrevChunk, goToNextChunk, openSearch })
+defineExpose({ goToPrevChunk, goToNextChunk, openSearch, flushDocs, getRightDoc })
 
 const hScrollSync = createHorizontalScrollSync()
 
@@ -705,12 +834,15 @@ onMounted(() => {
   if (!hostEl) return
 
   // 仅挂载时创建；导入只 dispatch 变化侧，禁止 destroy 重建
+  leftLite = isLargeDoc(workspace.leftDoc)
+  rightLite = isLargeDoc(workspace.rightDoc)
   mergeView = new MergeView({
     parent: hostEl,
     a: {
       doc: workspace.leftDoc,
       extensions: [
-        ...createEditableJsonExtensions([mergeHighlightTheme], openSearch),
+        ...createEditableJsonExtensions([mergeHighlightTheme], openSearch, true),
+        leftLiteCompartment.of(createLiteVariableExtensions(leftLite)),
         createSideListener('left'),
         swallowEditorFileDrop,
       ],
@@ -718,7 +850,8 @@ onMounted(() => {
     b: {
       doc: workspace.rightDoc,
       extensions: [
-        ...createEditableJsonExtensions([mergeHighlightTheme], openSearch),
+        ...createEditableJsonExtensions([mergeHighlightTheme], openSearch, true),
+        rightLiteCompartment.of(createLiteVariableExtensions(rightLite)),
         createSideListener('right'),
         swallowEditorFileDrop,
       ],
@@ -748,22 +881,14 @@ watch(collapseUnchanged, (enabled) => {
 watch(
   () => workspace.leftDoc,
   (next) => {
-    if (!mergeView) return
-    if (mergeView.a.state.doc.toString() === next) return
-    mergeView.a.dispatch({
-      changes: { from: 0, to: mergeView.a.state.doc.length, insert: next },
-    })
+    applyStoreDoc('left', next)
   },
 )
 
 watch(
   () => workspace.rightDoc,
   (next) => {
-    if (!mergeView) return
-    if (mergeView.b.state.doc.toString() === next) return
-    mergeView.b.dispatch({
-      changes: { from: 0, to: mergeView.b.state.doc.length, insert: next },
-    })
+    applyStoreDoc('right', next)
   },
 )
 

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { prepareImportText } from '@/composables/prepareImportText'
+import { prepareImportText, type PreparedImport } from '@/composables/prepareImportText'
 
 export type MergeSide = 'left' | 'right'
 
@@ -10,16 +10,17 @@ export const useMergeWorkspace = defineStore('mergeWorkspace', () => {
   const leftFileName = ref('')
   const rightFileName = ref('')
 
-  function importSide(side: MergeSide, raw: string, fileName?: string) {
-    const { text } = prepareImportText(raw)
+  function importSide(side: MergeSide, raw: string, fileName?: string): PreparedImport {
+    const prepared = prepareImportText(raw)
     const nextFileName = fileName ?? ''
     if (side === 'left') {
-      leftDoc.value = text
+      leftDoc.value = prepared.text
       leftFileName.value = nextFileName
     } else {
-      rightDoc.value = text
+      rightDoc.value = prepared.text
       rightFileName.value = nextFileName
     }
+    return prepared
   }
 
   function setLeftDoc(text: string) {

@@ -138,20 +138,25 @@ export function createSearchExtensions(onOpenSearch?: () => boolean): Extension[
   ]
 }
 
+/** lite 时卸掉的 JSON 语言 / 高亮 / 折叠 gutter，供 Compartment 热切。 */
+export function createLiteVariableExtensions(lite: boolean): Extension[] {
+  if (lite) return []
+  return [foldGutter(), json(), syntaxHighlighting(defaultHighlightStyle, { fallback: true })]
+}
+
 export function createEditableJsonExtensions(
   extra: Extension[] = [],
   onOpenSearch?: () => boolean,
+  lite?: boolean,
 ): Extension[] {
   return [
     lineNumbers(),
     highlightActiveLineGutter(),
-    foldGutter(),
+    ...createLiteVariableExtensions(lite === true),
     drawSelection(),
     history(),
     keymap.of(historyKeymap),
     keymap.of(defaultKeymap),
-    json(),
-    syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
     bracketMatching(),
     appEditorTheme,
     ...createSearchExtensions(onOpenSearch),

@@ -22,6 +22,8 @@ import {
   toneFromExportHint,
   type StatusMessageTone,
 } from '@/composables/statusMessage'
+import { createCollapseAutoOnce } from '@/composables/collapseAutoOnce'
+import { isLargeDoc } from '@/composables/largeDocPolicy'
 import { useAppStore } from '@/stores/app'
 import { useMergeWorkspace } from '@/stores/mergeWorkspace'
 import { copyText, downloadJsonFile } from '@/utils/exportConfig'
@@ -33,11 +35,14 @@ const mergeEditorRef = ref<{
   goToPrevChunk: () => void
   goToNextChunk: () => void
   openSearch: () => boolean
+  flushDocs: () => void
+  getRightDoc: () => string
 } | null>(null)
 /** 推开式目录；默认展开，不写 localStorage。 */
 const directoryOpen = ref(true)
 /** 折叠编辑器未改行；默认关，不写 localStorage。 */
 const collapseUnchanged = ref(false)
+const collapseSession = createCollapseAutoOnce()
 const directoryToggleDisabled = computed(
   () => workspace.leftDoc.length === 0 && workspace.rightDoc.length === 0,
 )
@@ -73,6 +78,22 @@ function dismissStatus() {
   statusText.value = ''
 }
 
+function onEditorNotice(notice: { text: string; tone: StatusMessageTone }) {
+  showStatus(notice.text, notice.tone)
+}
+
+watch(
+  () => [workspace.leftDoc, workspace.rightDoc] as const,
+  ([left, right]) => {
+    const isLarge = isLargeDoc(left) || isLargeDoc(right)
+    collapseUnchanged.value = collapseSession.nextEnabled(collapseUnchanged.value, isLarge)
+  },
+)
+
+watch(collapseUnchanged, (enabled) => {
+  if (!enabled) collapseSession.onUserSet(false)
+})
+
 function showStatus(text: string, tone: StatusMessageTone) {
   if (statusClearTimer !== undefined) {
     clearTimeout(statusClearTimer)
@@ -87,10 +108,15 @@ function showStatus(text: string, tone: StatusMessageTone) {
   }, statusDismissMs(tone))
 }
 
+function rightDocForExport() {
+  return mergeEditorRef.value?.getRightDoc() ?? workspace.rightDoc
+}
+
 async function onCopy() {
-  const hint = describeRightDocExport(workspace.rightDoc)
+  const text = rightDocForExport()
+  const hint = describeRightDocExport(text)
   try {
-    await copyText(workspace.rightDoc)
+    await copyText(text)
     showStatus(copyHintText(hint) ?? '已复制', toneFromExportHint(hint.kind))
   } catch {
     showStatus('复制失败', 'error')
@@ -98,7 +124,7 @@ async function onCopy() {
 }
 
 function onDownload(compressed: boolean) {
-  const guarded = guardRightDocDownload(workspace.rightDoc, compressed)
+  const guarded = guardRightDocDownload(rightDocForExport(), compressed)
   if (!guarded.allow) {
     showStatus(guarded.message, guarded.tone)
     return
@@ -226,6 +252,7 @@ onBeforeUnmount(dismissStatus)
         v-model:collapse-unchanged="collapseUnchanged"
         class="flex-1 min-h-0"
         @chunks="onChunks"
+        @notice="onEditorNotice"
       />
     </div>
 

@@ -10,6 +10,27 @@ function tokenChar(index: number): string {
   return String.fromCharCode(code)
 }
 
+/** 按行映射到 BMP token；唯一行超出 maxUnique 时返回 null（过粗）。 */
+export function tokenizeLines(
+  lines: readonly string[],
+  maxUnique: number,
+  tokenByLine: Map<string, string> = new Map(),
+): string[] | null {
+  const tokens: string[] = []
+  for (const line of lines) {
+    const existing = tokenByLine.get(line)
+    if (existing !== undefined) {
+      tokens.push(existing)
+      continue
+    }
+    if (tokenByLine.size >= maxUnique) return null
+    const token = tokenChar(tokenByLine.size)
+    tokenByLine.set(line, token)
+    tokens.push(token)
+  }
+  return tokens
+}
+
 function linesOf(text: string): string[] {
   if (text.length === 0) return []
   const lines: string[] = []
@@ -34,37 +55,32 @@ function startsOf(lines: string[]): number[] {
   return starts
 }
 
+let lastDiffCoarse = false
+
+/** 最近一次 diff 是否因唯一行溢出或耗时过长而过粗。 */
+export function takeLastDiffCoarse(): boolean {
+  return lastDiffCoarse
+}
+
 /** 按行对照，避免字符 diff 把未改行吞进同一块。 */
 export function diffByLine(a: string, b: string): readonly Change[] {
+  lastDiffCoarse = false
+  const startedAt = performance.now()
   const aLines = linesOf(a)
   const bLines = linesOf(b)
   const aStarts = startsOf(aLines)
   const bStarts = startsOf(bLines)
 
   const tokenByLine = new Map<string, string>()
-  const tokenOf = (line: string): string | null => {
-    const existing = tokenByLine.get(line)
-    if (existing !== undefined) return existing
-    if (tokenByLine.size >= MAX_UNIQUE_LINES) return null
-    const token = tokenChar(tokenByLine.size)
-    tokenByLine.set(line, token)
-    return token
+  const aTokens = tokenizeLines(aLines, MAX_UNIQUE_LINES, tokenByLine)
+  const bTokens = aTokens === null ? null : tokenizeLines(bLines, MAX_UNIQUE_LINES, tokenByLine)
+
+  if (aTokens === null || bTokens === null) {
+    lastDiffCoarse = true
+    return diff(a, b, { scanLimit: 10_000, timeout: 1000 })
   }
 
-  const aTokens: string[] = []
-  const bTokens: string[] = []
-  for (const line of aLines) {
-    const token = tokenOf(line)
-    if (token === null) return diff(a, b, { scanLimit: 10_000, timeout: 1000 })
-    aTokens.push(token)
-  }
-  for (const line of bLines) {
-    const token = tokenOf(line)
-    if (token === null) return diff(a, b, { scanLimit: 10_000, timeout: 1000 })
-    bTokens.push(token)
-  }
-
-  return diff(aTokens.join(''), bTokens.join('')).map(
+  const changes = diff(aTokens.join(''), bTokens.join('')).map(
     (change) =>
       new Change(
         aStarts[change.fromA] ?? a.length,
@@ -73,6 +89,10 @@ export function diffByLine(a: string, b: string): readonly Change[] {
         bStarts[change.toB] ?? b.length,
       ),
   )
+  if (performance.now() - startedAt >= 1000) {
+    lastDiffCoarse = true
+  }
+  return changes
 }
 
 export const mergeViewDiffConfig: DiffConfig = {

@@ -1,7 +1,7 @@
 import { Change, Chunk } from '@codemirror/merge'
 import { Text } from '@codemirror/state'
 import { describe, expect, it } from 'vitest'
-import { diffByLine, mergeViewDiffConfig } from './diffByLine'
+import { diffByLine, mergeViewDiffConfig, takeLastDiffCoarse, tokenizeLines } from './diffByLine'
 
 function sliceChange(text: string, change: Change, side: 'A' | 'B'): string {
   return side === 'A' ? text.slice(change.fromA, change.toA) : text.slice(change.fromB, change.toB)
@@ -44,5 +44,24 @@ describe('diffByLine', () => {
     const chunk = chunks[0]!
     expect(left.slice(chunk.fromA, chunk.endA)).toContain('"sortable": true')
     expect(left.slice(chunk.fromA, chunk.endA)).not.toContain('sortOrder')
+  })
+})
+
+describe('tokenizeLines', () => {
+  it('maxUnique 为 1 且存在两种不同行时返回 null', () => {
+    expect(tokenizeLines(['a\n', 'b\n'], 1)).toBeNull()
+  })
+
+  it('maxUnique 为 1 且仅一种行时返回 token', () => {
+    const tokens = tokenizeLines(['a\n', 'a\n'], 1)
+    expect(tokens).toHaveLength(2)
+    expect(tokens?.[0]).toBe(tokens?.[1])
+  })
+})
+
+describe('takeLastDiffCoarse', () => {
+  it('小文件按行对照后不是过粗', () => {
+    diffByLine('A\nSAME\nC', 'B\nSAME\nD')
+    expect(takeLastDiffCoarse()).toBe(false)
   })
 })

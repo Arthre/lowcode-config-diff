@@ -1,5 +1,8 @@
 export type ChunkBand = { start: number; end: number }
 
+/** 缩略轨单列色带上限；超出则按比例合并相邻带。 */
+export const MINIMAP_BAND_CAP = 200
+
 const MIN_VIEWPORT_SPAN = 0.04
 
 /** 把滑块夹在 0–1 轨道内。 */
@@ -117,6 +120,21 @@ function clampUnit(value: number): number {
   return Math.min(1, Math.max(0, value))
 }
 
+/** 超过上限时按比例合并相邻带，保序且覆盖原起止。 */
+function capMinimapBands(bands: ChunkBand[], cap = MINIMAP_BAND_CAP): ChunkBand[] {
+  if (bands.length <= cap) return bands
+  const capped: ChunkBand[] = []
+  for (let index = 0; index < cap; index += 1) {
+    const from = Math.floor((index * bands.length) / cap)
+    const to = Math.floor(((index + 1) * bands.length) / cap)
+    const first = bands[from]
+    const last = bands[to - 1]
+    if (first === undefined || last === undefined) continue
+    capped.push({ start: first.start, end: last.end })
+  }
+  return capped
+}
+
 /** 把对齐像素区间换成缩略轨 0–1 带，相邻或重叠的合并。 */
 export function bandsFromPixelSpans(
   spans: readonly { start: number; end: number }[],
@@ -140,7 +158,7 @@ export function bandsFromPixelSpans(
       merged.push({ start: band.start, end: band.end })
     }
   }
-  return merged
+  return capMinimapBands(merged)
 }
 
 /** 按块类型分到左右列：删除/修改画左，新增/修改画右。 */

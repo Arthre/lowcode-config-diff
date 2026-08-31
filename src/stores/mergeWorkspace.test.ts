@@ -1,5 +1,6 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { LARGE_DOC_BYTES } from '@/composables/largeDocPolicy'
 import { useMergeWorkspace } from './mergeWorkspace'
 
 describe('useMergeWorkspace', () => {
@@ -69,5 +70,24 @@ describe('useMergeWorkspace', () => {
     expect(store.leftFileName).toBe('')
     expect(store.rightDoc).toContain('"y"')
     expect(store.rightFileName).toBe('p.json')
+  })
+
+  it('importSide 返回 PreparedImport 且小 JSON 已格式化', () => {
+    const store = useMergeWorkspace()
+    const result = store.importSide('left', '{"x":1}', 't.json')
+    expect(result.didFormat).toBe(true)
+    expect(result.skippedFormat).toBe(false)
+    expect(result.text).toBe(store.leftDoc)
+    expect(store.leftFileName).toBe('t.json')
+  })
+
+  it('超大原文导入返回 skippedFormat 且原文不变', () => {
+    const store = useMergeWorkspace()
+    const raw = 'x'.repeat(LARGE_DOC_BYTES)
+    const result = store.importSide('left', raw, 'big.json')
+    expect(result.skippedFormat).toBe(true)
+    expect(result.didFormat).toBe(false)
+    expect(result.text).toBe(raw)
+    expect(store.leftDoc).toBe(raw)
   })
 })

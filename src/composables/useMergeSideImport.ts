@@ -1,9 +1,17 @@
+import { SKIP_IMPORT_FORMAT_NOTICE } from '@/composables/largeDocPolicy'
 import { pickJsonFile } from '@/composables/pickJsonFile'
+import type { PreparedImport } from '@/composables/prepareImportText'
+import type { StatusMessageTone } from '@/composables/statusMessage'
 import { formatJsonDocument } from '@/composables/useJsonDocument'
 import { useMergeWorkspace, type MergeSide } from '@/stores/mergeWorkspace'
 
+export type MergeNotice = {
+  text: string
+  tone: StatusMessageTone
+}
+
 /** 双侧文件导入 / 粘贴全文 / 格式化 / 清空；错误与拖拽态留给宿主画。 */
-export function useMergeSideImport() {
+export function useMergeSideImport(options?: { onNotice?: (notice: MergeNotice) => void }) {
   const workspace = useMergeWorkspace()
 
   const leftDragDepth = ref(0)
@@ -35,6 +43,17 @@ export function useMergeSideImport() {
     return sideDoc(side).trim().length === 0
   }
 
+  function importText(side: MergeSide, raw: string, fileName?: string): PreparedImport {
+    const prepared = workspace.importSide(side, raw, fileName)
+    if (prepared.skippedFormat) {
+      options?.onNotice?.({
+        text: SKIP_IMPORT_FORMAT_NOTICE,
+        tone: 'warning',
+      })
+    }
+    return prepared
+  }
+
   function formatSide(side: MergeSide) {
     if (isFormatDisabled(side)) return
 
@@ -57,7 +76,7 @@ export function useMergeSideImport() {
         return
       }
       sideError(side).value = ''
-      workspace.importSide(side, reader.result, file.name)
+      importText(side, reader.result, file.name)
     }
     reader.onerror = () => {
       sideError(side).value = '读取文件失败，请重试'
@@ -91,7 +110,7 @@ export function useMergeSideImport() {
     try {
       const text = await navigator.clipboard.readText()
       sideError(side).value = ''
-      workspace.importSide(side, text)
+      importText(side, text)
     } catch {
       sideError(side).value = '无法读取剪贴板，请检查浏览器权限'
     }
@@ -111,6 +130,7 @@ export function useMergeSideImport() {
     enterDrag,
     leaveDrag,
     dropFiles,
+    importText,
     pasteAsFullSide,
     formatSide,
     clearSide,

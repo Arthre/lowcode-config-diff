@@ -151,6 +151,25 @@ describe('bandsFromPixelSpans', () => {
       ),
     ).toEqual([{ start: 0.1, end: 0.4 }])
   })
+
+  it('201 条互不重叠的带输出不超过 200 且覆盖原起止范围', () => {
+    const count = 201
+    const bandHeight = 10
+    const gap = 5
+    const scrollHeight = count * (bandHeight + gap)
+    const spans = Array.from({ length: count }, (_, index) => {
+      const start = index * (bandHeight + gap)
+      return { start, end: start + bandHeight }
+    })
+    const bands = bandsFromPixelSpans(spans, scrollHeight)
+    expect(bands.length).toBeLessThanOrEqual(200)
+    expect(bands.length).toBeGreaterThan(0)
+    expect(bands[0]?.start).toBeCloseTo(spans[0].start / scrollHeight)
+    expect(bands[bands.length - 1]?.end).toBeCloseTo(spans[count - 1].end / scrollHeight)
+    for (let index = 1; index < bands.length; index += 1) {
+      expect(bands[index].start).toBeGreaterThanOrEqual(bands[index - 1].start)
+    }
+  })
 })
 
 describe('splitMinimapBandsByKind', () => {

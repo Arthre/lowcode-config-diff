@@ -31,4 +31,4 @@ archive/YYYY-MM-DD-<主题>.md  ← 已完成归档
 
 ## 执行中
 
-无。
+[大文件 Diff P0 止血](./2026-08-25-large-file-diff-p0.md)

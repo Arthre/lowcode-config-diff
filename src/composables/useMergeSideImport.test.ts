@@ -1,5 +1,6 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
+import { LARGE_DOC_BYTES } from '@/composables/largeDocPolicy'
 import { useMergeWorkspace } from '@/stores/mergeWorkspace'
 import { useMergeSideImport } from './useMergeSideImport'
 
@@ -59,5 +60,36 @@ describe('useMergeSideImport formatSide', () => {
     const { isFormatDisabled } = useMergeSideImport()
     expect(isFormatDisabled('left')).toBe(true)
     expect(isFormatDisabled('right')).toBe(false)
+  })
+})
+
+describe('useMergeSideImport importText', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('跳过格式化时发出栏头提示且不二次解析', () => {
+    const notices: { text: string; tone: string }[] = []
+    const { importText } = useMergeSideImport({
+      onNotice: (notice) => notices.push(notice),
+    })
+    const raw = 'x'.repeat(LARGE_DOC_BYTES)
+    const prepared = importText('left', raw, 'big.json')
+
+    expect(prepared.skippedFormat).toBe(true)
+    expect(prepared.text).toBe(raw)
+    expect(useMergeWorkspace().leftDoc).toBe(raw)
+    expect(notices).toEqual([
+      { text: '文件较大，已保留原文；需要排版请点栏头格式化', tone: 'warning' },
+    ])
+  })
+
+  it('小文件导入不发出跳过格式化提示', () => {
+    const notices: { text: string; tone: string }[] = []
+    const { importText } = useMergeSideImport({
+      onNotice: (notice) => notices.push(notice),
+    })
+    importText('left', '{"a":1}')
+    expect(notices).toEqual([])
   })
 })
