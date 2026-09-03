@@ -829,6 +829,15 @@ function onRightHScroll() {
   hScrollSync.onScroll(mergeView.b.scrollDOM, mergeView.a.scrollDOM)
 }
 
+/** 把页眉「仅显示差异」同步到 MergeView；构造时也要带上，避免 watch 早于 mergeView 时丢一次。 */
+function applyCollapseUnchanged(enabled: boolean) {
+  if (!mergeView) return
+  mergeView.reconfigure({
+    collapseUnchanged: enabled ? MERGE_COLLAPSE_UNCHANGED : undefined,
+  })
+  afterEditorMeasure(() => syncEditorChrome(false, true))
+}
+
 onMounted(() => {
   const hostEl = hostRef.value
   if (!hostEl) return
@@ -861,7 +870,11 @@ onMounted(() => {
     highlightChanges: true,
     gutter: true,
     diffConfig: mergeViewDiffConfig,
+    // 大文件自动开折叠可能已先把 model 设为 true；构造时必须读当前值
+    collapseUnchanged: collapseUnchanged.value ? MERGE_COLLAPSE_UNCHANGED : undefined,
   })
+  // 构造期间若 model 已变、或 watch 曾因 mergeView 未就绪而跳过，再对齐一次
+  applyCollapseUnchanged(collapseUnchanged.value)
   syncEditorChrome(true)
   mergeView.dom.addEventListener('scroll', onMergeScroll, { passive: true })
   mergeView.a.scrollDOM.addEventListener('scroll', onLeftHScroll, { passive: true })
@@ -870,11 +883,7 @@ onMounted(() => {
 })
 
 watch(collapseUnchanged, (enabled) => {
-  if (!mergeView) return
-  mergeView.reconfigure({
-    collapseUnchanged: enabled ? MERGE_COLLAPSE_UNCHANGED : undefined,
-  })
-  afterEditorMeasure(() => syncEditorChrome(false, true))
+  applyCollapseUnchanged(enabled)
 })
 
 /** store 因导入/清空变化时，只替换该侧文档，保留另一侧 Undo 历史 */
