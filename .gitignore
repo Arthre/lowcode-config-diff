@@ -39,6 +39,9 @@ pnpm-debug.log*
 # Local index（本机产物，勿入库）
 .codegraph
 
+# 性能测试夹具（由 scripts/generate-perf-fixtures.mjs 生成，勿入库）
+fixtures
+
 # Generated
 src/types/auto-imports.d.ts
 src/types/components.d.ts
