@@ -832,8 +832,9 @@ function onRightHScroll() {
 /** 把页眉「仅显示差异」同步到 MergeView；构造时也要带上，避免 watch 早于 mergeView 时丢一次。 */
 function applyCollapseUnchanged(enabled: boolean) {
   if (!mergeView) return
+  const bothReady = workspace.leftDoc.length > 0 && workspace.rightDoc.length > 0
   mergeView.reconfigure({
-    collapseUnchanged: enabled ? MERGE_COLLAPSE_UNCHANGED : undefined,
+    collapseUnchanged: enabled && bothReady ? MERGE_COLLAPSE_UNCHANGED : undefined,
   })
   afterEditorMeasure(() => syncEditorChrome(false, true))
 }
@@ -885,6 +886,14 @@ onMounted(() => {
 watch(collapseUnchanged, (enabled) => {
   applyCollapseUnchanged(enabled)
 })
+
+/** 双侧齐套或缺一侧时，折叠过滤要跟着开关有效性重同步。 */
+watch(
+  () => [workspace.leftDoc.length > 0, workspace.rightDoc.length > 0] as const,
+  () => {
+    applyCollapseUnchanged(collapseUnchanged.value)
+  },
+)
 
 /** store 因导入/清空变化时，只替换该侧文档，保留另一侧 Undo 历史 */
 watch(

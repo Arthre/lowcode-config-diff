@@ -43,6 +43,10 @@ const directoryOpen = ref(true)
 /** 折叠编辑器未改行；默认关，不写 localStorage。 */
 const collapseUnchanged = ref(false)
 const collapseSession = createCollapseAutoOnce()
+/** 双侧都有配置后才谈差异状态（徽章/导航/仅显示差异）。 */
+const bothConfigsReady = computed(
+  () => workspace.leftDoc.length > 0 && workspace.rightDoc.length > 0,
+)
 const directoryToggleDisabled = computed(
   () => workspace.leftDoc.length === 0 && workspace.rightDoc.length === 0,
 )
@@ -50,6 +54,7 @@ const directoryToggleLabel = computed(() => directoryDrawerAriaLabel(directoryOp
 const chunkCount = ref(0)
 const chunkCurrent = ref(0)
 const chunkKinds = ref<ChunkKindCounts>({ added: 0, removed: 0, modified: 0 })
+const collapseToggleDisabled = computed(() => !bothConfigsReady.value || chunkCount.value === 0)
 const statusText = ref('')
 const statusTone = ref<StatusMessageTone>('success')
 const statusNonce = ref(0)
@@ -58,7 +63,17 @@ const kindRowAriaLabel = computed(() => chunkKindSummaryText(chunkKinds.value))
 
 let statusClearTimer: ReturnType<typeof setTimeout> | undefined
 
+function clearDiffStatus() {
+  chunkCount.value = 0
+  chunkCurrent.value = 0
+  chunkKinds.value = { added: 0, removed: 0, modified: 0 }
+}
+
 function onChunks(count: number, current: number, kinds: ChunkKindCounts) {
+  if (!bothConfigsReady.value) {
+    clearDiffStatus()
+    return
+  }
   chunkCount.value = count
   chunkCurrent.value = current
   chunkKinds.value = kinds
@@ -82,17 +97,26 @@ function onEditorNotice(notice: { text: string; tone: StatusMessageTone }) {
   showStatus(notice.text, notice.tone)
 }
 
+/** 用户切换「仅显示差异」；关掉才记本会话抑制。 */
+function onCollapseUserChange(enabled: boolean) {
+  collapseUnchanged.value = enabled
+  if (!enabled) collapseSession.onUserSet(false)
+}
+
 watch(
   () => [workspace.leftDoc, workspace.rightDoc] as const,
   ([left, right]) => {
+    const both = left.length > 0 && right.length > 0
+    if (!both) {
+      clearDiffStatus()
+      // 缺一侧时关掉折叠，但不记用户抑制，便于双侧齐后再自动开
+      collapseUnchanged.value = false
+      return
+    }
     const isLarge = isLargeDoc(left) || isLargeDoc(right)
     collapseUnchanged.value = collapseSession.nextEnabled(collapseUnchanged.value, isLarge)
   },
 )
-
-watch(collapseUnchanged, (enabled) => {
-  if (!enabled) collapseSession.onUserSet(false)
-})
 
 function showStatus(text: string, tone: StatusMessageTone) {
   if (statusClearTimer !== undefined) {
@@ -148,7 +172,12 @@ onBeforeUnmount(dismissStatus)
         </div>
         <div class="ui-toolbar-cluster" role="toolbar" aria-label="差异导航">
           <UiTooltip text="折叠编辑器中未改动的行">
-            <UiSwitch v-model="collapseUnchanged" label="仅显示差异" :disabled="chunkCount === 0" />
+            <UiSwitch
+              :model-value="collapseUnchanged"
+              label="仅显示差异"
+              :disabled="collapseToggleDisabled"
+              @update:model-value="onCollapseUserChange"
+            />
           </UiTooltip>
           <div class="ui-diff-anchor">
             <span

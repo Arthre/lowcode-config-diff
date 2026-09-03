@@ -83,26 +83,36 @@ export const editorPhrases = EditorState.phrases.of({
 })
 
 /** Merge 冲突高亮对齐设计 token（覆盖 merge 包默认绿/红）。 */
-export const mergeHighlightTheme = EditorView.theme({
-  '&.cm-merge-a .cm-changedLine, .cm-deletedChunk': {
-    backgroundColor: 'color-mix(in srgb, var(--diff-removed) 14%, transparent)',
-  },
-  '&.cm-merge-b .cm-changedLine, .cm-inlineChangedLine': {
-    backgroundColor: 'color-mix(in srgb, var(--diff-added) 14%, transparent)',
-  },
-  '&.cm-merge-a .cm-changedText, .cm-deletedChunk .cm-deletedText': {
-    background: 'color-mix(in srgb, var(--diff-removed) 28%, transparent)',
-  },
-  '&.cm-merge-b .cm-changedText': {
-    background: 'color-mix(in srgb, var(--diff-added) 28%, transparent)',
-  },
-  '&.cm-merge-a .cm-changedLineGutter, .cm-deletedLineGutter': {
-    backgroundColor: 'var(--diff-removed)',
-  },
-  '&.cm-merge-b .cm-changedLineGutter': {
-    backgroundColor: 'var(--diff-added)',
-  },
-})
+export const mergeHighlightTheme: Extension = [
+  EditorView.theme({
+    '&.cm-merge-a .cm-changedLine, .cm-deletedChunk': {
+      backgroundColor: 'color-mix(in srgb, var(--diff-removed) 14%, transparent)',
+    },
+    '&.cm-merge-b .cm-changedLine, .cm-inlineChangedLine': {
+      backgroundColor: 'color-mix(in srgb, var(--diff-added) 14%, transparent)',
+    },
+    '&.cm-merge-a .cm-changedText, .cm-deletedChunk .cm-deletedText': {
+      background: 'color-mix(in srgb, var(--diff-removed) 28%, transparent)',
+    },
+    '&.cm-merge-b .cm-changedText': {
+      background: 'color-mix(in srgb, var(--diff-added) 28%, transparent)',
+    },
+    '&.cm-merge-a .cm-changedLineGutter, .cm-deletedLineGutter': {
+      backgroundColor: 'var(--diff-removed)',
+    },
+    '&.cm-merge-b .cm-changedLineGutter': {
+      backgroundColor: 'var(--diff-added)',
+    },
+  }),
+  // &light/&dark 仅 baseTheme 支持；应用靠 html.dark 换 token，两侧都覆盖
+  EditorView.baseTheme({
+    '&light .cm-collapsedLines, &dark .cm-collapsedLines': {
+      color: 'var(--muted)',
+      background:
+        'linear-gradient(to bottom, transparent 0, var(--surface-raised) 30%, var(--surface-raised) 70%, transparent 100%)',
+    },
+  }),
+]
 
 /**
  * 查找状态与快捷键。默认面板改为幽灵节点，真正 UI 由 MergeSearchDock 承担。
