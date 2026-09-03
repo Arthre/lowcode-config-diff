@@ -935,48 +935,44 @@ onBeforeUnmount(() => {
               </UiTooltip>
             </div>
             <div class="two-way-merge-labels__actions">
-              <UiTooltip text="导入">
-                <button
-                  type="button"
-                  class="ui-btn ui-btn-icon"
-                  aria-label="导入参考配置"
-                  @click="openFilePicker('left')"
-                >
-                  <span class="i-lucide-file-up" aria-hidden="true" />
-                </button>
-              </UiTooltip>
-              <UiTooltip text="粘贴全文">
-                <button
-                  type="button"
-                  class="ui-btn ui-btn-icon"
-                  aria-label="粘贴为参考配置全文"
-                  @click="pasteAsFullSide('left')"
-                >
-                  <span class="i-lucide-clipboard" aria-hidden="true" />
-                </button>
-              </UiTooltip>
-              <UiTooltip text="格式化">
-                <button
-                  type="button"
-                  class="ui-btn ui-btn-icon"
-                  aria-label="格式化参考配置"
-                  :disabled="isFormatDisabled('left')"
-                  @click="formatSide('left')"
-                >
-                  <span class="i-lucide-align-left" aria-hidden="true" />
-                </button>
-              </UiTooltip>
-              <UiTooltip text="清空">
-                <button
-                  type="button"
-                  class="ui-btn ui-btn-icon ui-btn-danger"
-                  aria-label="清空参考配置"
-                  :disabled="isClearDisabled('left')"
-                  @click="clearSide('left')"
-                >
-                  <span class="i-lucide-trash-2" aria-hidden="true" />
-                </button>
-              </UiTooltip>
+              <button
+                type="button"
+                class="ui-btn two-way-merge-action"
+                aria-label="导入参考配置"
+                @click="openFilePicker('left')"
+              >
+                <span class="i-lucide-file-up" aria-hidden="true" />
+                <span class="two-way-merge-action__label">导入</span>
+              </button>
+              <button
+                type="button"
+                class="ui-btn two-way-merge-action"
+                aria-label="粘贴为参考配置全文"
+                @click="pasteAsFullSide('left')"
+              >
+                <span class="i-lucide-clipboard" aria-hidden="true" />
+                <span class="two-way-merge-action__label">粘贴</span>
+              </button>
+              <button
+                type="button"
+                class="ui-btn two-way-merge-action"
+                aria-label="格式化参考配置"
+                :disabled="isFormatDisabled('left')"
+                @click="formatSide('left')"
+              >
+                <span class="i-lucide-align-left" aria-hidden="true" />
+                <span class="two-way-merge-action__label">格式化</span>
+              </button>
+              <button
+                type="button"
+                class="ui-btn two-way-merge-action ui-btn-danger"
+                aria-label="清空参考配置"
+                :disabled="isClearDisabled('left')"
+                @click="clearSide('left')"
+              >
+                <span class="i-lucide-trash-2" aria-hidden="true" />
+                <span class="two-way-merge-action__label">清空</span>
+              </button>
             </div>
             <input
               ref="leftFileInput"
@@ -1004,48 +1000,44 @@ onBeforeUnmount(() => {
               </UiTooltip>
             </div>
             <div class="two-way-merge-labels__actions">
-              <UiTooltip text="导入">
-                <button
-                  type="button"
-                  class="ui-btn ui-btn-icon"
-                  aria-label="导入目标配置"
-                  @click="openFilePicker('right')"
-                >
-                  <span class="i-lucide-file-up" aria-hidden="true" />
-                </button>
-              </UiTooltip>
-              <UiTooltip text="粘贴全文">
-                <button
-                  type="button"
-                  class="ui-btn ui-btn-icon"
-                  aria-label="粘贴为目标配置全文"
-                  @click="pasteAsFullSide('right')"
-                >
-                  <span class="i-lucide-clipboard" aria-hidden="true" />
-                </button>
-              </UiTooltip>
-              <UiTooltip text="格式化">
-                <button
-                  type="button"
-                  class="ui-btn ui-btn-icon"
-                  aria-label="格式化目标配置"
-                  :disabled="isFormatDisabled('right')"
-                  @click="formatSide('right')"
-                >
-                  <span class="i-lucide-align-left" aria-hidden="true" />
-                </button>
-              </UiTooltip>
-              <UiTooltip text="清空">
-                <button
-                  type="button"
-                  class="ui-btn ui-btn-icon ui-btn-danger"
-                  aria-label="清空目标配置"
-                  :disabled="isClearDisabled('right')"
-                  @click="clearSide('right')"
-                >
-                  <span class="i-lucide-trash-2" aria-hidden="true" />
-                </button>
-              </UiTooltip>
+              <button
+                type="button"
+                class="ui-btn two-way-merge-action"
+                aria-label="导入目标配置"
+                @click="openFilePicker('right')"
+              >
+                <span class="i-lucide-file-up" aria-hidden="true" />
+                <span class="two-way-merge-action__label">导入</span>
+              </button>
+              <button
+                type="button"
+                class="ui-btn two-way-merge-action"
+                aria-label="粘贴为目标配置全文"
+                @click="pasteAsFullSide('right')"
+              >
+                <span class="i-lucide-clipboard" aria-hidden="true" />
+                <span class="two-way-merge-action__label">粘贴</span>
+              </button>
+              <button
+                type="button"
+                class="ui-btn two-way-merge-action"
+                aria-label="格式化目标配置"
+                :disabled="isFormatDisabled('right')"
+                @click="formatSide('right')"
+              >
+                <span class="i-lucide-align-left" aria-hidden="true" />
+                <span class="two-way-merge-action__label">格式化</span>
+              </button>
+              <button
+                type="button"
+                class="ui-btn two-way-merge-action ui-btn-danger"
+                aria-label="清空目标配置"
+                :disabled="isClearDisabled('right')"
+                @click="clearSide('right')"
+              >
+                <span class="i-lucide-trash-2" aria-hidden="true" />
+                <span class="two-way-merge-action__label">清空</span>
+              </button>
             </div>
             <input
               ref="rightFileInput"
@@ -1178,7 +1170,7 @@ onBeforeUnmount(() => {
   min-width: 0;
   padding: 0.45rem 0.65rem;
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   background: var(--surface);
 }
 
@@ -1216,8 +1208,32 @@ onBeforeUnmount(() => {
 .two-way-merge-labels__actions {
   display: flex;
   align-items: center;
-  gap: 0.2rem;
+  gap: 0.5rem;
   flex-shrink: 0;
+}
+
+/* 比页眉 ui-btn 更小一档；图标用 block 避免行内基线把视觉中心抬偏 */
+.two-way-merge-action {
+  gap: 0.25rem;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.two-way-merge-action [class^='i-lucide-'] {
+  display: block;
+  width: 0.85rem;
+  height: 0.85rem;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.two-way-merge-action__label {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
 }
 
 .two-way-merge-labels__revert {
