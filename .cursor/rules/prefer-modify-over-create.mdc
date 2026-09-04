@@ -1,0 +1,23 @@
+---
+description: 默认修改现有文件；新建 src 源文件须举证错位理由
+alwaysApply: true
+---
+
+# Prefer Modify Over Create
+
+新建 `src/` 源文件（及无合适宿主时的新测试文件）是**例外**，不是默认动作。
+
+## 硬门
+
+- **默认**：改现有文件 / 同文件私有函数 / 邻接 export / 现有 composable 与 `src/utils`
+- **禁止**：计划或用户未写明「创建 + 一行错位理由」时，擅自写入新路径
+- **禁止**：为对称、整洁、「以后扩展」或「文件更小更好看」而拆文件
+- **「复用」不含拆新文件**；拆新文件不算满足决策阶梯档 2
+
+错位理由仅接受：放进现有文件会职责越界 / 错误位置 / 已有 2+ 真实调用方要抽。
+
+## 主文档
+
+- `.docs/workflows/simplification.md`（实现前决策阶梯 + 新建硬门）
+- `.docs/workflows/writing-plans.md`（任务模板：修改必填，创建为例外）
+- `.docs/workflows/code-review.md`（未授权新建 → Important）
