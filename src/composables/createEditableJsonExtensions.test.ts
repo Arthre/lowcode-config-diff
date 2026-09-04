@@ -67,4 +67,22 @@ describe('createEditableJsonExtensions', () => {
     expect(full.facet(language)).toBeTruthy()
     expect(lite.facet(language)).toBeFalsy()
   })
+
+  it('lite 模式即使传入 sticky 选项也不挂语言', () => {
+    const lite = EditorState.create({
+      doc: '{"a":1}',
+      extensions: createEditableJsonExtensions([], undefined, true, {
+        getScrollRoot: () => null,
+      }),
+    })
+    expect(lite.facet(language)).toBeFalsy()
+  })
+
+  it('lite 模式传入 sticky 时扩展列表非空（sticky 仍挂）', () => {
+    const lite = createEditableJsonExtensions([], undefined, true, {
+      getScrollRoot: () => null,
+    })
+    const bare = createEditableJsonExtensions([], undefined, true)
+    expect(lite.length).toBeGreaterThan(bare.length)
+  })
 })

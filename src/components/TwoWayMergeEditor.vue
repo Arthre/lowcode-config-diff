@@ -46,6 +46,7 @@ import {
   createEditableJsonExtensions,
   createLiteVariableExtensions,
   mergeHighlightTheme,
+  type StickyScrollOptions,
 } from '@/composables/codemirrorTheme'
 import { mergeViewDiffConfig, takeLastDiffCoarse } from '@/composables/diffByLine'
 import {
@@ -312,6 +313,13 @@ function emitCoarseNoticeIfNeeded() {
     coarseNoticeShown = false
   } else {
     coarseNoticeShown = true
+  }
+}
+
+/** Sticky 竖滚根：Merge 外层 `.cm-mergeView`；构造完成前可能为 null。 */
+function stickyScrollOptions(): StickyScrollOptions {
+  return {
+    getScrollRoot: () => mergeView?.dom ?? null,
   }
 }
 
@@ -851,7 +859,12 @@ onMounted(() => {
     a: {
       doc: workspace.leftDoc,
       extensions: [
-        ...createEditableJsonExtensions([mergeHighlightTheme], openSearch, true),
+        ...createEditableJsonExtensions(
+          [mergeHighlightTheme],
+          openSearch,
+          true,
+          stickyScrollOptions(),
+        ),
         leftLiteCompartment.of(createLiteVariableExtensions(leftLite)),
         createSideListener('left'),
         swallowEditorFileDrop,
@@ -860,7 +873,12 @@ onMounted(() => {
     b: {
       doc: workspace.rightDoc,
       extensions: [
-        ...createEditableJsonExtensions([mergeHighlightTheme], openSearch, true),
+        ...createEditableJsonExtensions(
+          [mergeHighlightTheme],
+          openSearch,
+          true,
+          stickyScrollOptions(),
+        ),
         rightLiteCompartment.of(createLiteVariableExtensions(rightLite)),
         createSideListener('right'),
         swallowEditorFileDrop,

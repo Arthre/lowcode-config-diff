@@ -20,6 +20,9 @@ import {
   keymap,
   lineNumbers,
 } from '@codemirror/view'
+import { stickyScrollExtension, type StickyScrollOptions } from './stickyScrollExtension'
+
+export type { StickyScrollOptions }
 
 /** Theme follows CSS variables so light/dark html.dark swaps stay in sync. */
 export const appEditorTheme = EditorView.theme({
@@ -148,7 +151,7 @@ export function createSearchExtensions(onOpenSearch?: () => boolean): Extension[
   ]
 }
 
-/** lite 时卸掉的 JSON 语言 / 高亮 / 折叠 gutter，供 Compartment 热切。 */
+/** lite 时卸掉的 JSON 语言 / 高亮 / 折叠 gutter（Sticky 不在此列，大文件仍启用）。 */
 export function createLiteVariableExtensions(lite: boolean): Extension[] {
   if (lite) return []
   return [foldGutter(), json(), syntaxHighlighting(defaultHighlightStyle, { fallback: true })]
@@ -158,11 +161,13 @@ export function createEditableJsonExtensions(
   extra: Extension[] = [],
   onOpenSearch?: () => boolean,
   lite?: boolean,
+  sticky?: StickyScrollOptions,
 ): Extension[] {
   return [
     lineNumbers(),
     highlightActiveLineGutter(),
     ...createLiteVariableExtensions(lite === true),
+    ...(sticky ? [stickyScrollExtension(sticky)] : []),
     drawSelection(),
     history(),
     keymap.of(historyKeymap),
