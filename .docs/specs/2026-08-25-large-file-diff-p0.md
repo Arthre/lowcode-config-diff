@@ -2,7 +2,7 @@
 
 **日期：** 2026-08-25  
 **状态：** 实施中  
-**关联计划：** [`.docs/plans/2026-08-25-large-file-diff-p0.md`](../plans/2026-08-25-large-file-diff-p0.md)  
+**关联计划：** [`.docs/plans/archive/2026-08-25-large-file-diff-p0.md`](../plans/archive/2026-08-25-large-file-diff-p0.md)  
 **前置：** [可编辑双栏文本合并工作台](./2026-08-18-editable-two-way-merge.md)、[工作台扫读、空态与折叠差异](./2026-08-21-workbench-scan-empty-collapse.md)  
 **影响模块：** `prepareImportText`、`mergeWorkspace`、`TwoWayMergeEditor`、`HomeView`、`useMergeSideImport`、`diffByLine`、`chunkMinimapLayout`、`codemirrorTheme`  
 **不改动：** Core `diffConfig` / `mergeConfig`、`scanLimit` / `timeout` 数值、`DIRECTORY_TREE_ENABLED`、MergeView 禁止因导入 `destroy`

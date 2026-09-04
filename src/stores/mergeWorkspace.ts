@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { prepareImportText, type PreparedImport } from '@/composables/prepareImportText'
+import { prepareImportText, type PreparedImport } from '@/features/merge/lib/import/prepareText'
 
 export type MergeSide = 'left' | 'right'
 

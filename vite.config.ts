@@ -28,6 +28,7 @@ export default defineConfig({
       dts: 'src/types/auto-imports.d.ts',
     }),
     Components({
+      dirs: ['src/components', 'src/features/merge/components', 'src/features/shell/components'],
       dts: 'src/types/components.d.ts',
     }),
   ],

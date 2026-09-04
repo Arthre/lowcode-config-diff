@@ -23,7 +23,7 @@ archive/YYYY-MM-DD-<主题>.md  ← 已完成归档
 
 ## 最近完成
 
-[Sticky Scroll](./archive/2026-09-04-sticky-scroll.md)（面包屑、视口锚定、lite 回退）；[工作台扫读、空态与折叠差异](./2026-08-21-workbench-scan-empty-collapse.md)（切片 A–E 已落地，待 finishing-branch 归档）；[工作台胶囊栏头与分层目录](./archive/2026-08-20-workbench-capsules-directory.md)；[导入后目录定位性能](./archive/2026-08-20-diff-import-layout-perf.md)；[差异块工作台后续](./archive/2026-08-20-chunk-workbench-followup.md)；[块导航与缩略轨滚动性能](./archive/2026-08-19-chunk-nav-scroll-perf.md)；[2026-08-18 总计划索引](./archive/2026-08-18-editable-two-way-merge.md) 与 M1–M4 计划均已归档。
+[Sticky Scroll](./archive/2026-09-04-sticky-scroll.md)（面包屑、视口锚定、lite 回退）；[大文件 Diff P0 止血](./archive/2026-08-25-large-file-diff-p0.md)；[工作台扫读、空态与折叠差异](./archive/2026-08-21-workbench-scan-empty-collapse.md)（切片 A–E 已落地并归档）；[工作台胶囊栏头与分层目录](./archive/2026-08-20-workbench-capsules-directory.md)；[导入后目录定位性能](./archive/2026-08-20-diff-import-layout-perf.md)；[差异块工作台后续](./archive/2026-08-20-chunk-workbench-followup.md)；[块导航与缩略轨滚动性能](./archive/2026-08-19-chunk-nav-scroll-perf.md)；[2026-08-18 总计划索引](./archive/2026-08-18-editable-two-way-merge.md) 与 M1–M4 计划均已归档。
 
 ## 待执行
 
@@ -31,4 +31,4 @@ archive/YYYY-MM-DD-<主题>.md  ← 已完成归档
 
 ## 执行中
 
-[大文件 Diff P0 止血](./2026-08-25-large-file-diff-p0.md)
+无。

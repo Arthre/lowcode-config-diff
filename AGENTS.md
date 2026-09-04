@@ -54,26 +54,33 @@
 
 ## 目录与业务边界
 
-| 路径               | 职责                                                               |
-| ------------------ | ------------------------------------------------------------------ |
-| `src/`             | 应用源码                                                           |
-| `src/views/`       | 页面视图                                                           |
-| `src/components/`  | 通用组件（约超过 12～15 个文件时再按 layout/json/diff 等分子目录） |
-| `src/composables/` | 可复用副作用与可测纯逻辑                                           |
-| `src/core/`        | Diff/Merge 纯引擎（禁止依赖 Vue / Pinia / DOM）                    |
-| `src/styles/`      | 设计系统 SCSS（token / 原语 / 壳 / 语义；功能扩展见 `features/`）  |
-| `src/router/`      | 路由与导航守卫（含 NProgress）                                     |
-| `src/stores/`      | Pinia 状态                                                         |
-| `src/utils/`       | 工具与请求封装                                                     |
-| `src/types/`       | 自动生成类型声明（auto-import / components）                       |
-| `public/`          | 静态资源                                                           |
-| `.docs/`           | 主要文档：工作流、specs、plans、模块活文档                         |
-| `.husky/`          | Git hooks（lint-staged、commitlint）                               |
-| `.cursor/`         | Cursor 规则等 IDE 薄层（入库共享）                                 |
-| `.agents/`         | Agent Skills（入库共享）                                           |
-| `.claude/`         | Claude 相关配置与 skills（入库共享）                               |
+| 路径                  | 职责                                                                    |
+| --------------------- | ----------------------------------------------------------------------- |
+| `src/`                | 应用源码                                                                |
+| `src/views/`          | 页面视图（如 `HomeView`）                                               |
+| `src/features/merge/` | 对照合并工作台：`components/`、Vue 副作用 `composables/`、纯逻辑 `lib/` |
+| `src/features/shell/` | 壳层 chrome（主题切换等）                                               |
+| `src/components/ui/`  | UI 原语（`UiSwitch` / `UiTooltip` / `UiMessage` 等）                    |
+| `src/core/`           | Diff/Merge 纯引擎（禁止依赖 Vue / Pinia / DOM）                         |
+| `src/styles/`         | 设计系统 SCSS（token / 原语 / 壳 / 语义；功能扩展见 `features/`）       |
+| `src/router/`         | 路由与导航守卫（含 NProgress）                                          |
+| `src/stores/`         | Pinia 状态                                                              |
+| `src/utils/`          | 工具与请求封装                                                          |
+| `src/types/`          | 自动生成类型声明（auto-import / components）                            |
+| `public/`             | 静态资源                                                                |
+| `.docs/`              | 主要文档：工作流、specs、plans、模块活文档                              |
+| `.husky/`             | Git hooks（lint-staged、commitlint）                                    |
+| `.cursor/`            | Cursor 规则等 IDE 薄层（入库共享）                                      |
+| `.agents/`            | Agent Skills（入库共享）                                                |
+| `.claude/`            | Claude 相关配置与 skills（入库共享）                                    |
 
-新增页面优先放 `src/views/`；可复用 UI 放 `src/components/`；跨页面状态放 `src/stores/`；HTTP 调用统一走 `src/utils/request.ts`（或后续抽离的 `src/api/`），页面内不要散落裸 `axios`。
+约定：
+
+- **新纯逻辑**默认进所属 feature 的 `lib/`（如 `src/features/merge/lib/...`）；**禁止**回填扁平 `src/composables/`（该目录已移除）。
+- **Vue 副作用**（`use*` + Pinia/DOM）进 feature 的 `composables/`。
+- **UI 原语**进 `src/components/ui/`；工作台组件进 `src/features/merge/components/`。
+- 路径别名仍仅 `@` → `src/`；禁止为好看而新增 barrel re-export。
+- 新增页面优先放 `src/views/`；跨页面状态放 `src/stores/`；HTTP 调用统一走 `src/utils/request.ts`（或后续抽离的 `src/api/`），页面内不要散落裸 `axios`。
 
 ## 开发工作流
 
@@ -106,7 +113,7 @@
 - 使用 `<script setup lang="ts">`；需要组件名时可用 `name` 属性（`unplugin-vue-setup-extend-plus`）。
 - 禁止无必要的 `any` 和非空断言 `!`；对外 API / 请求结果尽量声明类型。
 - 优先使用 `type`，复杂对象可使用 `interface`。
-- 页面副作用抽离到 composables；单文件逻辑过重时拆分并说明原因。
+- 页面副作用抽离到 feature `composables/`；纯逻辑进 feature `lib/`；单文件逻辑过重时拆分并说明原因。
 
 ### 命名与导入
 
@@ -171,7 +178,7 @@
 | `.docs/specs/`         | 变更设计文档（需求 delta）       |
 | `.docs/plans/`         | 变更实施计划与 `archive/` 归档   |
 
-模块活文档按需创建于 `.docs/{模块}/`；当前尚无模块文档时以代码与本文件为准。
+模块活文档按需创建于 `.docs/{模块}/`（现有：`.docs/ui/`、`.docs/merge/`）；无对应文档时以代码与本文件为准。
 
 ## IDE 规则同步
 

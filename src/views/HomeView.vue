@@ -1,29 +1,28 @@
 <script setup lang="ts" name="HomeView">
-import DownloadMenu from '@/components/DownloadMenu.vue'
-import ThemeToggle from '@/components/ThemeToggle.vue'
-import TwoWayMergeEditor from '@/components/TwoWayMergeEditor.vue'
-import UiMessage from '@/components/UiMessage.vue'
-import UiSwitch from '@/components/UiSwitch.vue'
-import UiTooltip from '@/components/UiTooltip.vue'
-import { chunkKindSummaryText, type ChunkKindCounts } from '@/composables/chunkKind'
+import DownloadMenu from '@/features/merge/components/DownloadMenu.vue'
+import ThemeToggle from '@/features/shell/components/ThemeToggle.vue'
+import TwoWayMergeEditor from '@/features/merge/components/TwoWayMergeEditor.vue'
+import UiMessage from '@/components/ui/UiMessage.vue'
+import UiSwitch from '@/components/ui/UiSwitch.vue'
+import UiTooltip from '@/components/ui/UiTooltip.vue'
+import { chunkKindSummaryText, type ChunkKindCounts } from '@/features/merge/lib/chunk/kind'
 import {
   chunkAnchorText,
   chunkNavAriaLabel,
   chunkNavVisibleLabel,
-} from '@/composables/chunkNavAnchor'
-import { DIRECTORY_TREE_ENABLED, directoryDrawerAriaLabel } from '@/composables/directoryDrawer'
+} from '@/features/merge/lib/chunk/navAnchor'
 import {
   describeRightDocExport,
   type RightDocExportHint,
-} from '@/composables/describeRightDocExport'
-import { guardRightDocDownload } from '@/composables/packRightDocDownload'
+} from '@/features/merge/lib/export/describeRightDoc'
+import { guardRightDocDownload } from '@/features/merge/lib/export/packDownload'
 import {
   statusDismissMs,
   toneFromExportHint,
   type StatusMessageTone,
-} from '@/composables/statusMessage'
-import { createCollapseAutoOnce } from '@/composables/collapseAutoOnce'
-import { isLargeDoc } from '@/composables/largeDocPolicy'
+} from '@/features/merge/lib/policy/statusMessage'
+import { createCollapseAutoOnce } from '@/features/merge/lib/editor/collapse'
+import { isLargeDoc } from '@/features/merge/lib/policy/largeDoc'
 import { useAppStore } from '@/stores/app'
 import { useMergeWorkspace } from '@/stores/mergeWorkspace'
 import { copyText, downloadJsonFile } from '@/utils/exportConfig'
@@ -38,8 +37,6 @@ const mergeEditorRef = ref<{
   flushDocs: () => void
   getRightDoc: () => string
 } | null>(null)
-/** 推开式目录；默认展开，不写 localStorage。 */
-const directoryOpen = ref(true)
 /** 折叠编辑器未改行；默认关，不写 localStorage。 */
 const collapseUnchanged = ref(false)
 const collapseSession = createCollapseAutoOnce()
@@ -47,10 +44,6 @@ const collapseSession = createCollapseAutoOnce()
 const bothConfigsReady = computed(
   () => workspace.leftDoc.length > 0 && workspace.rightDoc.length > 0,
 )
-const directoryToggleDisabled = computed(
-  () => workspace.leftDoc.length === 0 && workspace.rightDoc.length === 0,
-)
-const directoryToggleLabel = computed(() => directoryDrawerAriaLabel(directoryOpen.value))
 const chunkCount = ref(0)
 const chunkCurrent = ref(0)
 const chunkKinds = ref<ChunkKindCounts>({ added: 0, removed: 0, modified: 0 })
@@ -239,19 +232,6 @@ onBeforeUnmount(dismissStatus)
             </span>
           </UiTooltip>
           <ThemeToggle />
-          <UiTooltip v-if="DIRECTORY_TREE_ENABLED" :text="directoryToggleLabel">
-            <button
-              type="button"
-              class="ui-btn"
-              :disabled="directoryToggleDisabled"
-              :aria-expanded="directoryOpen"
-              :aria-label="directoryToggleLabel"
-              @click="directoryOpen = !directoryOpen"
-            >
-              <span class="i-lucide-list-tree" aria-hidden="true" />
-              目录
-            </button>
-          </UiTooltip>
           <UiTooltip text="搜索 Ctrl+F">
             <button
               type="button"
@@ -277,7 +257,6 @@ onBeforeUnmount(dismissStatus)
     <div class="ui-workspace">
       <TwoWayMergeEditor
         ref="mergeEditorRef"
-        v-model:directory-open="directoryOpen"
         v-model:collapse-unchanged="collapseUnchanged"
         class="flex-1 min-h-0"
         @chunks="onChunks"

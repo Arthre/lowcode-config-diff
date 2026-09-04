@@ -1,6 +1,6 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { LARGE_DOC_BYTES } from '@/composables/largeDocPolicy'
+import { LARGE_DOC_BYTES } from '@/features/merge/lib/policy/largeDoc'
 import { useMergeWorkspace } from './mergeWorkspace'
 
 describe('useMergeWorkspace', () => {

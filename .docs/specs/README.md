@@ -27,8 +27,8 @@ YYYY-MM-DD-<主题>.md
 
 ## 实施中
 
-[大文件 Diff P0 止血](./2026-08-25-large-file-diff-p0.md)
+无。
 
 ## 最近完成
 
-[Sticky Scroll](./2026-09-04-sticky-scroll.md)（面包屑路径、视口锚定、lite 括号栈回退）；[工作台扫读、空态与折叠差异](./2026-08-21-workbench-scan-empty-collapse.md)（页眉 `差异 n / m`、目录符号树与类型筛选、居中空态与示例对、缩略轨同高与横滚同步、仅显示差异折叠）；[工作台胶囊栏头与分层目录](./2026-08-20-workbench-capsules-directory.md)（含页眉精简 / 目录抽屉 / 行号 / 缩略轨跳转迭代）；[导入后目录定位性能](./2026-08-20-diff-import-layout-perf.md)；[Operate 扫读优化](./2026-08-20-ui-operate-pass.md)；[差异块工作台后续](./2026-08-20-chunk-workbench-followup.md)。已完成：[块导航与缩略轨滚动性能](./2026-08-19-chunk-nav-scroll-perf.md)；可编辑双栏合并（2026-08-18）：[总览](./2026-08-18-editable-two-way-merge.md) 与 M1–M4。对应计划见 [`.docs/plans/`](../plans/README.md) 与 [archive](../plans/archive/)。
+[Sticky Scroll](./2026-09-04-sticky-scroll.md)（面包屑路径、视口锚定、lite 括号栈回退）；[大文件 Diff P0 止血](./2026-08-25-large-file-diff-p0.md)；[工作台扫读、空态与折叠差异](./2026-08-21-workbench-scan-empty-collapse.md)（页眉 `差异 n / m`、目录符号树与类型筛选、居中空态与示例对、缩略轨同高与横滚同步、仅显示差异折叠）；[工作台胶囊栏头与分层目录](./2026-08-20-workbench-capsules-directory.md)（含页眉精简 / 目录抽屉 / 行号 / 缩略轨跳转迭代）；[导入后目录定位性能](./2026-08-20-diff-import-layout-perf.md)；[Operate 扫读优化](./2026-08-20-ui-operate-pass.md)；[差异块工作台后续](./2026-08-20-chunk-workbench-followup.md)。已完成：[块导航与缩略轨滚动性能](./2026-08-19-chunk-nav-scroll-perf.md)；可编辑双栏合并（2026-08-18）：[总览](./2026-08-18-editable-two-way-merge.md) 与 M1–M4。对应计划见 [`.docs/plans/`](../plans/README.md) 与 [archive](../plans/archive/)。
