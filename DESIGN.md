@@ -79,10 +79,10 @@ typography:
     fontWeight: 400
     lineHeight: 1.45
 rounded:
-  xs: '2px'
-  sm: '6px'
-  md: '10px'
-  lg: '14px'
+  xs: '0'
+  sm: '2px'
+  md: '6px'
+  lg: '10px'
 spacing:
   xs: '4px'
   sm: '8px'

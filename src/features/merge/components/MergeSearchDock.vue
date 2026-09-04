@@ -104,10 +104,9 @@ function onFindKeydown(event: KeyboardEvent) {
   align-items: center;
   gap: 0.4rem 0.55rem;
   width: 100%;
-  padding: 0.4rem 0.5rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--surface);
+  padding: 0.4rem 0.65rem;
+  border: 0;
+  background: transparent;
 }
 
 .merge-search-dock__sides {

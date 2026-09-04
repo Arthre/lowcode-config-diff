@@ -145,8 +145,9 @@ onBeforeUnmount(() => {
   min-height: 0;
   align-self: stretch;
   overflow: hidden;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
+  border: 0;
+  border-left: 1px solid var(--border-subtle);
+  border-radius: 0;
   background: var(--surface);
   cursor: pointer;
   touch-action: none;
@@ -166,7 +167,7 @@ onBeforeUnmount(() => {
   /* 亮色：透亮描边框，几乎不挡色带 */
   border: 1.5px solid color-mix(in srgb, var(--accent) 72%, transparent);
   background: color-mix(in srgb, var(--accent) 7%, transparent);
-  border-radius: 2px;
+  border-radius: 1px;
   box-shadow: none;
   pointer-events: none;
 }
@@ -200,7 +201,7 @@ onBeforeUnmount(() => {
   position: absolute;
   right: 0;
   left: 0;
-  border-radius: 1px;
+  border-radius: 0;
 }
 
 .diff-minimap__band--left {

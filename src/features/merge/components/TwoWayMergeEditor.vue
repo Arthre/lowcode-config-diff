@@ -708,205 +708,239 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="two-way-merge-editor">
+  <div class="two-way-merge-editor" :class="{ 'is-empty': leftEmpty && rightEmpty }">
     <div class="two-way-merge-stage">
       <div class="two-way-merge-main">
-        <div class="two-way-merge-labels">
-          <div class="two-way-merge-labels__side">
-            <span class="ui-label-test">参考配置</span>
-            <div class="two-way-merge-file-slot">
-              <UiTooltip :text="workspace.leftFileName || '导入 JSON 文件'">
-                <button
-                  type="button"
-                  class="two-way-merge-file"
-                  aria-label="导入参考配置"
-                  @click="openFilePicker('left')"
-                >
-                  {{ workspace.leftFileName || '未导入' }}
-                </button>
-              </UiTooltip>
+        <div class="two-way-merge-panel" :class="{ 'is-populated': showMinimap }">
+          <div class="two-way-merge-chrome">
+            <div class="two-way-merge-chrome__align">
+              <div class="two-way-merge-labels">
+                <div class="two-way-merge-labels__side">
+                  <span class="ui-label-test">参考配置</span>
+                  <div class="two-way-merge-file-slot">
+                    <UiTooltip :text="workspace.leftFileName || '导入 JSON 文件'">
+                      <button
+                        type="button"
+                        class="two-way-merge-file"
+                        aria-label="导入参考配置"
+                        @click="openFilePicker('left')"
+                      >
+                        {{ workspace.leftFileName || '未导入' }}
+                      </button>
+                    </UiTooltip>
+                  </div>
+                  <div class="two-way-merge-labels__actions">
+                    <button
+                      type="button"
+                      class="ui-btn two-way-merge-action"
+                      aria-label="导入参考配置"
+                      @click="openFilePicker('left')"
+                    >
+                      <span class="i-lucide-file-up" aria-hidden="true" />
+                      <span class="two-way-merge-action__label">导入</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="ui-btn two-way-merge-action"
+                      aria-label="粘贴为参考配置全文"
+                      @click="pasteAsFullSide('left')"
+                    >
+                      <span class="i-lucide-clipboard" aria-hidden="true" />
+                      <span class="two-way-merge-action__label">粘贴</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="ui-btn two-way-merge-action"
+                      aria-label="格式化参考配置"
+                      :disabled="isFormatDisabled('left')"
+                      @click="formatSide('left')"
+                    >
+                      <span class="i-lucide-align-left" aria-hidden="true" />
+                      <span class="two-way-merge-action__label">格式化</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="ui-btn two-way-merge-action ui-btn-danger"
+                      aria-label="清空参考配置"
+                      :disabled="isClearDisabled('left')"
+                      @click="clearSide('left')"
+                    >
+                      <span class="i-lucide-trash-2" aria-hidden="true" />
+                      <span class="two-way-merge-action__label">清空</span>
+                    </button>
+                  </div>
+                  <input
+                    ref="leftFileInput"
+                    type="file"
+                    accept=".json,application/json,text/plain"
+                    class="hidden"
+                    @change="onFileSelected('left', $event)"
+                  />
+                </div>
+                <div class="two-way-merge-labels__revert">
+                  <span class="i-lucide-move-right" aria-hidden="true" />
+                </div>
+                <div class="two-way-merge-labels__side">
+                  <span class="ui-label-prod">目标配置</span>
+                  <div class="two-way-merge-file-slot">
+                    <UiTooltip :text="workspace.rightFileName || '导入 JSON 文件'">
+                      <button
+                        type="button"
+                        class="two-way-merge-file"
+                        aria-label="导入目标配置"
+                        @click="openFilePicker('right')"
+                      >
+                        {{ workspace.rightFileName || '未导入' }}
+                      </button>
+                    </UiTooltip>
+                  </div>
+                  <div class="two-way-merge-labels__actions">
+                    <button
+                      type="button"
+                      class="ui-btn two-way-merge-action"
+                      aria-label="导入目标配置"
+                      @click="openFilePicker('right')"
+                    >
+                      <span class="i-lucide-file-up" aria-hidden="true" />
+                      <span class="two-way-merge-action__label">导入</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="ui-btn two-way-merge-action"
+                      aria-label="粘贴为目标配置全文"
+                      @click="pasteAsFullSide('right')"
+                    >
+                      <span class="i-lucide-clipboard" aria-hidden="true" />
+                      <span class="two-way-merge-action__label">粘贴</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="ui-btn two-way-merge-action"
+                      aria-label="格式化目标配置"
+                      :disabled="isFormatDisabled('right')"
+                      @click="formatSide('right')"
+                    >
+                      <span class="i-lucide-align-left" aria-hidden="true" />
+                      <span class="two-way-merge-action__label">格式化</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="ui-btn two-way-merge-action ui-btn-danger"
+                      aria-label="清空目标配置"
+                      :disabled="isClearDisabled('right')"
+                      @click="clearSide('right')"
+                    >
+                      <span class="i-lucide-trash-2" aria-hidden="true" />
+                      <span class="two-way-merge-action__label">清空</span>
+                    </button>
+                  </div>
+                  <input
+                    ref="rightFileInput"
+                    type="file"
+                    accept=".json,application/json,text/plain"
+                    class="hidden"
+                    @change="onFileSelected('right', $event)"
+                  />
+                </div>
+              </div>
+              <!-- 与下方缩略轨同宽，保证中间 → 与 Merge revert 槽对齐 -->
+              <div v-if="showMinimap" class="two-way-merge-chrome__rail" aria-hidden="true" />
             </div>
-            <div class="two-way-merge-labels__actions">
-              <button
-                type="button"
-                class="ui-btn two-way-merge-action"
-                aria-label="导入参考配置"
-                @click="openFilePicker('left')"
-              >
-                <span class="i-lucide-file-up" aria-hidden="true" />
-                <span class="two-way-merge-action__label">导入</span>
-              </button>
-              <button
-                type="button"
-                class="ui-btn two-way-merge-action"
-                aria-label="粘贴为参考配置全文"
-                @click="pasteAsFullSide('left')"
-              >
-                <span class="i-lucide-clipboard" aria-hidden="true" />
-                <span class="two-way-merge-action__label">粘贴</span>
-              </button>
-              <button
-                type="button"
-                class="ui-btn two-way-merge-action"
-                aria-label="格式化参考配置"
-                :disabled="isFormatDisabled('left')"
-                @click="formatSide('left')"
-              >
-                <span class="i-lucide-align-left" aria-hidden="true" />
-                <span class="two-way-merge-action__label">格式化</span>
-              </button>
-              <button
-                type="button"
-                class="ui-btn two-way-merge-action ui-btn-danger"
-                aria-label="清空参考配置"
-                :disabled="isClearDisabled('left')"
-                @click="clearSide('left')"
-              >
-                <span class="i-lucide-trash-2" aria-hidden="true" />
-                <span class="two-way-merge-action__label">清空</span>
-              </button>
-            </div>
-            <input
-              ref="leftFileInput"
-              type="file"
-              accept=".json,application/json,text/plain"
-              class="hidden"
-              @change="onFileSelected('left', $event)"
+            <p
+              v-if="leftError || rightError"
+              class="two-way-merge-status ui-status-invalid"
+              role="status"
+            >
+              <span v-if="leftError">参考配置：{{ leftError }}</span>
+              <span v-if="rightError">目标配置：{{ rightError }}</span>
+            </p>
+            <MergeSearchDock
+              v-if="searchOpen"
+              ref="searchDockRef"
+              v-model:find="searchFind"
+              v-model:replace="searchReplace"
+              v-model:case-sensitive="searchCase"
+              v-model:regexp="searchRegexp"
+              v-model:whole-word="searchWord"
+              v-model:side="searchSide"
+              class="two-way-merge-search"
+              @next="runSearch(findNext)"
+              @prev="runSearch(findPrevious)"
+              @all="runSearch(selectMatches)"
+              @replace-one="runSearch(replaceNext)"
+              @replace-all="runSearch(replaceAll)"
+              @close="closeSearch"
             />
           </div>
-          <div class="two-way-merge-labels__revert">
-            <span class="i-lucide-move-right" aria-hidden="true" />
-          </div>
-          <div class="two-way-merge-labels__side">
-            <span class="ui-label-prod">目标配置</span>
-            <div class="two-way-merge-file-slot">
-              <UiTooltip :text="workspace.rightFileName || '导入 JSON 文件'">
-                <button
-                  type="button"
-                  class="two-way-merge-file"
-                  aria-label="导入目标配置"
-                  @click="openFilePicker('right')"
-                >
-                  {{ workspace.rightFileName || '未导入' }}
-                </button>
-              </UiTooltip>
+          <div class="two-way-merge-body" :class="{ 'is-empty': leftEmpty && rightEmpty }">
+            <div
+              class="two-way-merge-frame flex-1 min-h-0"
+              :class="{
+                'is-both-empty': leftEmpty && rightEmpty,
+                'is-dragging-left': leftDragDepth > 0,
+                'is-dragging-right': rightDragDepth > 0,
+              }"
+              @dragenter="onHostDragEnter"
+              @dragover="onHostDragOver"
+              @dragleave="onHostDragLeave"
+              @drop="onHostDrop"
+            >
+              <div
+                ref="hostRef"
+                class="two-way-merge-host flex-1 min-h-0"
+                :class="{ 'is-collapsed': leftEmpty && rightEmpty }"
+              />
+              <div v-if="leftEmpty && rightEmpty" class="two-way-merge-empty-flow">
+                <div class="two-way-merge-empty two-way-merge-empty--flow">
+                  <MergePaneEmptyState
+                    select-aria-label="选择参考配置文件"
+                    :drag-over="leftDragDepth > 0"
+                    show-sample
+                    @paste="pasteAsFullSide('left')"
+                    @sample="fillSampleDocs"
+                    @select="openFilePicker('left')"
+                  />
+                </div>
+                <div class="two-way-merge-empty-flow__gap" aria-hidden="true" />
+                <div class="two-way-merge-empty two-way-merge-empty--flow">
+                  <MergePaneEmptyState
+                    select-aria-label="选择目标配置文件"
+                    :drag-over="rightDragDepth > 0"
+                    show-sample
+                    @paste="pasteAsFullSide('right')"
+                    @sample="fillSampleDocs"
+                    @select="openFilePicker('right')"
+                  />
+                </div>
+              </div>
+              <template v-else>
+                <div v-if="leftEmpty" class="two-way-merge-empty two-way-merge-empty--left">
+                  <MergePaneEmptyState
+                    select-aria-label="选择参考配置文件"
+                    :drag-over="leftDragDepth > 0"
+                    @paste="pasteAsFullSide('left')"
+                    @select="openFilePicker('left')"
+                  />
+                </div>
+                <div v-if="rightEmpty" class="two-way-merge-empty two-way-merge-empty--right">
+                  <MergePaneEmptyState
+                    select-aria-label="选择目标配置文件"
+                    :drag-over="rightDragDepth > 0"
+                    @paste="pasteAsFullSide('right')"
+                    @select="openFilePicker('right')"
+                  />
+                </div>
+              </template>
             </div>
-            <div class="two-way-merge-labels__actions">
-              <button
-                type="button"
-                class="ui-btn two-way-merge-action"
-                aria-label="导入目标配置"
-                @click="openFilePicker('right')"
-              >
-                <span class="i-lucide-file-up" aria-hidden="true" />
-                <span class="two-way-merge-action__label">导入</span>
-              </button>
-              <button
-                type="button"
-                class="ui-btn two-way-merge-action"
-                aria-label="粘贴为目标配置全文"
-                @click="pasteAsFullSide('right')"
-              >
-                <span class="i-lucide-clipboard" aria-hidden="true" />
-                <span class="two-way-merge-action__label">粘贴</span>
-              </button>
-              <button
-                type="button"
-                class="ui-btn two-way-merge-action"
-                aria-label="格式化目标配置"
-                :disabled="isFormatDisabled('right')"
-                @click="formatSide('right')"
-              >
-                <span class="i-lucide-align-left" aria-hidden="true" />
-                <span class="two-way-merge-action__label">格式化</span>
-              </button>
-              <button
-                type="button"
-                class="ui-btn two-way-merge-action ui-btn-danger"
-                aria-label="清空目标配置"
-                :disabled="isClearDisabled('right')"
-                @click="clearSide('right')"
-              >
-                <span class="i-lucide-trash-2" aria-hidden="true" />
-                <span class="two-way-merge-action__label">清空</span>
-              </button>
-            </div>
-            <input
-              ref="rightFileInput"
-              type="file"
-              accept=".json,application/json,text/plain"
-              class="hidden"
-              @change="onFileSelected('right', $event)"
+            <DiffMinimap
+              v-if="showMinimap"
+              :left-bands="leftBands"
+              :right-bands="rightBands"
+              :viewport="viewportBand"
+              @jump="onMinimapJump"
+              @drag-end="onMinimapDragEnd"
             />
           </div>
-        </div>
-        <p
-          v-if="leftError || rightError"
-          class="two-way-merge-status ui-status-invalid"
-          role="status"
-        >
-          <span v-if="leftError">参考配置：{{ leftError }}</span>
-          <span v-if="rightError">目标配置：{{ rightError }}</span>
-        </p>
-        <MergeSearchDock
-          v-if="searchOpen"
-          ref="searchDockRef"
-          v-model:find="searchFind"
-          v-model:replace="searchReplace"
-          v-model:case-sensitive="searchCase"
-          v-model:regexp="searchRegexp"
-          v-model:whole-word="searchWord"
-          v-model:side="searchSide"
-          class="two-way-merge-search"
-          @next="runSearch(findNext)"
-          @prev="runSearch(findPrevious)"
-          @all="runSearch(selectMatches)"
-          @replace-one="runSearch(replaceNext)"
-          @replace-all="runSearch(replaceAll)"
-          @close="closeSearch"
-        />
-        <div class="two-way-merge-body" :class="{ 'is-empty': leftEmpty && rightEmpty }">
-          <div
-            class="two-way-merge-frame flex-1 min-h-0"
-            :class="{
-              'is-dragging-left': leftDragDepth > 0,
-              'is-dragging-right': rightDragDepth > 0,
-            }"
-            @dragenter="onHostDragEnter"
-            @dragover="onHostDragOver"
-            @dragleave="onHostDragLeave"
-            @drop="onHostDrop"
-          >
-            <div ref="hostRef" class="two-way-merge-host flex-1 min-h-0" />
-            <div v-if="leftEmpty" class="two-way-merge-empty two-way-merge-empty--left">
-              <MergePaneEmptyState
-                select-aria-label="选择参考配置文件"
-                :drag-over="leftDragDepth > 0"
-                :show-sample="leftEmpty && rightEmpty"
-                @paste="pasteAsFullSide('left')"
-                @sample="fillSampleDocs"
-                @select="openFilePicker('left')"
-              />
-            </div>
-            <div v-if="rightEmpty" class="two-way-merge-empty two-way-merge-empty--right">
-              <MergePaneEmptyState
-                select-aria-label="选择目标配置文件"
-                :drag-over="rightDragDepth > 0"
-                :show-sample="leftEmpty && rightEmpty"
-                @paste="pasteAsFullSide('right')"
-                @sample="fillSampleDocs"
-                @select="openFilePicker('right')"
-              />
-            </div>
-          </div>
-          <DiffMinimap
-            v-if="showMinimap"
-            :left-bands="leftBands"
-            :right-bands="rightBands"
-            :viewport="viewportBand"
-            @jump="onMinimapJump"
-            @drag-end="onMinimapDragEnd"
-          />
         </div>
       </div>
     </div>
@@ -923,13 +957,72 @@ onBeforeUnmount(() => {
   overflow-x: auto;
 }
 
+/* 双侧皆空：宽度沾满工作区，高度跟空态内容走 */
+.two-way-merge-editor.is-empty {
+  flex: 0 0 auto;
+  align-self: stretch;
+  width: 100%;
+  height: auto;
+}
+
+.two-way-merge-editor.is-empty .two-way-merge-stage,
+.two-way-merge-editor.is-empty .two-way-merge-main,
+.two-way-merge-editor.is-empty .two-way-merge-panel {
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+}
+
+/* 栏头、查找与编辑区共用一块外壳 */
+.two-way-merge-panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.two-way-merge-chrome {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+/* 栏头三列只占编辑器宽；右侧轨与 DiffMinimap 同宽 */
+.two-way-merge-chrome__align {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.two-way-merge-chrome__rail {
+  flex: 0 0 0.9rem;
+  width: 0.9rem;
+  min-width: 0.9rem;
+  border-left: 1px solid var(--border-subtle);
+}
+
 /* 与 MergeView 三列对齐：左右均分剩余宽度，中间 2.4em revert 槽 */
 .two-way-merge-labels {
   display: flex;
+  flex: 1 1 0;
   align-items: center;
-  flex-shrink: 0;
-  margin-bottom: 0.375rem;
+  min-width: 0;
   gap: 0;
+}
+
+/* 双侧皆空时不预留滚槽（空态遮罩按全宽居中）；有内容后与 .cm-mergeView 同步预留 */
+.two-way-merge-panel.is-populated .two-way-merge-labels {
+  overflow-y: auto;
+  scrollbar-gutter: stable;
 }
 
 .two-way-merge-labels__side {
@@ -939,9 +1032,6 @@ onBeforeUnmount(() => {
   flex: 1 1 0;
   min-width: 0;
   padding: 0.45rem 0.65rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--surface);
 }
 
 .two-way-merge-file-slot {
@@ -1011,9 +1101,11 @@ onBeforeUnmount(() => {
   flex: 0 0 2.4em;
   align-items: center;
   justify-content: center;
+  align-self: stretch;
   width: 2.4em;
-  height: 2.4em;
   color: var(--text-h);
+  border-right: 1px solid var(--border-subtle);
+  border-left: 1px solid var(--border-subtle);
 }
 
 .two-way-merge-labels__revert .i-lucide-move-right {
@@ -1025,7 +1117,9 @@ onBeforeUnmount(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem 1rem;
-  margin: 0 0 0.35rem;
+  margin: 0;
+  padding: 0.35rem 0.65rem;
+  border-top: 1px solid var(--border-subtle);
   font-size: 0.75rem;
   line-height: 1.35;
 }
@@ -1044,40 +1138,102 @@ onBeforeUnmount(() => {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
   background: var(--code-bg);
+}
+
+/* 双侧空态时压扁 Merge 宿主，高度改由空态流式行决定 */
+.two-way-merge-host.is-collapsed {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .two-way-merge-empty {
   position: absolute;
-  top: 0.1rem;
-  bottom: 0.1rem;
+  top: 0;
+  bottom: 0;
   z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
   padding: 1.5rem 2.5rem;
-  border-radius: var(--radius-md);
   background: var(--code-bg);
   pointer-events: none;
 }
 
 .two-way-merge-empty--left {
-  left: 0.1rem;
-  width: calc((100% - 2.4em) / 2 - 0.1rem);
+  left: 0;
+  width: calc((100% - 2.4em) / 2);
 }
 
 .two-way-merge-empty--right {
-  right: 0.1rem;
-  width: calc((100% - 2.4em) / 2 - 0.1rem);
+  right: 0;
+  width: calc((100% - 2.4em) / 2);
+}
+
+.two-way-merge-empty-flow {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  min-height: 55vh;
+  background: var(--surface);
+}
+
+.two-way-merge-empty--flow {
+  position: static;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-width: 0;
+  padding: 1.25rem 1.5rem 1.5rem;
+  background: var(--surface);
+}
+
+.two-way-merge-empty-flow__gap {
+  flex: 0 0 2.4em;
+  width: 2.4em;
+  min-width: 2.4em;
+  border-right: 1px solid var(--border-subtle);
+  border-left: 1px solid var(--border-subtle);
+}
+
+.two-way-merge-frame.is-both-empty {
+  flex: 0 0 auto;
+  min-height: 0;
 }
 
 .two-way-merge-frame.is-dragging-left .two-way-merge-empty--left :deep(.merge-pane-empty__title),
 .two-way-merge-frame.is-dragging-left .two-way-merge-empty--left :deep(.merge-pane-empty__sub),
+.two-way-merge-frame.is-dragging-left
+  .two-way-merge-empty-flow
+  .two-way-merge-empty--flow:first-child
+  :deep(.merge-pane-empty__title),
+.two-way-merge-frame.is-dragging-left
+  .two-way-merge-empty-flow
+  .two-way-merge-empty--flow:first-child
+  :deep(.merge-pane-empty__sub),
 .two-way-merge-frame.is-dragging-right .two-way-merge-empty--right :deep(.merge-pane-empty__title),
-.two-way-merge-frame.is-dragging-right .two-way-merge-empty--right :deep(.merge-pane-empty__sub) {
+.two-way-merge-frame.is-dragging-right .two-way-merge-empty--right :deep(.merge-pane-empty__sub),
+.two-way-merge-frame.is-dragging-right
+  .two-way-merge-empty-flow
+  .two-way-merge-empty--flow:last-child
+  :deep(.merge-pane-empty__title),
+.two-way-merge-frame.is-dragging-right
+  .two-way-merge-empty-flow
+  .two-way-merge-empty--flow:last-child
+  :deep(.merge-pane-empty__sub) {
   color: var(--accent);
 }
 
@@ -1103,29 +1259,27 @@ onBeforeUnmount(() => {
   flex: 1;
   min-width: 0;
   min-height: 0;
-  gap: 0.35rem;
+  gap: 0;
 }
 
 .two-way-merge-body.is-empty {
   flex: 0 0 auto;
   align-self: stretch;
   width: 100%;
+  min-width: 0;
+  min-height: 0;
 }
 
 .two-way-merge-body.is-empty .two-way-merge-frame,
-.two-way-merge-body.is-empty .two-way-merge-host {
-  flex: 1 1 auto;
+.two-way-merge-body.is-empty .two-way-merge-empty-flow {
+  flex: 0 0 auto;
   width: 100%;
-  min-height: 22rem;
-}
-
-.two-way-merge-body.is-empty .two-way-merge-host {
-  background: var(--surface);
+  min-width: 0;
 }
 
 .two-way-merge-search {
   flex-shrink: 0;
-  margin-bottom: 0.375rem;
+  border-top: 1px solid var(--border-subtle);
 }
 
 :deep(.cm-search-ghost),
@@ -1147,6 +1301,10 @@ onBeforeUnmount(() => {
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+
+.two-way-merge-panel.is-populated :deep(.cm-mergeView) {
+  scrollbar-gutter: stable;
 }
 
 :deep(.cm-mergeViewEditors) {

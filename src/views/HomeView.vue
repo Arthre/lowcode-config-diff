@@ -44,6 +44,9 @@ const collapseSession = createCollapseAutoOnce()
 const bothConfigsReady = computed(
   () => workspace.leftDoc.length > 0 && workspace.rightDoc.length > 0,
 )
+const bothDocsEmpty = computed(
+  () => workspace.leftDoc.length === 0 && workspace.rightDoc.length === 0,
+)
 const chunkCount = ref(0)
 const chunkCurrent = ref(0)
 const chunkKinds = ref<ChunkKindCounts>({ added: 0, removed: 0, modified: 0 })
@@ -258,7 +261,7 @@ onBeforeUnmount(dismissStatus)
       <TwoWayMergeEditor
         ref="mergeEditorRef"
         v-model:collapse-unchanged="collapseUnchanged"
-        class="flex-1 min-h-0"
+        :class="bothDocsEmpty ? 'w-full self-stretch min-h-0' : 'flex-1 min-h-0'"
         @chunks="onChunks"
         @notice="onEditorNotice"
       />

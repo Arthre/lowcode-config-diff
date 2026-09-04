@@ -285,7 +285,7 @@ export function stickyScrollExtension(options: StickyScrollOptions): Extension {
       padding: '0.1rem 0.35rem',
       overflow: 'hidden',
       border: 'none',
-      borderRadius: 'var(--radius-xs, 2px)',
+      borderRadius: 'var(--radius-xs, 0)',
       background: 'transparent',
       color: 'var(--text-h)',
       font: 'inherit',

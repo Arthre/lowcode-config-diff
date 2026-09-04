@@ -45,11 +45,11 @@
   --heading: var(--sans);
   --mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
 
-  /* 圆角 */
-  --radius-xs: 2px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  /* 圆角（相对上一档整体收一档） */
+  --radius-xs: 0;
+  --radius-sm: 2px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
 
   font: 15px/1.5 var(--sans);
   letter-spacing: 0;
