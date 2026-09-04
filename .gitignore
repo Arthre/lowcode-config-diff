@@ -39,7 +39,7 @@ pnpm-debug.log*
 # Local index（本机产物，勿入库）
 .codegraph
 
-# 性能测试夹具（由 scripts/generate-perf-fixtures.mjs 生成，勿入库）
+# 性能测试 JSON（由 scripts/generate-perf-fixtures.mjs 生成）
 fixtures
 
 # Generated

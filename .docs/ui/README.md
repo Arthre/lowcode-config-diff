@@ -91,8 +91,9 @@
 
 ## 工作台布局
 
-- 视口高：`.ui-page` `100svh` + overflow hidden；`.ui-workspace` 纵向 flex，Merge `flex: 1; min-height: 0`；现行无目录列（实现保留，下架时不挂载）
+- 视口高：`html`/`body`/`#app` 满高 + `overflow: hidden`（避免暗色 `color-scheme` 把滚动条抬到 body）；`.ui-page` `100svh` + overflow hidden；`.ui-workspace` 纵向 flex，Merge `flex: 1; min-height: 0`；现行无目录列（实现保留，下架时不挂载）
 - 窄屏：Merge 仍左右并排，宿主可横滑；禁止把 `.cm-mergeViewEditors` 改成 column
+- 竖滚：`.cm-mergeView { overflow-y: auto }`；`.cm-scroller` 用 `overflow-y: hidden !important` 压住 merge 包的 `visible`（与 `overflow-x:auto` 配对否则会变 `auto`）
 
 ## 规格与计划
 

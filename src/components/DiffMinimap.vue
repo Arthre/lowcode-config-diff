@@ -147,21 +147,36 @@ onBeforeUnmount(() => {
   overflow: hidden;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--code-bg) 88%, var(--surface));
+  background: var(--surface);
   cursor: pointer;
   touch-action: none;
   user-select: none;
   overscroll-behavior: contain;
 }
 
+:global(html.dark) .diff-minimap {
+  background: color-mix(in srgb, var(--code-bg) 88%, var(--surface));
+}
+
 .diff-minimap__viewport {
   position: absolute;
   right: 0;
   left: 0;
-  z-index: 0;
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  z-index: 2;
+  /* 亮色：透亮描边框，几乎不挡色带 */
+  border: 1.5px solid color-mix(in srgb, var(--accent) 72%, transparent);
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  border-radius: 2px;
+  box-shadow: none;
   pointer-events: none;
+}
+
+:global(html.dark) .diff-minimap__viewport {
+  border: 1px solid color-mix(in srgb, var(--accent) 78%, var(--text-h));
+  background: color-mix(in srgb, var(--accent) 34%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 .diff-minimap__col {
