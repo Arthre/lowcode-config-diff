@@ -1,6 +1,6 @@
 ---
 name: Diff 合并工具
-description: 冷灰画布 + 青绿强调的 Operate 工具界面
+description: 冷灰画布；亮色中天蓝强调、暗色静谧青绿的 Operate 工具界面
 colors:
   canvas: '#eef1f4'
   surface: '#ffffff'
@@ -9,9 +9,9 @@ colors:
   border-subtle: '#e4e9ef'
   text: '#5a6572'
   text-heading: '#0f1720'
-  accent: '#0f766e'
-  accent-hover: '#0d9488'
-  accent-muted: '#ccfbf1'
+  accent: '#1f7aad'
+  accent-hover: '#2890c8'
+  accent-muted: '#d6ebf5'
   side-test: '#0369a1'
   side-prod: '#b45309'
   diff-added: '#047857'
@@ -21,7 +21,7 @@ colors:
   danger: '#b91c1c'
   muted: '#7b8794'
   code-bg: '#f1f4f7'
-  focus-ring: '#0f766e'
+  focus-ring: '#1f7aad'
 colorsDark:
   canvas: '#0c1014'
   surface: '#151b22'
@@ -30,9 +30,9 @@ colorsDark:
   border-subtle: '#222a34'
   text: '#9aa6b2'
   text-heading: '#eef2f6'
-  accent: '#2dd4bf'
-  accent-hover: '#5eead4'
-  accent-muted: 'rgba(45, 212, 191, 0.14)'
+  accent: '#5eb8ab'
+  accent-hover: '#7ec9be'
+  accent-muted: 'rgba(94, 184, 171, 0.16)'
   side-test: '#38bdf8'
   side-prod: '#fbbf24'
   diff-added: '#34d399'
@@ -129,7 +129,7 @@ components:
 
 ## Overview
 
-Operate 模式的可编辑双栏文本合并工作台：冷灰画布托起表面与栏头，青绿用于导入、复制/导出与焦点。语义色区分「参考配置」与「目标配置」侧标签；扫读优先于装饰。访客成功标准是完成「导入 → 块级 `→` / 编辑 → 导出右栏」，不是停留欣赏。
+Operate 模式的可编辑双栏文本合并工作台：冷灰画布托起表面与栏头；亮色用中天蓝、暗色用静谧青绿做导入/复制/导出与焦点。语义色区分「参考配置」与「目标配置」侧标签；扫读优先于装饰。访客成功标准是完成「导入 → 块级 `→` / 编辑 → 导出右栏」，不是停留欣赏。
 
 ## Colors
 
@@ -148,7 +148,7 @@ Operate 模式的可编辑双栏文本合并工作台：冷灰画布托起表面
 ## Theme toggle
 
 - 入口：页眉右侧太阳/月亮按钮（`ThemeToggle`）
-- 状态：`useDark`（VueUse）+ `localStorage` 键 `lcd-color-scheme`；首次无存储时跟随系统偏好；`index.html` 内联脚本防 FOUC
+- 状态：`useDark`（VueUse）+ `localStorage` 键 `lcd-color-scheme`；首次无存储时**默认亮色**；`index.html` 内联脚本防 FOUC
 - 过场：支持时用 **View Transitions API**（约 340ms，对称缓动）：亮→暗为亮色*收回*，暗→亮为亮色*进入*；CSS 首帧驱动动画 + 暗色过渡底抑白闪；不支持或 `prefers-reduced-motion: reduce` 时瞬时切换
 - 编辑器：CodeMirror 主题用 CSS 变量，随 `html.dark` 同步
 
@@ -171,7 +171,7 @@ Operate 模式的可编辑双栏文本合并工作台：冷灰画布托起表面
 
 - 阴影梯级：`sm`（导入坞、品牌标、弱表面）、`md`（拖拽强调）、`lg`（raised 面板）
 - 面板：淡边框 + 软偏移阴影（非零模糊）；阴影加强时边框略淡，避免发脏
-- 背景：冷灰底 + 顶部极淡青绿径向光 + 细点阵纹理（约 40% 强度，固定附着，非装饰 glow）
+- 背景：冷灰底 + 顶部极淡 accent 径向光 + 细点阵纹理（约 40% 强度，固定附着，非装饰 glow）
 - 禁止彩色光晕、厚色左边框装饰条
 
 ## Icons
@@ -188,7 +188,7 @@ Operate 模式的可编辑双栏文本合并工作台：冷灰画布托起表面
 ## Components
 
 - **Primary button：** 实心 accent（页眉导出等）；禁用时用 `accent-muted` 底而非死灰
-- **Soft button：** 浅绿底 accent 字（选择文件、粘贴为该侧全文）
+- **Soft button：** 浅色 accent-muted 底 + accent 字（选择文件、粘贴为该侧全文）
 - **Ghost / 默认按钮：** 透明或弱边框（查找、复制等）
 - **Switch：** 页眉「仅显示差异」：文案 + SVG 描边胶囊（开时描边滑到右侧并变 accent）；`role="switch"`；`prefers-reduced-motion` 时关闭描边过渡
 - **Danger：** 危险色字与淡边框（清空）
@@ -201,7 +201,7 @@ Operate 模式的可编辑双栏文本合并工作台：冷灰画布托起表面
 **Do**
 
 - 用语义色表达状态，并辅以文字标签
-- 主操作唯一高饱和色（青绿）
+- 主操作唯一高饱和色（亮色中天蓝 / 暗色青绿）
 - mono 仅用于 path 与 JSON
 - 窄屏保持并排 Merge，靠横滑而不是改 column
 

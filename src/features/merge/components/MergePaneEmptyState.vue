@@ -7,16 +7,13 @@ const props = withDefaults(
     selectAriaLabel?: string
     /** 该窗格正处于文件拖入高亮（宿主 dragenter/dragover，不是 drop） */
     dragOver?: boolean
-    /** 双侧文档都为空时显示示例入口 */
-    showSample?: boolean
   }>(),
-  { selectAriaLabel: '选择文件', dragOver: false, showSample: false },
+  { selectAriaLabel: '选择文件', dragOver: false },
 )
 
 const emit = defineEmits<{
   select: []
   paste: []
-  sample: []
 }>()
 
 const reduceMotion = usePreferredReducedMotion()
@@ -130,14 +127,6 @@ onBeforeUnmount(() => {
       <button type="button" class="ui-btn merge-pane-empty__cta" @click="emit('paste')">
         粘贴全文
       </button>
-      <button
-        v-if="showSample"
-        type="button"
-        class="merge-pane-empty__sample"
-        @click="emit('sample')"
-      >
-        填入示例配置
-      </button>
     </div>
   </div>
 </template>
@@ -206,20 +195,6 @@ onBeforeUnmount(() => {
 .merge-pane-empty__cta {
   padding: 0.35rem 0.7rem;
   font-size: 0.8125rem;
-}
-
-.merge-pane-empty__sample {
-  padding: 0.35rem 0.25rem;
-  border: 0;
-  background: transparent;
-  color: var(--accent);
-  font: inherit;
-  font-size: 0.8125rem;
-  cursor: pointer;
-}
-
-.merge-pane-empty__cta,
-.merge-pane-empty__sample {
   pointer-events: auto;
 }
 </style>

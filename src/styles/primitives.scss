@@ -336,8 +336,9 @@
 }
 
 .ui-diff-badge.is-clean {
-  color: var(--success);
-  background: var(--diff-added-bg);
+  color: var(--accent);
+  background: var(--accent-muted);
+  border-color: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .ui-diff-badge.is-open {

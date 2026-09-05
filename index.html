@@ -10,10 +10,8 @@
         try {
           var key = 'lcd-color-scheme'
           var stored = localStorage.getItem(key)
-          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-          var dark =
-            stored === 'dark' || ((stored === 'auto' || stored == null) && prefersDark)
-          if (dark) document.documentElement.classList.add('dark')
+          // 默认亮色；仅显式 dark 走暗色（与 useThemeToggle initialValue: 'light' 一致）
+          if (stored === 'dark') document.documentElement.classList.add('dark')
         } catch (_) {}
       })()
     </script>

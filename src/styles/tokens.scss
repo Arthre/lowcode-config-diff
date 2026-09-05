@@ -15,10 +15,10 @@
   --text-h: #0f1720;
   --muted: #7b8794;
 
-  /* 操作强调 — 青绿 */
-  --accent: #0f766e;
-  --accent-hover: #0d9488;
-  --accent-muted: #ccfbf1;
+  /* 操作强调 — 亮色中天蓝（与侧标签参考蓝拉开） */
+  --accent: #1f7aad;
+  --accent-hover: #2890c8;
+  --accent-muted: #d6ebf5;
   --accent-bg: var(--accent-muted);
   --accent-border: color-mix(in srgb, var(--accent) 45%, transparent);
 
@@ -78,9 +78,9 @@ html.dark {
   --text: #9aa6b2;
   --text-h: #eef2f6;
   --muted: #7a8694;
-  --accent: #2dd4bf;
-  --accent-hover: #5eead4;
-  --accent-muted: rgba(45, 212, 191, 0.14);
+  --accent: #5eb8ab;
+  --accent-hover: #7ec9be;
+  --accent-muted: rgba(94, 184, 171, 0.16);
   --side-test: #38bdf8;
   --side-prod: #fbbf24;
   --diff-added: #34d399;

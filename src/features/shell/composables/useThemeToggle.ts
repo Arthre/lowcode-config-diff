@@ -4,6 +4,9 @@ import { nextTick } from 'vue'
 /** localStorage key — keep in sync with the FOUC script in index.html */
 export const THEME_STORAGE_KEY = 'lcd-color-scheme'
 
+/** 无本地存储时的默认色系（FOUC 脚本：仅 `dark` 走暗色） */
+export const THEME_DEFAULT_SCHEME = 'light' as const
+
 /** Shared by both directions so expand/retract feel matched. */
 const THEME_VT_MS = 340
 const THEME_VT_EASING = 'cubic-bezier(0.45, 0.05, 0.55, 0.95)'
@@ -32,6 +35,8 @@ export function themeRevealRadius(x: number, y: number, width: number, height: n
 export function useThemeToggle() {
   const isDark = useDark({
     storageKey: THEME_STORAGE_KEY,
+    /** 无本地存储时默认亮色（与 index.html FOUC 脚本一致） */
+    initialValue: THEME_DEFAULT_SCHEME,
   })
 
   async function toggleWithViewTransition(event?: MouseEvent) {

@@ -41,13 +41,6 @@ import {
 } from '@/features/merge/lib/editor/theme'
 import { mergeViewDiffConfig, takeLastDiffCoarse } from '@/features/merge/lib/editor/diffByLine'
 import { pointerLeftMergeFrame, sideFromClientX } from '@/features/merge/lib/import/dragHit'
-import {
-  SAMPLE_REFERENCE_FILE_NAME,
-  SAMPLE_REFERENCE_JSON,
-  SAMPLE_TARGET_FILE_NAME,
-  SAMPLE_TARGET_JSON,
-  isSampleFillAvailable,
-} from '@/features/merge/lib/import/sampleDocs'
 import { MERGE_COLLAPSE_UNCHANGED } from '@/features/merge/lib/editor/collapse'
 import { createHorizontalScrollSync } from '@/features/merge/lib/editor/scrollLeft'
 import {
@@ -536,12 +529,6 @@ function openFilePicker(side: MergeSide) {
   input?.click()
 }
 
-function fillSampleDocs() {
-  if (!isSampleFillAvailable(workspace.leftDoc, workspace.rightDoc)) return
-  workspace.importSide('left', SAMPLE_REFERENCE_JSON, SAMPLE_REFERENCE_FILE_NAME)
-  workspace.importSide('right', SAMPLE_TARGET_JSON, SAMPLE_TARGET_FILE_NAME)
-}
-
 function sideFromPointer(clientX: number): MergeSide | null {
   if (!mergeView) return null
   return sideFromClientX(
@@ -895,9 +882,7 @@ onBeforeUnmount(() => {
                   <MergePaneEmptyState
                     select-aria-label="选择参考配置文件"
                     :drag-over="leftDragDepth > 0"
-                    show-sample
                     @paste="pasteAsFullSide('left')"
-                    @sample="fillSampleDocs"
                     @select="openFilePicker('left')"
                   />
                 </div>
@@ -906,9 +891,7 @@ onBeforeUnmount(() => {
                   <MergePaneEmptyState
                     select-aria-label="选择目标配置文件"
                     :drag-over="rightDragDepth > 0"
-                    show-sample
                     @paste="pasteAsFullSide('right')"
-                    @sample="fillSampleDocs"
                     @select="openFilePicker('right')"
                   />
                 </div>
