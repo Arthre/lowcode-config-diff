@@ -6,6 +6,8 @@
 
 # Vendored / generated (exclude from GitHub language stats)
 node_modules/ linguist-vendored=true
+.agents/** linguist-vendored=true
+.claude/** linguist-vendored=true
 dist/ linguist-generated=true
 build/ linguist-generated=true
 pnpm-lock.yaml linguist-generated=true
