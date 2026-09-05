@@ -6,13 +6,13 @@
   -->
   <defs>
     <style>
-      .tile { fill: #0f766e; }
-      .pane { fill: #ccfbf1; }
+      .tile { fill: #1f7aad; }
+      .pane { fill: #d6ebf5; }
       .arrow { fill: #ffffff; }
       @media (prefers-color-scheme: dark) {
-        .tile { fill: #134e4a; }
-        .pane { fill: #5eead4; }
-        .arrow { fill: #ecfdf5; }
+        .tile { fill: #1a4540; }
+        .pane { fill: #7ec9be; }
+        .arrow { fill: #eef2f6; }
       }
     </style>
   </defs>

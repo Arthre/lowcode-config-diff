@@ -32,6 +32,7 @@ import {
 import {
   activeChunkIndexInViewport,
   chunkNavTargetIndex,
+  resolveChunkNavAnchor,
 } from '@/features/merge/lib/chunk/navAnchor'
 import {
   createEditableJsonExtensions,
@@ -137,6 +138,12 @@ let coarseNoticeShown = false
 let skipFormatNoticeThisImport = false
 /** 差异块像素带；只在文档/块数/尺寸变化时重测，滚动只做重叠判断。 */
 let cachedChunkBands: { start: number; end: number }[] = []
+/** 按钮步进钉住的块下标；用户手滚后清掉，改回视口重叠。 */
+let chunkNavCursor: number | null = null
+/** 程序改 scrollTop 时不要清掉导航游标。 */
+let chunkNavProgrammatic = false
+let chunkNavGeneration = 0
+let chunkNavProgrammaticTop = -1
 const minimapDrag = createMinimapDragSession()
 let minimapDragging = false
 /** 上次已通知的差异块数量与当前下标；-1 保证挂载后必 emit 一次 */
@@ -216,6 +223,7 @@ function syncEditorChrome(rebuildLayout: boolean, remasureBands = false) {
   const count = mergeView.chunks.length
   const shouldLayout = rebuildLayout || count !== lastChunkCount
   if (shouldLayout) {
+    chunkNavCursor = null
     refreshChunkBands()
     refreshMinimapSnapshot()
     lastChunkKinds = countChunkKinds(mergeView.chunks)
@@ -224,10 +232,11 @@ function syncEditorChrome(rebuildLayout: boolean, remasureBands = false) {
     refreshChunkBands()
     refreshMinimapSnapshot()
   }
-  const index = activeChunkIndexInViewport(
+  const index = resolveChunkNavAnchor(
     cachedChunkBands,
     scroller.scrollTop,
-    scroller.scrollTop + scroller.clientHeight,
+    scroller.clientHeight,
+    chunkNavCursor,
   )
   const current = count === 0 || index < 0 ? 0 : index + 1
   chunkCurrent.value = current
@@ -327,6 +336,10 @@ function applyStoreDoc(side: MergeSide, next: string) {
 
 function onMergeScroll() {
   if (minimapDragging) return
+  if (!chunkNavProgrammatic) {
+    const top = mergeView?.dom.scrollTop
+    if (top === undefined || Math.abs(top - chunkNavProgrammaticTop) > 1) chunkNavCursor = null
+  }
   syncEditorChrome(false)
 }
 
@@ -389,6 +402,7 @@ function onMinimapJump(ratio: number) {
   const live = mergeScrollerMetrics()
   if (live === null) return
   minimapDragging = true
+  chunkNavCursor = null
   const scroller = mergeView.dom
   const maxTop = Math.max(0, live.scrollHeight - live.clientHeight)
   scroller.scrollTop = Math.min(minimapDrag.scrollTopForRatio(ratio, live), maxTop)
@@ -491,8 +505,9 @@ function goToPrevChunk() {
 
 /** 滚到缓存块顶并选中 B 的 fromB；与「下一个差异」共用 bands。 */
 function goToChunkAt(index: number) {
+  const generation = ++chunkNavGeneration
   afterEditorMeasure(() => {
-    if (!mergeView) return
+    if (!mergeView || generation !== chunkNavGeneration) return
     const { chunks } = mergeView
     const count = chunks.length
     if (count === 0 || index < 0 || index >= count) return
@@ -503,11 +518,19 @@ function goToChunkAt(index: number) {
     const scroller = mergeView.dom
     const from = Math.min(chunk.fromB, mergeView.b.state.doc.length)
     const maxTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight)
-    scroller.scrollTop = Math.min(band.start, maxTop)
+    const nextTop = Math.min(band.start, maxTop)
+    chunkNavCursor = index
+    chunkNavProgrammatic = true
+    chunkNavProgrammaticTop = nextTop
+    scroller.scrollTop = nextTop
     mergeView.b.dispatch({
       selection: { anchor: from },
       userEvent: 'select.byChunk',
       scrollIntoView: false,
+    })
+    syncEditorChrome(false)
+    requestAnimationFrame(() => {
+      if (generation === chunkNavGeneration) chunkNavProgrammatic = false
     })
   })
 }
@@ -520,7 +543,13 @@ function goToChunkFromAnchor(step: 1 | -1) {
   const scroller = mergeView.dom
   if (cachedChunkBands.length !== count) refreshChunkBands()
   goToChunkAt(
-    chunkNavTargetIndex(cachedChunkBands, scroller.scrollTop, scroller.clientHeight, step),
+    chunkNavTargetIndex(
+      cachedChunkBands,
+      scroller.scrollTop,
+      scroller.clientHeight,
+      step,
+      chunkNavCursor,
+    ),
   )
 }
 
