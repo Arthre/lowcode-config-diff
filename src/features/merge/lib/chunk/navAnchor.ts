@@ -56,17 +56,33 @@ export function chunkIndexAfterAnchor(anchorIndex: number, count: number, step: 
 }
 
 /**
+ * 导航当前块：有钉住的下标时用它（末块滚不到顶时视口重叠仍停在上一块）。
+ * 否则用视口与色带的像素重叠。
+ */
+export function resolveChunkNavAnchor(
+  bands: readonly { start: number; end: number }[],
+  scrollTop: number,
+  clientHeight: number,
+  pinnedIndex: number | null,
+): number {
+  if (pinnedIndex !== null && pinnedIndex >= 0 && pinnedIndex < bands.length) return pinnedIndex
+  return activeChunkIndexInViewport(bands, scrollTop, scrollTop + clientHeight)
+}
+
+/**
  * 用像素重叠锚点算上一条/下一条目标。
  * 必须走视口重叠，不能用视口顶文档位置：scrollTop 取整后会落在块前空隙，
  * 下一条会停在原地、上一条会连退两块。
+ * pinnedIndex：按钮步进后钉住的块，避免滚不到顶时永远停在视口最上的一块。
  */
 export function chunkNavTargetIndex(
   bands: readonly { start: number; end: number }[],
   scrollTop: number,
   clientHeight: number,
   step: 1 | -1,
+  pinnedIndex: number | null = null,
 ): number {
-  const anchor = activeChunkIndexInViewport(bands, scrollTop, scrollTop + clientHeight)
+  const anchor = resolveChunkNavAnchor(bands, scrollTop, clientHeight, pinnedIndex)
   return chunkIndexAfterAnchor(anchor, bands.length, step)
 }
 

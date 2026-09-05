@@ -7,6 +7,7 @@ import {
   chunkNavAriaLabel,
   chunkNavTargetIndex,
   chunkNavVisibleLabel,
+  resolveChunkNavAnchor,
 } from './navAnchor'
 
 const chunks = [
@@ -97,6 +98,24 @@ describe('chunkNavTargetIndex', () => {
     ]
     expect(chunkNavTargetIndex(bands, 100, 600, 1)).toBe(2)
     expect(chunkNavTargetIndex(bands, 100, 600, -1)).toBe(0)
+  })
+
+  it('末两块都在底部视口内且滚不到顶时，钉住后下一条能进到最后一块再绕回', () => {
+    const bands = [
+      { start: 42, end: 63 },
+      { start: 12663, end: 12999 },
+      { start: 79716, end: 79737 },
+      { start: 80010, end: 80031 },
+    ]
+    const scrollTop = 79330
+    const clientHeight = 772
+    expect(activeChunkIndexInViewport(bands, scrollTop, scrollTop + clientHeight)).toBe(2)
+    expect(resolveChunkNavAnchor(bands, scrollTop, clientHeight, null)).toBe(2)
+    expect(resolveChunkNavAnchor(bands, scrollTop, clientHeight, 3)).toBe(3)
+    expect(chunkNavTargetIndex(bands, scrollTop, clientHeight, 1)).toBe(3)
+    expect(chunkNavTargetIndex(bands, scrollTop, clientHeight, 1, 2)).toBe(3)
+    expect(chunkNavTargetIndex(bands, scrollTop, clientHeight, 1, 3)).toBe(0)
+    expect(chunkNavTargetIndex(bands, 42, clientHeight, -1, 0)).toBe(3)
   })
 })
 
